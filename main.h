@@ -10,9 +10,11 @@
 #include <map>
 #include <algorithm>
 
-using namespace std ;
-
 #include "myjson.h"
+#include <stdio.h>
+#include <string.h>
+
+using namespace std ;
 
 
 #define NS_UNKNOWN -999
