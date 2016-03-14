@@ -11,22 +11,38 @@
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
   if (ev == MG_EV_HTTP_REQUEST) {
     struct http_message *hm = (struct http_message *) p;
-    char reply[100];
 
-    /* Simulate long calculation */
-//    sleep(3);
+    string out ;
 
-cout << hm->uri.p << endl ;
+	string path ( hm->uri.p ) ;
+	path = path.substr ( 0 , hm->uri.len ) ;
+	cout << "!!: " << path << endl ;
+	if ( path == "/" || path == "/index.html" || path == "/main.js" ) {
+		char *buffer = loadFileFromDisk ( "html/index.html" ) ;
+		out = buffer ;
+		free ( buffer ) ;
+	} else {
+		char reply[1000];
 
-    /* Send the reply */
-    snprintf(reply, sizeof(reply), "{ \"uri\": \"%.*s\" }\n",
-             (int) hm->uri.len, hm->uri.p);
+		/* Simulate long calculation */
+	//    sleep(3);
+
+		cout << hm->uri.p << endl ;
+
+		/* Send the reply */
+		snprintf(reply, sizeof(reply), "{ \"uri\": \"%.*s\" }\n",
+				 (int) hm->uri.len, hm->uri.p);
+			 
+	    out = reply ;
+	}
+	
+	
     mg_printf(c, "HTTP/1.1 200 OK\r\n"
               "Content-Type: application/json\r\n"
               "Content-Length: %d\r\n"
               "\r\n"
               "%s",
-              (int) strlen(reply), reply);
+              (int) out.length(), out.c_str());
   }
 }
 

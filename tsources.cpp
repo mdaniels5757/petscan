@@ -342,22 +342,7 @@ void TSourceDatabase::getCategoriesInTree ( TWikidataDB &db , string name , int1
 //________________________________________________________________________________________________________________________
 
 bool TPlatform::readConfigFile ( string filename ) {
-	char * buffer;
-	size_t result;
-  	FILE *pFile = fopen ( filename.c_str() , "rb" );
-	if (pFile==NULL) return error ("Cannot open config file");
-	
-	fseek (pFile , 0 , SEEK_END);
-	long lSize = ftell (pFile);
-	rewind (pFile);
-	
-	buffer = (char*) malloc (sizeof(char)*lSize);
-	if (buffer == NULL) return error ("Memory error while reading config file");
-
-	result = fread (buffer,1,lSize,pFile);
-	if (result != lSize) return error ("Reading error (config file)");
-	fclose (pFile);
-
+	char *buffer = loadFileFromDisk ( filename ) ;
 	MyJSON j ( buffer ) ;
 	free (buffer);
 	
@@ -367,4 +352,24 @@ bool TPlatform::readConfigFile ( string filename ) {
 	}
 
 	return true ;
+}
+
+char *loadFileFromDisk ( string filename ) {
+	char * buffer;
+	size_t result;
+  	FILE *pFile = fopen ( filename.c_str() , "rb" );
+	if (pFile==NULL) { cerr << "Cannot open file " << filename << endl ; exit ( 0 ) ; }
+	
+	fseek (pFile , 0 , SEEK_END);
+	long lSize = ftell (pFile);
+	rewind (pFile);
+	
+	buffer = (char*) malloc (sizeof(char)*lSize);
+	if (buffer == NULL) { cerr << "Memory error while reading file " << filename << endl ; exit ( 0 ) ; }
+
+	result = fread (buffer,1,lSize,pFile);
+	if (result != lSize) { cerr << "Reading error for file " << filename << endl ; exit ( 0 ) ; }
+	fclose (pFile);
+	
+	return buffer ;
 }

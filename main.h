@@ -19,6 +19,7 @@ using namespace std ;
 
 #define NS_UNKNOWN -999
 
+char *loadFileFromDisk ( string filename ) ;
 
 class TPlatform ;
 
