@@ -205,7 +205,7 @@ protected:
 class TPlatform {
 public:
 	bool readConfigFile ( string filename ) ;
-	void error ( string s ) { cout << s << endl ; } ;
+	bool error ( string s ) { cout << s << endl ; return false ; } ;
 	map <string,string> config ;
 } ;
 

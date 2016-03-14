@@ -6,7 +6,7 @@ int main(void) {
 	curl_global_init(CURL_GLOBAL_ALL);
 
 
-	cout << "OK" << endl ;
+	cout << "Running..." << endl ;
 
 	TPlatform p ;
 	if ( !p.readConfigFile ( "config.json" ) ) exit ( 1 ) ;

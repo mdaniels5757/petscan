@@ -6,7 +6,7 @@
 //________________________________________________________________________________________________
 
 //static const char *s_http_port = "8083";
-int timeout_ms = 3000 ;
+//int timeout_ms = 3000 ;
 
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
   if (ev == MG_EV_HTTP_REQUEST) {
@@ -35,7 +35,7 @@ int main(void) {
 	struct mg_connection *nc;
 
 	TPlatform p ;
-	p.readConfigFile ( "config.json" ) ;
+	if ( !p.readConfigFile ( "config.json" ) ) exit ( 1 ) ;
 
 //	TWikidataDB db ( "petscan.conf" , "enwiki.labsddb" ) ;
 
@@ -46,9 +46,9 @@ int main(void) {
 	/* For each new connection, execute ev_handler in a separate thread */
 	mg_enable_multithreading(nc);
 
-	printf("Starting multi-threaded server on port %s\n", s_http_port);
+	printf("Starting multi-threaded server on port %s\n", p.config["port"].c_str() ); // s_http_port
 	for (;;) {
-		mg_mgr_poll(&mgr, timeout_ms);
+		mg_mgr_poll(&mgr, atoi(p.config["timeout"].c_str()) );
 	}
 	mg_mgr_free(&mgr);
 
