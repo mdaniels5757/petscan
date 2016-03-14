@@ -18,7 +18,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	string path ( hm->uri.p ) ;
 	path = path.substr ( 0 , hm->uri.len ) ;
 	cout << "!!: " << path << endl ;
-	if ( path == "/" || path == "/index.html" || path == "/main.js" ) {
+	if ( path == "/" || path == "/index.html" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" ) {
 		string filename = "html" + path ;
 		if ( path == "/" ) filename = "html/index.html" ;
 		
@@ -28,7 +28,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		char *buffer = loadFileFromDisk ( filename ) ;
 		out = string ( buffer ) ;
 		free ( buffer ) ;
-		cout << out << endl ;
 	} else {
 		char reply[1000];
 
