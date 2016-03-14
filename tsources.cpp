@@ -179,3 +179,7 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	for ( uint32_t i = 0 ; i < j["pages"].size() ; i++ ) pages.push_back ( j["pages"][i].s ) ;
 	return true ;
 }
+
+
+bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
+}

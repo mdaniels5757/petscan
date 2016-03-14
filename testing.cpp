@@ -10,7 +10,7 @@ int main(void) {
 
 	TPlatform p ;
 
-
+/*
 	TSourceSPARQL sparql ( &p ) ;
 //	if ( sparql.runQuery ( "SELECT ?item WHERE { ?item wdt:P31 wd:Q146 }" ) ) {
 	if ( sparql.runQuery ( "SELECT ?item WHERE { ?item wdt:P106 wd:Q937857 . ?item wdt:P27 wd:Q29 }" ) ) {
@@ -25,6 +25,19 @@ int main(void) {
 
 	sparql.merge ( pp ) ;
 	cout << "Now " << sparql.size() << " items\n" ;
+*/
+
+	TSourceDatabase db ( &p ) ;
+	TSourceDatabaseParams params ;
+	params.wiki = "dewiki" ;
+	params.positive.push_back ( TSourceDatabaseCatDepth ( "Mann" , 0 ) ) ;
+	params.positive.push_back ( TSourceDatabaseCatDepth ( "Frau" , 0 ) ) ;
+
+	if ( db.getPages ( params ) ) {
+		cout << "Read " << db.size() << " items\n" ;
+	} else {
+		cout << "Nope" << endl ;
+	}
 
    curl_global_cleanup();
 }

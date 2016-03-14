@@ -160,6 +160,38 @@ public:
 } ;
 
 
+class TSourceDatabaseCatDepth {
+public:
+	TSourceDatabaseCatDepth ( string n = "" , int16_t d = -1 ) { name = n ; depth = d ; }
+	string name ;
+	int16_t depth ;
+} ;
+
+class TSourceDatabaseParams {
+public:
+	vector <TSourceDatabaseCatDepth> positive , negative ;
+	vector <uint16_t> page_namespace_ids ;
+	vector <string> templates_all , templates_any , templates_none ;
+	bool templates_all_talk_page = false ;
+	bool templates_any_talk_page = false ;
+	bool templates_none_talk_page = false ;
+	vector <string> linked_from_all , linked_from_any , linked_from_none ;
+	
+	string wiki = "enwiki" ;
+	int16_t default_depth = 0 ;
+	string combine = "subset" ;
+	string redirects = "either" ;
+	string last_edit_bot = "either" ;
+	string last_edit_anon = "either" ;
+	string last_edit_flagged = "either" ;
+} ;
+
+class TSourceDatabase : public TSource {
+public:
+	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; } ;
+	
+	bool getPages ( TSourceDatabaseParams &params ) ;
+} ;
 
 
 class TPlatform {
