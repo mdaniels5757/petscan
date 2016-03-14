@@ -13,14 +13,22 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
     struct http_message *hm = (struct http_message *) p;
 
     string out ;
+    string type = "application/json" ;
 
 	string path ( hm->uri.p ) ;
 	path = path.substr ( 0 , hm->uri.len ) ;
 	cout << "!!: " << path << endl ;
 	if ( path == "/" || path == "/index.html" || path == "/main.js" ) {
-		char *buffer = loadFileFromDisk ( "html/index.html" ) ;
-		out = buffer ;
+		string filename = "html" + path ;
+		if ( path == "/" ) filename = "html/index.html" ;
+		
+		type = "text/html" ;
+		if ( path == "/main.js" ) type = "text/plain" ;
+		
+		char *buffer = loadFileFromDisk ( filename ) ;
+		out = string ( buffer ) ;
 		free ( buffer ) ;
+		cout << out << endl ;
 	} else {
 		char reply[1000];
 
@@ -38,10 +46,11 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	
 	
     mg_printf(c, "HTTP/1.1 200 OK\r\n"
-              "Content-Type: application/json\r\n"
+              "Content-Type: %s\r\n"
               "Content-Length: %d\r\n"
               "\r\n"
               "%s",
+              type.c_str() ,
               (int) out.length(), out.c_str());
   }
 }

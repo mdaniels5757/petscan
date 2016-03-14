@@ -116,7 +116,7 @@ public:
 	TMetadata *meta = NULL ;
 } ;
 
-inline bool operator < ( const TPage &t1 , const TPage &t2 ) { return t1.name < t2.name ; }
+inline bool operator < ( const TPage &t1 , const TPage &t2 ) { return (t1.name == t2.name ? t1.ns < t2.ns : t1.name < t2.name ) ; }
 inline bool operator == ( const TPage &t1 , const TPage &t2 ) { return !((t1<t2)||(t2<t1)) ; }
 
 

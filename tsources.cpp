@@ -364,12 +364,13 @@ char *loadFileFromDisk ( string filename ) {
 	long lSize = ftell (pFile);
 	rewind (pFile);
 	
-	buffer = (char*) malloc (sizeof(char)*lSize);
+	buffer = (char*) malloc (sizeof(char)*(lSize+1));
 	if (buffer == NULL) { cerr << "Memory error while reading file " << filename << endl ; exit ( 0 ) ; }
 
 	result = fread (buffer,1,lSize,pFile);
 	if (result != lSize) { cerr << "Reading error for file " << filename << endl ; exit ( 0 ) ; }
 	fclose (pFile);
+	buffer[lSize] = 0 ;
 	
 	return buffer ;
 }
