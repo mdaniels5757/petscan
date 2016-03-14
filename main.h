@@ -29,6 +29,11 @@ public:
 //	bool updateRecentChanges ( TItemSet &target ) ;
 //	void getRedirects ( map <TItemNumber,bool> &remove ) ;
 //	void getDeletedItems ( map <TItemNumber,bool> &remove ) ;
+	void doConnect ( bool first = false ) ;
+	void runQuery ( string sql ) ;
+	MYSQL_RES *getQueryResults ( string sql ) ;
+	string escape ( string s ) ;
+	string space2_ ( string s ) ;
 	~TWikidataDB () ;
 
 	uint32_t batch_size ; // ATTENTION: If this is lower than the number of edits in a specific second, it may cause a loop. Default is 1000; keep it well >100 !
@@ -38,9 +43,6 @@ protected:
 	string _host , _config_file , _database ;
 	TPlatform *_platform ;
 	
-	void doConnect ( bool first = false ) ;
-	void runQuery ( string sql ) ;
-	MYSQL_RES *getQueryResults ( string sql ) ;
 	char *getTextFromURL ( string url ) ;
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
@@ -137,7 +139,6 @@ protected:
 class TSource : public TPageList {
 public:
 	TSource ( TPlatform *p = NULL ) { platform = p ; } ;
-//	TPageList pagelist ;
 	TPlatform *platform ;
 	
 	virtual bool error ( string s ) ;
@@ -193,6 +194,11 @@ public:
 	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; } ;
 	
 	bool getPages ( TSourceDatabaseParams &params ) ;
+
+protected:
+	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
+	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
+	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
 } ;
 
 
