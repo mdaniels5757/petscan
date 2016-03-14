@@ -9,6 +9,7 @@ int main(void) {
 	cout << "OK" << endl ;
 
 	TPlatform p ;
+	p.readConfigFile ( "config.json" ) ;
 
 /*
 	TSourceSPARQL sparql ( &p ) ;

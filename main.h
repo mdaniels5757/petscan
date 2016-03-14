@@ -25,7 +25,7 @@ class TPlatform ;
 class TWikidataDB {
 public:
 	TWikidataDB () {} ;
-	TWikidataDB ( string config_file , string host ) ;
+	TWikidataDB ( TPlatform &platform , string wiki ) ;
 //	bool updateRecentChanges ( TItemSet &target ) ;
 //	void getRedirects ( map <TItemNumber,bool> &remove ) ;
 //	void getDeletedItems ( map <TItemNumber,bool> &remove ) ;
@@ -36,12 +36,14 @@ public:
 protected:
 	MYSQL mysql;
 	string _host , _config_file , _database ;
+	TPlatform *_platform ;
 	
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
 	char *getTextFromURL ( string url ) ;
 	void finishWithError ( string msg = "" ) ;
+	bool setHostDBFromWiki ( string wiki ) ;
 
 
 	struct MemoryStruct {
@@ -196,7 +198,9 @@ public:
 
 class TPlatform {
 public:
+	bool readConfigFile ( string filename ) ;
 	void error ( string s ) { cout << s << endl ; } ;
+	map <string,string> config ;
 } ;
 
 #endif

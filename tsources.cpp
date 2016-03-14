@@ -182,4 +182,38 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 
 
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
+	
+	TWikidataDB db ( *platform , params.wiki ) ;
+}
+
+
+
+
+bool TPlatform::readConfigFile ( string filename ) {
+	char * buffer;
+	size_t result;
+  	FILE *pFile = fopen ( filename.c_str() , "rb" );
+	if (pFile==NULL) {error ("Cannot open config file"); return false ; }
+	
+	fseek (pFile , 0 , SEEK_END);
+	long lSize = ftell (pFile);
+	rewind (pFile);
+	
+	buffer = (char*) malloc (sizeof(char)*lSize);
+	if (buffer == NULL) {error ("Memory error"); return false ;}
+
+	result = fread (buffer,1,lSize,pFile);
+	if (result != lSize) {error ("Reading error"); return false ;}
+	fclose (pFile);
+
+	MyJSON j ( buffer ) ;
+	free (buffer);
+	
+	for ( auto i = j.o.begin() ; i != j.o.end() ; i++ ) {
+		if ( i->first == "" ) continue ;
+		config[i->first] = i->second.s ;
+		cout << i->first << " : " << i->second.s << endl ;
+	}
+
+	return true ;
 }
