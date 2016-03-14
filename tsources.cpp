@@ -345,17 +345,17 @@ bool TPlatform::readConfigFile ( string filename ) {
 	char * buffer;
 	size_t result;
   	FILE *pFile = fopen ( filename.c_str() , "rb" );
-	if (pFile==NULL) {error ("Cannot open config file"); return false ; }
+	if (pFile==NULL) return error ("Cannot open config file");
 	
 	fseek (pFile , 0 , SEEK_END);
 	long lSize = ftell (pFile);
 	rewind (pFile);
 	
 	buffer = (char*) malloc (sizeof(char)*lSize);
-	if (buffer == NULL) {error ("Memory error"); return false ;}
+	if (buffer == NULL) return error ("Memory error while reading config file");
 
 	result = fread (buffer,1,lSize,pFile);
-	if (result != lSize) {error ("Reading error"); return false ;}
+	if (result != lSize) return error ("Reading error (config file)");
 	fclose (pFile);
 
 	MyJSON j ( buffer ) ;

@@ -9,7 +9,7 @@ int main(void) {
 	cout << "OK" << endl ;
 
 	TPlatform p ;
-	p.readConfigFile ( "config.json" ) ;
+	if ( !p.readConfigFile ( "config.json" ) ) exit ( 1 ) ;
 
 /*
 	TSourceSPARQL sparql ( &p ) ;
