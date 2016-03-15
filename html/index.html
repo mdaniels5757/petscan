@@ -8,6 +8,19 @@
 <link rel="stylesheet" href="dist/css/bootstrap.min.css">
 
 <style>
+.smaller {
+	font-size:10pt;
+}
+div.ns-block {
+	display:inline-block;
+	padding:1px;
+	margin-bottom:5px;
+	margin-right:5px;
+	white-space: nowrap;
+}
+#main_form textarea {
+	font-size:9pt;
+}
 </style>
 
 <script src='jquery.min.js'></script>
@@ -22,26 +35,110 @@
       ☰
     </button>
     <a class="navbar-brand hidden-sm-up" href="/">
-      Bootstrap
+      PetScan
     </a>
   </div>
   <div class="collapse navbar-toggleable-xs" id="bd-main-nav">
     <nav class="nav navbar-nav">
-      <a class="nav-item nav-link " href="/" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Bootstrap');">Bootstrap</a>
-      <a class="nav-item nav-link active" href="/getting-started/introduction/" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Docs');">Documentation</a>
-      <a class="nav-item nav-link " href="/examples/" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Examples');">Examples</a>
-      <a class="nav-item nav-link" href="http://themes.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Themes');">Themes</a>
+      <a class="nav-item nav-link l_toolname" href="/"></a>
+      <a class="nav-item nav-link active" href="/">Documentation</a>
+      <a class="nav-item nav-link " href="/">Examples</a>
+<!--      <a class="nav-item nav-link" href="http://themes.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Themes');">Themes</a>
       <a class="nav-item nav-link" href="http://expo.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Expo');">Expo</a>
-      <a class="nav-item nav-link" href="http://blog.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Blog');">Blog</a>
+      <a class="nav-item nav-link" href="http://blog.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Blog');">Blog</a>-->
+
+	  <div class="btn-group nav-item nav-link">
+	  	<button type="button" class="btn btn-secondary dropdown-toggle l_interface_language" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+	  	<div class="dropdown-menu" id='interface_languages'></div>
+	  </div>
     </nav>
-  </div>
 </header>
 
 
 <div class="container">
 <div class="row">
 <div class="col-md-12">
-OK!
+
+<form id='main_form'>
+
+<h4 class='l_categories'></h4>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_language"></label>
+<div class="col-sm-4"><input type="text" class="form-control" name="language" value='en'></div>
+<label class="col-sm-2 form-control-label l_project"></label>
+<div class="col-sm-4"><input type="text" class="form-control" name="project" value='wikipedia'></div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_depth"></label>
+<div class="col-sm-2"><input type="number" class="form-control" name="depth" value='0'></div>
+<div class='col-sm-8 l_depth_explanation smaller'></div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_categories"></label>
+<div class="col-sm-4"><textarea name='categories' rows=3 style='width:100%'></textarea></div>
+
+<label class="col-sm-2 form-control-label l_negative_categories"></label>
+<div class="col-sm-4"><textarea name='negcats' rows=3 style='width:100%'></textarea></div>
+</div>
+
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_combination"></label>
+<div class="col-sm-10">
+<div class="radio-inline"><label><input type="radio" name="combination" value="subset" checked> <span class='l_comb_subset'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="combination" value="union"> <span class='l_comb_union'></span></label></div>
+</div>
+</div>
+
+
+<h4>!Page properties</h4>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"><span class='l_namespaces'></span><br/><span class='smaller current_wiki'></span></label>
+<div class="col-sm-10" id='namespaces'></div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_show_redirects"></label>
+<div class="col-sm-4">
+<div class="radio-inline"><label><input type="radio" name="show_redirects" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="show_redirects" value="yes"> <span class='l_edits_yes'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="show_redirects" value="no"> <span class='l_edits_no'></span></label></div>
+</div>
+
+<label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_bots'></span></label>
+<div class="col-sm-4">
+<div class="radio-inline"><label><input type="radio" name="edits[bots]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[bots]" value="yes"> <span class='l_edits_yes'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[bots]" value="no"> <span class='l_edits_no'></span></label></div>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_anons'></span></label>
+<div class="col-sm-4">
+<div class="radio-inline"><label><input type="radio" name="edits[anons]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[anons]" value="yes"> <span class='l_edits_yes'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[anons]" value="no"> <span class='l_edits_no'></span></label></div>
+</div>
+
+<label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_flagged'></span></label>
+<div class="col-sm-4">
+<div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="yes"> <span class='l_edits_yes'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="no"> <span class='l_edits_no'></span></label></div>
+</div>
+
+</div>
+
+
+
+</form>
+
+
 </div>
 </div>
 </div>
