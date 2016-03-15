@@ -13,6 +13,7 @@
 #include "myjson.h"
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
 
 using namespace std ;
 

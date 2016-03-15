@@ -1,6 +1,9 @@
 #ifndef __MYJSON_H__
 #define __MYJSON_H__
 
+// THIS SHOULD PROBABLY BE REPLACED BY
+// https://github.com/nlohmann/json
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +11,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
+#include <iomanip>
 
 using namespace std ;
 
@@ -33,6 +38,9 @@ public :
 	
 	inline MyJSON & operator [] ( uint32_t key ) { return a[key] ; } // Arrays
 	inline MyJSON & operator [] ( string key ) { return o[key] ; } // Objects
+
+	string escapeString ( const string &s ) ;
+	string unescapeString ( const string &input ) ;
 	
 	// TODO operators to cast into string, number
 
@@ -45,6 +53,8 @@ public :
 
 protected :
 	char *parse ( char *t , int depth = 0 ) ;
+	static string to_unicode(const std::size_t codepoint1, const std::size_t codepoint2 = 0) ;
 } ;
+
 
 #endif

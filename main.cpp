@@ -18,12 +18,16 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	string path ( hm->uri.p ) ;
 	path = path.substr ( 0 , hm->uri.len ) ;
 	cout << "!!: " << path << endl ;
-	if ( path == "/" || path == "/index.html" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" ) {
+	if ( path == "/" || path == "/index.html" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" ) {
 		string filename = "html" + path ;
 		if ( path == "/" ) filename = "html/index.html" ;
-		
+
 		type = "text/html" ;
-		if ( path == "/main.js" ) type = "text/plain" ;
+		if ( path.length() > 5 ) {
+			if ( path.substr(path.length()-3,3)==".js" ) type = "application/javascript" ;
+			if ( path.substr(path.length()-4,4)==".css" ) type = "text/css" ;
+			if ( path.substr(path.length()-4,4)==".map" ) type = "text/plain" ;
+		}
 		
 		char *buffer = loadFileFromDisk ( filename ) ;
 		out = string ( buffer ) ;

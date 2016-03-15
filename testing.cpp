@@ -5,6 +5,21 @@ int main(void) {
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
+/*
+	// JSON string escape testing
+	setlocale(LC_ALL, "");
+    cout << "LC_ALL: " << setlocale(LC_ALL, NULL) << endl;
+    cout << "LC_CTYPE: " << setlocale(LC_CTYPE, NULL) << endl;	
+
+	MyJSON j ;
+	string s = "ბერლინი" ;
+	string t = j.escapeString ( s ) ;
+	string u = j.unescapeString ( t ) ;
+	cout << s << endl ;
+	cout << t << endl ;
+	cout << u << endl ;
+	exit ( 0 ) ;
+*/
 
 	cout << "Running..." << endl ;
 
