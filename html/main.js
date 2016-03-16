@@ -4,6 +4,7 @@ var default_params = {
 	'edits[bots]':'both',
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
+	'format':'html',
 	'ns[0]':'1'
 } ;
 
@@ -15,6 +16,21 @@ var last_namespace_project = '' ;
 var interface_language = '' ;
 var interface_text = {} ;
 
+function deXSS ( s ) {
+	return s.replace ( /<script/ , '' ) ; // TODO this should be better...
+}
+
+function getUrlVars () {
+	var vars = {} ;
+	var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	$.each ( hashes , function ( i , j ) {
+		var hash = j.split('=');
+		hash[1] += '' ;
+		vars[decodeURIComponent(hash[0])] = decodeURIComponent(hash[1]).replace(/_/g,' ');
+	} ) ;
+	return vars;
+}
+
 function _t ( k ) {
 	var ret = "<i>" + k + "</i>" ;
 	if ( typeof interface_text['en'][k] != 'undefined' ) ret = interface_text['en'][k] ;
@@ -23,7 +39,9 @@ function _t ( k ) {
 }
 
 function applyParameters () {
-	// Radio
+	
+	namespaces_selected = [] ;
+	
 	$.each ( params , function ( name , value ) {
 		
 		var m = name.match ( /^ns\[(\d+)\]$/ ) ;
@@ -33,7 +51,17 @@ function applyParameters () {
 		}
 		
 		$('input:radio[name="'+name+'"][value="'+value+'"]').prop('checked', true);
+		
+		$('input[type="text"][name="'+name+'"]').val ( deXSS(value) ) ;
+		$('input[type="number"][name="'+name+'"]').val ( value*1 ) ;
+		$('textarea[name="'+name+'"]').val ( deXSS(value) ) ;
+		
+		if ( value == '1' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
+		
 	} ) ;
+	
+	loadNamespaces() ;
+	$('body').show() ;
 }
 
 function setInterfaceLanguage ( l ) {
@@ -159,7 +187,11 @@ function loadNamespaces () {
 }
 
 $(document).ready ( function () {
-	params = $.extend ( {} , default_params ) ;
+	var p = getUrlVars() ;
+	params = $.extend ( {} , default_params , p ) ;
 	loadInterface ( 'en' ) ;
 	$('input[name="language"]').focus() ;
+	$('#doit').click ( function () {
+		$('#main_form').submit() ;
+	} ) ;
 } ) ;

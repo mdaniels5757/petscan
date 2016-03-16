@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta http-equiv="x-ua-compatible" content="ie=edge">
+<title>PetScan</title>
 
 <link rel="stylesheet" href="dist/css/bootstrap.min.css">
 
@@ -21,13 +22,16 @@ div.ns-block {
 #main_form textarea {
 	font-size:9pt;
 }
+div.form-group.row > label:first-child {
+	font-weight:bold;
+}
 </style>
 
 <script src='jquery.min.js'></script>
 <script src='dist/js/bootstrap.min.js'></script>
 <script src='main.js'></script>
 </head>
-<body>
+<body style='display:none'>
 
 <header class="navbar navbar-light navbar-static-top bd-navbar" role="banner">
   <div class="clearfix">
@@ -59,13 +63,26 @@ div.ns-block {
 <div class="row">
 <div class="col-md-12">
 
-<form id='main_form'>
+<form id='main_form' method='get' action='?'>
 
-<h4 class='l_categories'></h4>
+<ul class="nav nav-tabs" role="tablist">
+	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span class='l_categories'></span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_pageprops" role="tab"><span class='l_page_props'>!Page properties</span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'>!Templates/links</span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span class='l_output'>!Output</span></a></li>
+</ul>
 
+<div class="tab-content">
+
+
+<div class="tab-pane active" id="tab_categories" role="tabpanel">
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_language"></label>
 <div class="col-sm-4"><input type="text" class="form-control" name="language" value='en'></div>
+<div class="col-sm-6"><span class='smaller'>!Use "commons/wikimedia" or "www/wikidata" for the respective projects</span></div>
+</div>
+
+<div class="form-group row">
 <label class="col-sm-2 form-control-label l_project"></label>
 <div class="col-sm-4"><input type="text" class="form-control" name="project" value='wikipedia'></div>
 </div>
@@ -78,10 +95,12 @@ div.ns-block {
 
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_categories"></label>
-<div class="col-sm-4"><textarea name='categories' rows=3 style='width:100%'></textarea></div>
+<div class="col-sm-10"><textarea class="form-control" name='categories' rows=3 style='width:100%'></textarea></div>
+</div>
 
+<div class="form-group row">
 <label class="col-sm-2 form-control-label l_negative_categories"></label>
-<div class="col-sm-4"><textarea name='negcats' rows=3 style='width:100%'></textarea></div>
+<div class="col-sm-10"><textarea class="form-control" name='negcats' rows=3 style='width:100%'></textarea></div>
 </div>
 
 
@@ -93,8 +112,8 @@ div.ns-block {
 </div>
 </div>
 
-
-<h4>!Page properties</h4>
+</div> <!--tab panel-->
+<div class="tab-pane" id="tab_pageprops" role="tabpanel">
 
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_namespaces'></span><br/><span class='smaller current_wiki'></span></label>
@@ -108,7 +127,9 @@ div.ns-block {
 <div class="radio-inline"><label><input type="radio" name="show_redirects" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="show_redirects" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
+</div>
 
+<div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_bots'></span></label>
 <div class="col-sm-4">
 <div class="radio-inline"><label><input type="radio" name="edits[bots]" value="both" checked> <span class='l_edits_both'></span></label></div>
@@ -124,7 +145,9 @@ div.ns-block {
 <div class="radio-inline"><label><input type="radio" name="edits[anons]" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[anons]" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
+</div>
 
+<div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_flagged'></span></label>
 <div class="col-sm-4">
 <div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="both" checked> <span class='l_edits_both'></span></label></div>
@@ -134,8 +157,61 @@ div.ns-block {
 
 </div>
 
+</div> <!--tab panel-->
+
+<div class="tab-pane" id="tab_templates_n_links" role="tabpanel">
 
 
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_templates"></label>
+<div class="col-sm-3"><div class='l_templates_yes'></div><textarea class="form-control" name='templates_yes' rows=4 style="width:100%"></textarea><div><label><input type='checkbox' name='templates_use_talk_yes' /> <span class='l_templates_use_talk_instead'></span></label></div></div>
+<div class="col-sm-3"><div class='l_templates_any'></div><textarea class="form-control" name='templates_any' rows=4 style="width:100%"></textarea><div><label><input type='checkbox' name='templates_use_talk_any' /> <span class='l_templates_use_talk_instead'></span></label></div></div>
+<div class="col-sm-3"><div class='l_templates_no' ></div><textarea class="form-control" name='templates_no'  rows=4 style="width:100%"></textarea><div><label><input type='checkbox' name='templates_use_talk_no'  /> <span class='l_templates_use_talk_instead'></span></label></div></div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_outlinks"></label>
+<div class="col-sm-3"><div class='l_outlinks_yes'></div><textarea class="form-control" name='outlinks_yes' rows=4 style="width:100%"></textarea></div>
+<div class="col-sm-3"><div class='l_outlinks_any'></div><textarea class="form-control" name='outlinks_any' rows=4 style="width:100%"></textarea></div>
+<div class="col-sm-3"><div class='l_outlinks_no' ></div><textarea class="form-control" name='outlinks_no'  rows=4 style="width:100%"></textarea></div>
+</div>
+
+
+</div> <!--tab panel-->
+<div class="tab-pane" id="tab_output" role="tabpanel">
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_format"></label>
+<div class="col-sm-10">
+<div class="radio-inline"><label><input type="radio" name="format" value="html"> HTML</label></div>
+<div class="radio-inline"><label><input type="radio" name="format" value="csv"> CSV</label></div>
+<div class="radio-inline"><label><input type="radio" name="format" value="tsv"> TSV</label></div>
+<div class="radio-inline"><label><input type="radio" name="format" value="wiki"> Wiki</label></div>
+<div class="radio-inline"><label><input type="radio" name="format" value="json"> JSON</label></div>
+<div class="radio-inline"><label><input type="radio" name="format" value="pagepile"> PagePile</label></div>
+</div>
+</div>
+
+
+</div> <!--tab panel-->
+
+
+<div>
+<button id='doit' name='doit' class='btn btn-lg btn-primary l_doit'></button>
+</div>
+
+<!-- TODO
+Last change
+Size
+Links
+Redlinks
+Top categories
+Wikidata
+Sort
+Format
+-->
+
+</div>
 </form>
 
 
