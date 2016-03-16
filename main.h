@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <sstream>
 
 #include "myjson.h"
 #include <stdio.h>
@@ -21,6 +22,10 @@ using namespace std ;
 #define NS_UNKNOWN -999
 
 char *loadFileFromDisk ( string filename ) ;
+void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
+const std::string urlencode( const std::string& s ) ;
+const std::string urldecode ( const std::string& str ) ;
+
 
 class TPlatform ;
 
@@ -208,7 +213,37 @@ class TPlatform {
 public:
 	bool readConfigFile ( string filename ) ;
 	bool error ( string s ) { cout << s << endl ; return false ; } ;
-	map <string,string> config ;
+	string process() ;
+	string getWiki () ;
+	string getWikiServer ( string wiki ) ;
+	string getParam ( string key , string default_value = "" ) ;
+	
+	map <string,string> config , params ;
+	string content_type ;
+
+protected:
+	string renderPageList ( const TPageList &pagelist ) ;
+	string getLink ( const TPage &page ) ;
 } ;
+
+
+
+
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+        return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+        return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+        return ltrim(rtrim(s));
+}
 
 #endif
