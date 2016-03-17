@@ -31,10 +31,12 @@ function getUrlVars () {
 	return vars;
 }
 
-function _t ( k ) {
+function _t ( k , alt_lang = '' ) {
+	var l = interface_language ;
+	if ( alt_lang != '' ) l = alt_lang ;
 	var ret = "<i>" + k + "</i>" ;
 	if ( typeof interface_text['en'][k] != 'undefined' ) ret = interface_text['en'][k] ;
-	if ( typeof interface_text[interface_language][k] != 'undefined' ) ret = interface_text[interface_language][k] ;
+	if ( typeof interface_text[l][k] != 'undefined' ) ret = interface_text[l][k] ;
 	return ret ;
 }
 
@@ -60,7 +62,15 @@ function applyParameters () {
 		
 	} ) ;
 	
-	loadNamespaces() ;
+	function wait2load_ns () {
+		if ( namespaces_loading ) {
+			setTimeout ( wait2load_ns , 100 ) ;
+			return ;
+		}
+		
+		loadNamespaces() ;
+	}
+	wait2load_ns() ;
 	$('body').show() ;
 }
 
@@ -132,7 +142,7 @@ function loadNamespaces () {
 			id *= 1 ;
 			if ( id < 0 ) return ;
 			var title = v['*'] ;
-			if ( title == '' ) title = _t('namespace_0') ;
+			if ( title == '' ) title = _t('namespace_0',l) ;
 			last_namespaces[id] = [ title , (v.canonical||title) ] ;
 			if ( id > max_namespace_id ) max_namespace_id = id ;
 		} ) ;
