@@ -4,7 +4,9 @@ var default_params = {
 	'edits[bots]':'both',
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
-	'format':'html'
+	'format':'html',
+	'sortby':'none',
+	'sortorder':'ascending'
 } ;
 
 var max_namespace_id = 0 ;
@@ -75,13 +77,14 @@ function applyParameters () {
 }
 
 function setInterfaceLanguage ( l ) {
-	if ( interface_language == l ) return ;
+	if ( interface_language == l ) return false ;
 	interface_language = l ;
 	$('input[name="interface_language"]').val ( l ) ;
 	$.each ( interface_text['en'] , function ( k , v ) {
 		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
 		$('.l_'+k).html ( v ) ;
 	} ) ;
+	return false ;
 }
 
 function loadInterface ( init_lang ) {
@@ -122,12 +125,12 @@ function loadInterface ( init_lang ) {
 }
 
 function loadNamespaces () {
-	if ( namespaces_loading ) return ;
+	if ( namespaces_loading ) return false ;
 	var l = $('input[name="language"]').val() ;
-	if ( l.length < 2 ) return ;
+	if ( l.length < 2 ) return false ;
 	var p = $('input[name="project"]').val() ;
 	var lp = l+'.'+p ;
-	if ( lp == last_namespace_project ) return ;
+	if ( lp == last_namespace_project ) return false ;
 	
 	var server = lp+'.org' ;
 	namespaces_loading = true ;
@@ -194,7 +197,7 @@ function loadNamespaces () {
 	} ) . always ( function () {
 		namespaces_loading = false ;
 	} ) ;
-	;
+	return false ;
 }
 
 $(document).ready ( function () {
@@ -204,6 +207,10 @@ $(document).ready ( function () {
 	var cnt = 0 ;
 	$.each ( p , function ( k , v ) { cnt++ } ) ;
 	if ( cnt == 0 ) p['ns[0]'] = 1 ;
+	
+	// Legacy parameters
+	if ( typeof p.comb_subset != 'undefined' ) p.combination = 'subset' ;
+	if ( typeof p.comb_union != 'undefined' ) p.combination = 'union' ;
 
 	params = $.extend ( {} , default_params , p ) ;
 	

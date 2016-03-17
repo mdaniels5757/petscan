@@ -134,3 +134,41 @@ const std::string urldecode (
 	}
 	return result;
 }
+
+
+//________________________________________________________________________________________________________________________
+
+
+bool loadJSONfromURL ( string url , MyJSON &j ) {
+	CURL *curl;
+	curl = curl_easy_init();
+	if ( !curl ) return false ;
+
+	struct CURLMemoryStruct chunk;
+	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
+	chunk.size = 0;    /* no data at this point */ 
+
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
+	
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) return false ;
+	if ( chunk.size == 0 || !chunk.memory ) return false ;
+	
+	
+	char *text = chunk.memory ;
+//	if(chunk.memory) free(chunk.memory);
+	curl_easy_cleanup(curl);
+
+	if ( *text != '{' ) {
+		free ( text ) ;
+		return false ;
+	}
+	
+	j.parse ( text ) ;
+	free ( text ) ;
+	return true ;
+}

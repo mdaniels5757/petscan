@@ -26,7 +26,7 @@ void split ( const string &input , vector <string> &v , char delim , uint32_t ma
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
-
+bool loadJSONfromURL ( string url , MyJSON &j ) ;
 
 class TPlatform ;
 
@@ -114,8 +114,8 @@ public:
 	uint32_t id = 0 ;
 	uint32_t size = 0 ;
 	int16_t ns = NS_UNKNOWN ;
-	char timestamp[14] = "" ;
 	bool is_full_title = true ;
+	string timestamp ;
 } ;
 
 class TPage {
@@ -129,6 +129,15 @@ public:
 
 inline bool operator < ( const TPage &t1 , const TPage &t2 ) { return (t1.name == t2.name ? t1.meta.ns < t2.meta.ns : t1.name < t2.name ) ; }
 inline bool operator == ( const TPage &t1 , const TPage &t2 ) { return !((t1<t2)||(t2<t1)) ; }
+
+#define PAGE_SORT_DEFAULT 0
+#define PAGE_SORT_TITLE 1
+#define PAGE_SORT_NS_TITLE 2
+#define PAGE_SORT_SIZE 3
+#define PAGE_SORT_DATE 4
+#define PAGE_SORT_FILE_SIZE 5
+#define PAGE_SORT_UPLOAD_DATE 6
+#define PAGE_SORT_INCOMING_LINKS 7
 
 
 class TPageList {
@@ -144,6 +153,7 @@ public:
 		wiki.swap ( pl.wiki ) ;
 		pages.swap ( pl.pages ) ;
 	}
+	void customSort ( uint8_t mode , bool ascending ) ;
 	
 	string wiki ;
 	vector <TPage> pages ;

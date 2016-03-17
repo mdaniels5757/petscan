@@ -1,39 +1,5 @@
 #include "main.h"
 
-bool loadJSONfromURL ( string url , MyJSON &j ) {
-	CURL *curl;
-	curl = curl_easy_init();
-	if ( !curl ) return false ;
-
-	struct CURLMemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
-
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
-	
-	CURLcode res = curl_easy_perform(curl);
-	if (res != CURLE_OK) return false ;
-	if ( chunk.size == 0 || !chunk.memory ) return false ;
-	
-	
-	char *text = chunk.memory ;
-//	if(chunk.memory) free(chunk.memory);
-	curl_easy_cleanup(curl);
-
-	if ( *text != '{' ) {
-		free ( text ) ;
-		return false ;
-	}
-	
-	j.parse ( text ) ;
-	free ( text ) ;
-	return true ;
-}
-
 string TPageList::getNamespaceString ( const int16_t ns ) {
 	loadNamespaces() ;
 	if ( ns_local.find(ns) != ns_local.end() ) return ns_local[ns] ;
@@ -66,6 +32,20 @@ void TPageList::loadNamespaces () {
 	}
 	
 	// TODO aliases
+}
+
+void TPageList::customSort ( uint8_t mode , bool ascending ) {
+//cout << "SORTING BY " << (int)mode << ", " << (ascending?"ASC":"DESC") << endl ;
+
+	switch ( mode ) {
+		case PAGE_SORT_DEFAULT : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.id<b.meta.id;} ) ; break ;
+		case PAGE_SORT_TITLE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.name<b.name;} ) ; break ; // FIXME namespaces
+		case PAGE_SORT_NS_TITLE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.name<b.name;} ) ; break ; // FIXME namespaces
+		case PAGE_SORT_SIZE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.size<b.meta.size;} ) ; break ;
+		case PAGE_SORT_DATE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.timestamp<b.meta.timestamp;} ) ; break ;
+	}
+	
+	if ( !ascending ) reverse ( pages.begin() , pages.end() ) ;
 }
 
 void TPageList::sort () {
@@ -342,8 +322,8 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		TPage p ( title , nsnum ) ;
 		p.meta.id = atol(row[0]) ;
 		p.meta.size = atol(row[4]) ;
-//		p.meta.is_full_title = false ;
-		strcpy ( p.meta.timestamp , row[3] ) ;
+		p.meta.timestamp = row[3] ;
+//		strcpy ( p.meta.timestamp , row[3] ) ;
 		
 		pl1.pages.push_back ( p ) ;
 	}

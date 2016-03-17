@@ -14,7 +14,12 @@ string TPlatform::process () {
 			db_params.page_namespace_ids.push_back ( atoi ( nss.c_str() ) ) ;
 		}
 	}
-	
+
+	// Legacy parameters
+	if ( params.find("comb_subset") != params.end() ) params["combination"] = "subset" ;
+	if ( params.find("comb_union") != params.end() ) params["combination"] = "union" ;
+
+	// Add positive categories
 	string dummy = getParam ( "categories" , "" ) ;
 	vector <string> pos ;
 	split ( dummy , pos , '\n' ) ;
@@ -32,8 +37,20 @@ string TPlatform::process () {
 	if ( db.getPages ( db_params ) ) {
 		pagelist.swap ( db ) ;
 	}
-	
-	// TODO: sort
+
+
+
+	// Sort pagelist
+//cout << "SORT PARAM: " << getParam("sortby") << "/" << getParam("sortorder") << endl ;
+	bool asc = !(getParam("sortorder") == "descending") ;
+	if ( getParam("sortby") == "title" ) pagelist.customSort ( PAGE_SORT_TITLE , asc ) ;
+	else if ( getParam("sortby") == "ns_title" ) pagelist.customSort ( PAGE_SORT_NS_TITLE , asc ) ;
+	else if ( getParam("sortby") == "size" ) pagelist.customSort ( PAGE_SORT_SIZE , asc ) ;
+	else if ( getParam("sortby") == "date" ) pagelist.customSort ( PAGE_SORT_DATE , asc ) ;
+	else if ( getParam("sortby") == "filesize" ) pagelist.customSort ( PAGE_SORT_FILE_SIZE , asc ) ;
+	else if ( getParam("sortby") == "uploaddate" ) pagelist.customSort ( PAGE_SORT_UPLOAD_DATE , asc ) ;
+	else if ( getParam("sortby") == "incoming_links" ) pagelist.customSort ( PAGE_SORT_INCOMING_LINKS , asc ) ;
+	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
 	
 	
 	return renderPageList ( pagelist ) ;
