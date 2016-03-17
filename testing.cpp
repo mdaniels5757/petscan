@@ -26,23 +26,24 @@ int main(void) {
 	TPlatform p ;
 	if ( !p.readConfigFile ( "config.json" ) ) exit ( 1 ) ;
 
-/*
 	TSourceSPARQL sparql ( &p ) ;
 //	if ( sparql.runQuery ( "SELECT ?item WHERE { ?item wdt:P31 wd:Q146 }" ) ) {
 	if ( sparql.runQuery ( "SELECT ?item WHERE { ?item wdt:P106 wd:Q937857 . ?item wdt:P27 wd:Q29 }" ) ) {
 		cout << "Read " << sparql.size() << " items\n" ;
+		for ( int a = 0 ; a < 5 ; a++ ) cout << sparql.pages[a].name << endl ;
 	}
 
 
 	TSourcePagePile pp ( &p ) ;
 	if ( pp.getPile ( 2567 ) ) {
 		cout << "Read " << pp.size() << " items\n" ;
+		for ( int a = 0 ; a < 5 ; a++ ) cout << pp.pages[a].name << endl ;
 	}
 
-	sparql.merge ( pp ) ;
+	sparql.intersect ( pp ) ;
 	cout << "Now " << sparql.size() << " items\n" ;
-*/
 
+/*
 	TSourceDatabase db ( &p ) ;
 	TSourceDatabaseParams params ;
 	params.wiki = "dewiki" ;
@@ -56,7 +57,7 @@ int main(void) {
 	} else {
 		cout << "Nope" << endl ;
 	}
-
+*/
    curl_global_cleanup();
 }
 

@@ -119,53 +119,13 @@ bool TSource::error ( string s ) {
 //________________________________________________________________________________________________________________________
 
 
-
 bool TSourceSPARQL::runQuery ( string query ) {
 	clear() ;
 	wiki = "wikidatawiki" ;
 	
-
-// TODO BEGIN FUNCTION
-	CURL *curl;
-	curl = curl_easy_init();
-	if ( !curl ) return error ( "Cannot init curl" ) ;
-
-	string real_query = sparql_prefixes + query ;
-	char *encoded_query = curl_easy_escape ( curl , real_query.c_str() , 0 ) ;
-	string url = string("https://query.wikidata.org/sparql?format=json&query=") + encoded_query ;
-	curl_free(encoded_query) ;
-
-	struct CURLMemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
-
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
-	
-	CURLcode res = curl_easy_perform(curl);
-	if (res != CURLE_OK) {
-		string e = string("curl_easy_perform() failed for ") + url + string(": ") + curl_easy_strerror(res) ;
-		return error ( e ) ;
-	}
-	
-	if ( chunk.size == 0 || !chunk.memory ) return error ( "CURL chunk: No memory" ) ;
-	
-	
-	char *text = chunk.memory ;
-//	if(chunk.memory) free(chunk.memory);
-	curl_easy_cleanup(curl);
-
-	if ( *text != '{' ) {
-		free ( text ) ;
-		return error ( "SPARQL return does not start with '{'" ) ;
-	}
-	
-	MyJSON j ( text ) ;
-	free ( text ) ;
-// TODO END FUNCTION
+	MyJSON j ;
+	string url = "https://query.wikidata.org/sparql?format=json&query=" + escapeURLcomponent ( sparql_prefixes + query ) ;
+	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
 
 	string item_key = j["head"]["vars"][0].s ;
 	pages.reserve ( j["results"]["bindings"].a.size() ) ;
@@ -186,51 +146,15 @@ bool TSourceSPARQL::runQuery ( string query ) {
 
 
 bool TSourcePagePile::getPile ( uint32_t id ) {
+	MyJSON j ;
 	char s[200] ;
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
+	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
 
-// TODO BEGIN FUNCTION
-	CURL *curl;
-	curl = curl_easy_init();
-	if ( !curl ) return error ( "Cannot init curl" ) ;
-
-	struct CURLMemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
-
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
-	
-	CURLcode res = curl_easy_perform(curl);
-	if (res != CURLE_OK) {
-		string e = string("curl_easy_perform() failed for ") + url + string(": ") + curl_easy_strerror(res) ;
-		return error ( e ) ;
-	}
-	
-	if ( chunk.size == 0 || !chunk.memory ) return error ( "CURL chunk: No memory" ) ;
-	
-	
-	char *text = chunk.memory ;
-//	if(chunk.memory) free(chunk.memory);
-	curl_easy_cleanup(curl);
-
-	if ( *text != '{' ) {
-		free ( text ) ;
-		return error ( "SPARQL return does not start with '{'" ) ;
-	}
-	
-	MyJSON j ( text ) ;
-	free ( text ) ;
-// TODO END FUNCTION
-	
-	
 	clear() ;
 	wiki = j["wiki"].s ;
-	for ( uint32_t i = 0 ; i < j["pages"].size() ; i++ ) pages.push_back ( j["pages"][i].s ) ;
+	for ( uint32_t i = 0 ; i < j["pages"].size() ; i++ ) pages.push_back ( TPage ( j["pages"][i].s , 0 ) ) ;
 	return true ;
 }
 
@@ -272,7 +196,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 //		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
 		sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
-		sql += db.space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
+		sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
 		sql += ")) cl0" ;
 		for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
 			char tmp[200] ;
@@ -366,7 +290,7 @@ void TSourceDatabase::goDepth ( TWikidataDB &db , map <string,bool> &tmp , vecto
 void TSourceDatabase::getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) {
 	
 	map <string,bool> tmp ;
-	name = db.space2_ ( name ) ;
+	name = space2_ ( name ) ;
 	name[0] = toupper(name[0]) ;
 	
 	vector <string> cats_init ;

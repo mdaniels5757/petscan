@@ -27,6 +27,9 @@ const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
 bool loadJSONfromURL ( string url , MyJSON &j ) ;
+string space2_ ( string s ) ;
+string _2space ( string s ) ;
+string escapeURLcomponent ( string s ) ;
 
 class TPlatform ;
 
@@ -120,9 +123,8 @@ public:
 
 class TPage {
 public:
-	TPage ( const char *s = NULL ) { if(s) name = s ; }
 	TPage ( string s ) { name = s ; }
-	TPage ( string s , int _ns) { name = s ; meta.ns = _ns ; }
+	TPage ( string s , int ns = 0 ) { name = space2_(s) ; meta.ns = ns ; }
 	string name ;
 	TPageMetadata meta ;
 } ;

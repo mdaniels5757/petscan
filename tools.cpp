@@ -172,3 +172,31 @@ bool loadJSONfromURL ( string url , MyJSON &j ) {
 	free ( text ) ;
 	return true ;
 }
+
+//________________________________________________________________________________________________________________________
+
+string space2_ ( string s ) {
+	string ret = s ;
+	std::replace ( ret.begin(), ret.end(), ' ', '_') ;
+	return ret ;
+}
+
+string _2space ( string s ) {
+	string ret = s ;
+	std::replace ( ret.begin(), ret.end(), '_', ' ') ;
+	return ret ;
+}
+
+//________________________________________________________________________________________________________________________
+
+
+string escapeURLcomponent ( string s ) {
+	CURL *curl;
+	curl = curl_easy_init();
+	if ( !curl ) return "" ;
+	char *encoded_query = curl_easy_escape ( curl , s.c_str() , 0 ) ;
+	string ret ( encoded_query ) ;
+	curl_free(encoded_query) ;
+	curl_easy_cleanup(curl);
+	return ret ;
+}

@@ -57,12 +57,6 @@ string TWikidataDB::escape ( string s ) {
 	return ret ;
 }
 
-string TWikidataDB::space2_ ( string s ) {
-	string ret = s ;
-	std::replace ( ret.begin(), ret.end(), ' ', '_') ;
-	return ret ;
-}
-
 void TWikidataDB::runQuery ( string sql ) {
 	doConnect() ;
 	if ( mysql_query ( &mysql , sql.c_str() ) ) finishWithError() ;
