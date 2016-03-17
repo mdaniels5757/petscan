@@ -47,8 +47,8 @@ int main(void) {
 	TSourceDatabaseParams params ;
 	params.wiki = "dewiki" ;
 	params.page_namespace_ids.push_back ( 0 ) ;
-	params.positive.push_back ( TSourceDatabaseCatDepth ( "Mann" , 0 ) ) ;
-	params.positive.push_back ( TSourceDatabaseCatDepth ( "Frau" , 0 ) ) ;
+//	params.positive.push_back ( TSourceDatabaseCatDepth ( "Mann" , 0 ) ) ;
+	params.positive.push_back ( TSourceDatabaseCatDepth ( "Hochschullehrer (Ludwig-Maximilians-Universität München)" , 0 ) ) ;
 
 	if ( db.getPages ( params ) ) {
 		cout << "Read " << db.size() << " items\n" ;

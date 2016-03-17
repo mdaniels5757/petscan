@@ -117,8 +117,6 @@ int main(void) {
 	TPlatform p ;
 	if ( !p.readConfigFile ( CONFIG_FILE ) ) exit ( 1 ) ;
 
-//	TWikidataDB db ( "petscan.conf" , "enwiki.labsddb" ) ;
-
 	mg_mgr_init(&mgr, NULL);
 	nc = mg_bind(&mgr, p.config["port"].c_str() , ev_handler); // s_http_port
 	mg_set_protocol_http_websocket(nc);

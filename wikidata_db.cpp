@@ -2,7 +2,7 @@
 
 //________________________________________________________________________________________________
 
-
+#define DB_ESCAPE_BUFFER_SIZE 10000
 
 TWikidataDB::TWikidataDB ( TPlatform &platform , string wiki ) {
 	_platform = &platform ;
@@ -44,19 +44,22 @@ TWikidataDB::~TWikidataDB () {
 }
 
 string TWikidataDB::escape ( string s ) {
-	uint32_t len = s.size() * 2 + 1 ;
-	char *tmp = new char ( len ) ;
-	mysql_real_escape_string ( &mysql , tmp , s.c_str() , s.size() ) ;
+	unsigned long len = s.length() * 2 + 1 ;
+	if ( len >= DB_ESCAPE_BUFFER_SIZE ) {
+		cerr << "DB:Escape for\n" << s << "\nrequires " << len << " bytes, but limit is " << DB_ESCAPE_BUFFER_SIZE << endl ;
+		exit ( 1 ) ;
+	}
+	char tmp[DB_ESCAPE_BUFFER_SIZE] ; // Would prefer "new" below, but that dies for some reason on "delete"
+//	char *tmp = new char ( len ) ;
+	long unsigned int end = mysql_real_escape_string ( &mysql , tmp , s.c_str() , s.length() ) ;
 	string ret ( tmp ) ;
-	free ( tmp ) ;
+//	delete [] tmp ;
 	return ret ;
 }
 
 string TWikidataDB::space2_ ( string s ) {
 	string ret = s ;
-	for ( uint32_t a = 0 ; a < ret.length() ; a++ ) {
-		if ( ret[a] == ' ' ) ret[a] == '_' ;
-	}
+	std::replace ( ret.begin(), ret.end(), ' ', '_') ;
 	return ret ;
 }
 
@@ -79,6 +82,7 @@ void TWikidataDB::finishWithError ( string msg ) {
 	exit(1);        
 }
 
+/*
 char *TWikidataDB::getTextFromURL ( string url ) {
 	char *ret = NULL ;
 	CURL *curl;
@@ -86,8 +90,8 @@ char *TWikidataDB::getTextFromURL ( string url ) {
 	if ( !curl ) return ret ; //finishWithError ( "Could not easy_init CURL for " + url ) ;
 
 	struct MemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
+	chunk.memory = (char*) malloc(1);  // will be grown as needed by the realloc above 
+	chunk.size = 0;    // no data at this point 
 
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
@@ -108,7 +112,7 @@ char *TWikidataDB::getTextFromURL ( string url ) {
 	curl_easy_cleanup(curl);
 	return ret ;
 }
-/*
+
 bool TWikidataDB::updateRecentChanges ( TItemSet &target ) {
 	string last_change_time = target.time_end ;
 	string timestamp ; 

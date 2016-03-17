@@ -108,8 +108,6 @@ bool TSourceSPARQL::runQuery ( string query ) {
 //	if(chunk.memory) free(chunk.memory);
 	curl_easy_cleanup(curl);
 
-//	cout << text << endl ;
-
 	if ( *text != '{' ) {
 		free ( text ) ;
 		return error ( "SPARQL return does not start with '{'" ) ;
@@ -170,8 +168,6 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 //	if(chunk.memory) free(chunk.memory);
 	curl_easy_cleanup(curl);
 
-//	cout << text << endl ;
-
 	if ( *text != '{' ) {
 		free ( text ) ;
 		return error ( "SPARQL return does not start with '{'" ) ;
@@ -213,10 +209,10 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		if ( x.size() == 0 ) continue ;
 		cat_pos.push_back ( x ) ;
 	}
-	
-	if ( cat_pos.size() == 0 ) {
-		cout << "No cats\n" ;
-		exit(0) ;
+
+	if ( cat_pos.empty() || cat_pos[0].empty() ) {
+		cout << "No categories\n" ;
+		return false ;
 	}
 	
 	string sql ;
@@ -226,7 +222,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 //		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
 		sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
-		sql += listEscapedStrings ( db , cat_pos[0] ) ;
+		sql += db.space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
 		sql += ")) cl0" ;
 		for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
 			char tmp[200] ;
@@ -260,7 +256,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 //	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
 //	sql += " ORDER BY cl0.cl_sortkey" ;
 
-	cout << sql << endl ;
+//	cout << sql << endl ;
 	
 	TPageList pl1 ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
@@ -294,8 +290,6 @@ void TSourceDatabase::goDepth ( TWikidataDB &db , map <string,bool> &tmp , vecto
 	}
 	sql += ")" ;
 
-//	cout << sql << endl ;
-	
 	vector <string> new_cats ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 //	int num_fields = mysql_num_fields(result);
@@ -308,8 +302,6 @@ void TSourceDatabase::goDepth ( TWikidataDB &db , map <string,bool> &tmp , vecto
 		tmp[cat] = true ; // Had that
 	}
 	mysql_free_result(result);
-	
-//	cout << "Subcats: " << new_cats.size() << ", left: " << left << endl ;
 	
 	goDepth ( db , tmp , new_cats , left-1 ) ;
 }
@@ -337,107 +329,3 @@ void TSourceDatabase::getCategoriesInTree ( TWikidataDB &db , string name , int1
 
 //________________________________________________________________________________________________________________________
 
-
-string TPlatform::process () {
-
-	TSourceDatabase db ( this ) ;
-	TSourceDatabaseParams db_params ;
-	db_params.wiki = getWiki() ;
-	
-	for ( auto i = params.begin() ; i != params.end() ; i++ ) {
-		string key = i->first ;
-		if ( key.length() >= 5 && key[0]=='n' && key[1]=='s' && key[2]=='[' && key[key.length()-1]==']' ) {
-			string nss = key.substr(3,key.length()-4) ;
-			db_params.page_namespace_ids.push_back ( atoi ( nss.c_str() ) ) ;
-		}
-	}
-	
-	string dummy = getParam ( "categories" , "" ) ;
-	vector <string> pos ;
-	split ( dummy , pos , '\n' ) ;
-	for ( auto i = pos.begin() ; i != pos.end() ; i++ ) {
-		if ( i->empty() ) continue ;
-		vector <string> parts ;
-		split ( (*i) , parts , '|' , 2 ) ;
-		if ( parts.empty() ) continue ; // Huh?
-		if ( parts.size() < 1 ) parts.push_back ( getParam("depth","0") ) ;
-		db_params.positive.push_back ( TSourceDatabaseCatDepth ( trim(parts[0]) , atoi(parts[1].c_str()) ) ) ;
-	}
-	
-	TPageList pagelist ;
-	
-	if ( db.getPages ( db_params ) ) {
-		pagelist = db ;
-	}
-	
-	// TODO: sort
-	
-	
-	return renderPageList ( pagelist ) ;
-}
-
-string TPlatform::getWiki () {
-	string l = getParam ( "language" , "en" ) ;
-	string p = getParam ( "project" , "wikipedia" ) ;
-	if ( l == "wikidata" || p == "wikidata" ) return "wikidatawiki" ;
-	if ( l == "commons" || l == "meta" ) return l+"wiki" ;
-	if ( p == "wikipedia" ) return l+"wiki" ;
-	return l+p ;
-}
-
-string TPlatform::getWikiServer ( string wiki ) {
-	if ( wiki == "wikidatawiki" ) return "www.wikidata.org" ;
-	if ( wiki == "commonswiki" ) return "commons.wikimedia.org" ;
-	if ( wiki == "metawiki" ) return "commons.wikimedia.org" ;
-	
-	for ( size_t a = 0 ; a+3 < wiki.length() ; a++ ) {
-		if ( wiki[a]=='w' && wiki[a+1]=='i' && wiki[a+2]=='k' ) {
-			string l = wiki.substr(0,a) ;
-			string p = wiki.substr(a) ;
-			if ( p == "wiki" ) p = "wikipedia" ;
-			return l+"."+p+".org" ;
-		}
-	}
-	return "NO_SERVER_FOUND" ; // Say what?
-}
-
-string TPlatform::getParam ( string key , string default_value ) {
-	auto i = params.find(key) ;
-	if ( i != params.end() ) return i->second ;
-	return default_value ;
-}
-
-string TPlatform::renderPageList ( const TPageList &pagelist ) {
-	string format = getParam ( "format" , "html" ) ;
-	string ret ;
-	
-	content_type = "text/html" ; // Default
-	
-	if ( format == "dummy" ) {
-	} else { // HTML
-		ret += "<table>" ;
-		ret += "<thead><tr><th>Page</th></tr></thead>" ;
-		ret += "<tbody>" ;
-		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
-cout << i->name << endl ;
-			ret += "<tr>" ;
-			ret += "<td>" + getLink ( *i ) + "</td>" ;
-			ret += "</tr>" ;
-		}
-		ret += "</tbody>" ;
-		ret += "</table>" ;
-	}
-	
-	return ret ;
-}
-
-string TPlatform::getLink ( const TPage &page ) {
-	string label = page.name ;
-	string url = page.name ;
-	std::replace ( label.begin(), label.end(), '_', ' ') ;
-	std::replace ( url.begin(), url.end(), ' ', '_') ;
-	// TODO escape '
-//	url = urlencode ( url ) ;
-	url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
-	return "<a href='" + url + "'>" + label + "</a>" ;
-}

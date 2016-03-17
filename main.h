@@ -50,7 +50,7 @@ protected:
 	string _host , _config_file , _database ;
 	TPlatform *_platform ;
 	
-	char *getTextFromURL ( string url ) ;
+//	char *getTextFromURL ( string url ) ;
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
 
@@ -132,6 +132,10 @@ public:
 	void intersect ( TPageList &pl ) ;
 	void merge ( TPageList &pl ) ;
 	inline int32_t size () { return pages.size() ; }
+	inline void swap ( TPageList &pl ) {
+		wiki.swap ( pl.wiki ) ;
+		pages.swap ( pl.pages ) ;
+	}
 	
 	string wiki ;
 	vector <TPage> pages ;

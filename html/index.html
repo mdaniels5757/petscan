@@ -25,6 +25,10 @@ div.ns-block {
 div.form-group.row > label:first-child {
 	font-weight:bold;
 }
+.num {
+	font-family:courier;
+	text-align:right;
+}
 </style>
 
 <script src='jquery.min.js'></script>
@@ -68,7 +72,7 @@ div.form-group.row > label:first-child {
 <ul class="nav nav-tabs" role="tablist">
 	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span class='l_categories'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_pageprops" role="tab"><span class='l_page_props'>!Page properties</span></a></li>
-	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'>!Templates/links</span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'>!Templates&links</span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span class='l_output'>!Output</span></a></li>
 </ul>
 
@@ -212,6 +216,9 @@ Sort
 
 
 </div>
+
+
+<input type='hidden' name='interface_language' value='en' />
 </form>
 
 </div>

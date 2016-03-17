@@ -4,8 +4,7 @@ var default_params = {
 	'edits[bots]':'both',
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
-	'format':'html',
-	'ns[0]':'1'
+	'format':'html'
 } ;
 
 var max_namespace_id = 0 ;
@@ -23,6 +22,7 @@ function deXSS ( s ) {
 function getUrlVars () {
 	var vars = {} ;
 	var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	if ( hashes.length >0 && hashes[0] == window.location.href ) hashes.shift() ;
 	$.each ( hashes , function ( i , j ) {
 		var hash = j.split('=');
 		hash[1] += '' ;
@@ -54,7 +54,7 @@ function applyParameters () {
 		
 		$('input[type="text"][name="'+name+'"]').val ( deXSS(value) ) ;
 		$('input[type="number"][name="'+name+'"]').val ( value*1 ) ;
-		$('textarea[name="'+name+'"]').val ( deXSS(value) ) ;
+		$('textarea[name="'+name+'"]').val ( deXSS(value.replace(/\+/g,' ')) ) ;
 		
 		if ( value == '1' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
 		
@@ -67,6 +67,7 @@ function applyParameters () {
 function setInterfaceLanguage ( l ) {
 	if ( interface_language == l ) return ;
 	interface_language = l ;
+	$('input[name="interface_language"]').val ( l ) ;
 	$.each ( interface_text['en'] , function ( k , v ) {
 		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
 		$('.l_'+k).html ( v ) ;
@@ -188,8 +189,18 @@ function loadNamespaces () {
 
 $(document).ready ( function () {
 	var p = getUrlVars() ;
+
+	// Ensure NS0 is selected by default
+	var cnt = 0 ;
+	$.each ( p , function ( k , v ) { cnt++ } ) ;
+	if ( cnt == 0 ) p['ns[0]'] = 1 ;
+
 	params = $.extend ( {} , default_params , p ) ;
-	loadInterface ( 'en' ) ;
+	
+	var l = 'en' ;
+	if ( typeof params.interface_language != 'undefined' ) l = params.interface_language ;
+	
+	loadInterface ( l ) ;
 	$('input[name="language"]').focus() ;
 	$('#doit').click ( function () {
 		$('#main_form').submit() ;

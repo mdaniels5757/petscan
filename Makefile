@@ -4,9 +4,11 @@ CFLAGS=-DMG_ENABLE_THREADS -pthread
 CPPFLAGS=-std=c++11  -g `mysql_config --include`
 
 SRCS_C=mongoose.c
-SRCS_CXX=myjson.cpp tsources.cpp wikidata_db.cpp tools.cpp
+SRCS_CXX=myjson.cpp tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp
 
 OBJS=$(subst .c,.o,$(SRCS_C)) $(subst .cpp,.o,$(SRCS_CXX))
+
+all: testing server
 
 server: $(OBJS)
 	g++ main.cpp $(OBJS) -o petscan -O3 $(CPPFLAGS) -ldl `mysql_config --libs` -l curl
