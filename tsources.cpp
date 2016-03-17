@@ -1,5 +1,73 @@
 #include "main.h"
 
+bool loadJSONfromURL ( string url , MyJSON &j ) {
+	CURL *curl;
+	curl = curl_easy_init();
+	if ( !curl ) return false ;
+
+	struct CURLMemoryStruct chunk;
+	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
+	chunk.size = 0;    /* no data at this point */ 
+
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
+	
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) return false ;
+	if ( chunk.size == 0 || !chunk.memory ) return false ;
+	
+	
+	char *text = chunk.memory ;
+//	if(chunk.memory) free(chunk.memory);
+	curl_easy_cleanup(curl);
+
+	if ( *text != '{' ) {
+		free ( text ) ;
+		return false ;
+	}
+	
+	j.parse ( text ) ;
+	free ( text ) ;
+	return true ;
+}
+
+string TPageList::getNamespaceString ( const int16_t ns ) {
+	loadNamespaces() ;
+	if ( ns_local.find(ns) != ns_local.end() ) return ns_local[ns] ;
+	return "" ; // Unknown
+}
+
+int16_t TPageList::getNamespaceNumber ( const string &ns ) {
+	loadNamespaces() ;
+	return 0 ;
+}
+
+void TPageList::loadNamespaces () {
+	if ( namespaces_loaded ) return ;
+	if ( wiki.empty() ) return ;
+	namespaces_loaded = true ;
+	// Load Namespace JSON
+	MyJSON j ;
+	string url = "https://" + getWikiServer ( wiki ) + "/w/api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases&format=json" ;
+	if ( !loadJSONfromURL ( url , j ) ) return ;
+	
+	for ( auto i = j["query"]["namespaces"].o.begin() ; i != j["query"]["namespaces"].o.end() ; i++ ) {
+		uint16_t num = atoi ( i->first.c_str() ) ;
+		map <string,MyJSON> *v = &(i->second.o ) ;
+		if ( v->find("canonical") != v->end() ) {
+			ns_string2id[(*v)["canonical"].s] = num ;
+			ns_canonical[num] = (*v)["canonical"].s ;
+		}
+		ns_string2id[(*v)["*"].s] = num ;
+		ns_local[num] = (*v)["*"].s ;
+	}
+	
+	// TODO aliases
+}
+
 void TPageList::sort () {
 	if ( is_sorted ) return ;
 	std::sort ( pages.begin() , pages.end() ) ;
@@ -27,6 +95,8 @@ void TPageList::intersect ( TPageList &pl ) {
 	}
 	pages = nl ;
 }
+
+
 
 void TPageList::merge ( TPageList &pl ) {
 	if ( wiki != pl.wiki ) {
@@ -218,7 +288,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	string sql ;
 	if ( params.combine == "subset" ) {
 //		sql = "SELECT DISTINCT p.*" ;
-		sql = "select distinct p.page_id,p.page_title,p.page_namespace" ;
+		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 
 //		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
 		sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
@@ -258,17 +328,24 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 //	cout << sql << endl ;
 	
-	TPageList pl1 ;
+	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 //	int num_fields = mysql_num_fields(result);
 	MYSQL_ROW row;
 	uint32_t cnt = 0 ;
 	while ((row = mysql_fetch_row(result))) {
-		pl1.pages.push_back ( TPage ( row[1] , atoi(row[2]) ) ) ;
-//		string id = row[0] ;
-//		if ( tmp.find(cat) != tmp.end() ) continue ; // Already had that
-//		new_cats.push_back ( cat ) ;
-//		tmp[cat] = true ; // Had that
+		int16_t nsnum = atoi(row[2]) ;
+		string nsname = pl1.getNamespaceString ( nsnum ) ;
+		string title ( row[1] ) ;
+		if ( !nsname.empty() ) title = nsname + ":" + title ;
+
+		TPage p ( title , nsnum ) ;
+		p.meta.id = atol(row[0]) ;
+		p.meta.size = atol(row[4]) ;
+//		p.meta.is_full_title = false ;
+		strcpy ( p.meta.timestamp , row[3] ) ;
+		
+		pl1.pages.push_back ( p ) ;
 	}
 	mysql_free_result(result);
 
@@ -321,7 +398,7 @@ void TSourceDatabase::getCategoriesInTree ( TWikidataDB &db , string name , int1
 	ret.clear() ;
 	ret.reserve ( tmp.size() ) ;
 	for ( auto i = tmp.begin() ; i != tmp.end() ; i++ ) {
-		cout << "FOUND: " << i->first << endl ;
+//		cout << "FOUND: " << i->first << endl ;
 		ret.push_back ( i->first ) ;
 	}
 }

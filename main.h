@@ -25,6 +25,7 @@ char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
+string getWikiServer ( string wiki ) ;
 
 
 class TPlatform ;
@@ -108,30 +109,37 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 
 
 
-class TMetadata {
+class TPageMetadata {
 public:
+	uint32_t id = 0 ;
+	uint32_t size = 0 ;
+	int16_t ns = NS_UNKNOWN ;
+	char timestamp[14] = "" ;
+	bool is_full_title = true ;
 } ;
 
 class TPage {
 public:
 	TPage ( const char *s = NULL ) { if(s) name = s ; }
 	TPage ( string s ) { name = s ; }
-	TPage ( string s , int _ns) { name = s ; ns = _ns ; }
+	TPage ( string s , int _ns) { name = s ; meta.ns = _ns ; }
 	string name ;
-	int16_t ns = NS_UNKNOWN ;
-	TMetadata *meta = NULL ;
+	TPageMetadata meta ;
 } ;
 
-inline bool operator < ( const TPage &t1 , const TPage &t2 ) { return (t1.name == t2.name ? t1.ns < t2.ns : t1.name < t2.name ) ; }
+inline bool operator < ( const TPage &t1 , const TPage &t2 ) { return (t1.name == t2.name ? t1.meta.ns < t2.meta.ns : t1.name < t2.name ) ; }
 inline bool operator == ( const TPage &t1 , const TPage &t2 ) { return !((t1<t2)||(t2<t1)) ; }
 
 
 class TPageList {
 public:
+	TPageList ( string w = "" ) { wiki = w ; }
 	void clear () { pages.clear() ; }
 	void intersect ( TPageList &pl ) ;
 	void merge ( TPageList &pl ) ;
 	inline int32_t size () { return pages.size() ; }
+	string getNamespaceString ( const int16_t ns ) ;
+	int16_t getNamespaceNumber ( const string &ns ) ;
 	inline void swap ( TPageList &pl ) {
 		wiki.swap ( pl.wiki ) ;
 		pages.swap ( pl.pages ) ;
@@ -141,8 +149,12 @@ public:
 	vector <TPage> pages ;
 	virtual bool error ( string s ) { return false ; }
 protected:
+	void loadNamespaces () ;
 	bool is_sorted = false ;
+	bool namespaces_loaded = false ;
 	void sort() ;
+	map <string,int16_t> ns_string2id ;
+	map <int16_t,string> ns_canonical , ns_local ;
 } ;
 
 
@@ -219,14 +231,14 @@ public:
 	bool error ( string s ) { cout << s << endl ; return false ; } ;
 	string process() ;
 	string getWiki () ;
-	string getWikiServer ( string wiki ) ;
 	string getParam ( string key , string default_value = "" ) ;
 	
 	map <string,string> config , params ;
 	string content_type ;
 
 protected:
-	string renderPageList ( const TPageList &pagelist ) ;
+	string renderPageList ( TPageList &pagelist ) ;
+	string renderPageListHTML ( TPageList &pagelist ) ;
 	string getLink ( const TPage &page ) ;
 } ;
 

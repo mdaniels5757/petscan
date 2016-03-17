@@ -35,6 +35,7 @@ public :
 	inline MyJSON &get ( uint32_t key ) { return a[key] ; }
 	inline MyJSON &get ( string key ) { return o[key] ; }
 	void print ( ostream &out ) ;
+	char *parse ( char *t , int depth = 0 ) ;
 	
 	inline MyJSON & operator [] ( uint32_t key ) { return a[key] ; } // Arrays
 	inline MyJSON & operator [] ( string key ) { return o[key] ; } // Objects
@@ -52,7 +53,6 @@ public :
 	int32_t i ;
 
 protected :
-	char *parse ( char *t , int depth = 0 ) ;
 	static string to_unicode(const std::size_t codepoint1, const std::size_t codepoint2 = 0) ;
 } ;
 

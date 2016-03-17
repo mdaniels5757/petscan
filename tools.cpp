@@ -1,19 +1,24 @@
 #include "main.h"
 
-//________________________________________________________________________________________________________________________
 
-bool TPlatform::readConfigFile ( string filename ) {
-	char *buffer = loadFileFromDisk ( filename ) ;
-	MyJSON j ( buffer ) ;
-	free (buffer);
+
+string getWikiServer ( string wiki ) {
+	if ( wiki == "wikidatawiki" ) return "www.wikidata.org" ;
+	if ( wiki == "commonswiki" ) return "commons.wikimedia.org" ;
+	if ( wiki == "metawiki" ) return "commons.wikimedia.org" ;
 	
-	for ( auto i = j.o.begin() ; i != j.o.end() ; i++ ) {
-		if ( i->first == "" ) continue ;
-		config[i->first] = i->second.s ;
+	for ( size_t a = 0 ; a+3 < wiki.length() ; a++ ) {
+		if ( wiki[a]=='w' && wiki[a+1]=='i' && wiki[a+2]=='k' ) {
+			string l = wiki.substr(0,a) ;
+			string p = wiki.substr(a) ;
+			if ( p == "wiki" ) p = "wikipedia" ;
+			return l+"."+p+".org" ;
+		}
 	}
-
-	return true ;
+	return "NO_SERVER_FOUND" ; // Say what?
 }
+
+//________________________________________________________________________________________________________________________
 
 char *loadFileFromDisk ( string filename ) {
 	char * buffer;

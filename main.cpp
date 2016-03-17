@@ -25,7 +25,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 	string path = mg_str2string ( hm->uri ) ;
 	string query = mg_str2string ( hm->query_string ) ;
-	cout << "!!: " << path << " with " << query << endl ;
+//	cout << "!!: " << path << " with " << query << endl ;
 	
 	if ( path == "/" && !query.empty() ) {
 	
@@ -90,7 +90,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		/* Simulate long calculation */
 	//    sleep(3);
 
-		cout << hm->uri.p << endl ;
+//		cout << hm->uri.p << endl ;
 
 		/* Send the reply */
 		snprintf(reply, sizeof(reply), "{ \"uri\": \"%.*s\" }\n",
