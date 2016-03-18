@@ -231,6 +231,7 @@ public:
 	bool getPages ( TSourceDatabaseParams &params ) ;
 
 protected:
+	bool parseCategoryList ( TWikidataDB &db , vector <TSourceDatabaseCatDepth> &input , vector <vector<string> > &output ) ;
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
 	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
@@ -252,6 +253,7 @@ protected:
 	string renderPageList ( TPageList &pagelist ) ;
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string getLink ( const TPage &page ) ;
+	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 } ;
 
 

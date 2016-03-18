@@ -1,5 +1,18 @@
 #include "main.h"
 
+void TPlatform::parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) {
+	vector <string> pos ;
+	split ( input , pos , '\n' ) ;
+	for ( auto i = pos.begin() ; i != pos.end() ; i++ ) {
+		if ( i->empty() ) continue ;
+		vector <string> parts ;
+		split ( (*i) , parts , '|' , 2 ) ;
+		if ( parts.empty() ) continue ; // Huh?
+		if ( parts.size() < 2 ) parts.push_back ( getParam("depth","0") ) ;
+		output.push_back ( TSourceDatabaseCatDepth ( trim(parts[0]) , atoi(parts[1].c_str()) ) ) ;
+	}
+}
+
 string TPlatform::process () {
 
 	TSourceDatabase db ( this ) ;
@@ -19,18 +32,10 @@ string TPlatform::process () {
 	if ( params.find("comb_subset") != params.end() ) params["combination"] = "subset" ;
 	if ( params.find("comb_union") != params.end() ) params["combination"] = "union" ;
 
-	// Add positive categories
-	string dummy = getParam ( "categories" , "" ) ;
-	vector <string> pos ;
-	split ( dummy , pos , '\n' ) ;
-	for ( auto i = pos.begin() ; i != pos.end() ; i++ ) {
-		if ( i->empty() ) continue ;
-		vector <string> parts ;
-		split ( (*i) , parts , '|' , 2 ) ;
-		if ( parts.empty() ) continue ; // Huh?
-		if ( parts.size() < 2 ) parts.push_back ( getParam("depth","0") ) ;
-		db_params.positive.push_back ( TSourceDatabaseCatDepth ( trim(parts[0]) , atoi(parts[1].c_str()) ) ) ;
-	}
+	// Add categories
+	parseCats ( getParam ( "categories" , "" ) , db_params.positive ) ;
+	parseCats ( getParam ( "negcats" , "" ) , db_params.negative ) ;
+	
 	
 	TPageList pagelist ( getWiki() ) ;
 	

@@ -171,20 +171,27 @@ string TSourceDatabase::listEscapedStrings ( TWikidataDB &db , vector <string> &
 	return ret ;
 }
 
+bool TSourceDatabase::parseCategoryList ( TWikidataDB &db , vector <TSourceDatabaseCatDepth> &input , vector <vector<string> > &output ) {
+	output.clear() ;
+	for ( auto i = input.begin() ; i !=input.end() ; i++ ) {
+		vector <string> x ;
+		getCategoriesInTree ( db , i->name , i->depth , x ) ;
+		if ( x.size() == 0 ) continue ;
+		output.push_back ( x ) ;
+	}
+	return !( output.empty() || output[0].empty() ) ;
+}
+
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( *platform , wiki ) ;
 	
-	vector <vector<string> > cat_pos ;
-	for ( auto i = params.positive.begin() ; i != params.positive.end() ; i++ ) {
-		vector <string> x ;
-		getCategoriesInTree ( db , i->name , i->depth , x ) ;
-		if ( x.size() == 0 ) continue ;
-		cat_pos.push_back ( x ) ;
-	}
+	vector <vector<string> > cat_pos , cat_neg ;
+	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
+	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
 
-	if ( cat_pos.empty() || cat_pos[0].empty() ) {
+	if ( !has_pos_cats ) {
 		cout << "No categories\n" ;
 		return false ;
 	}
@@ -222,9 +229,21 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		}
 		
 	//	if ( $giu ) $sql .= " AND gil_to=page_title" ;
-		if ( params.redirects == "only" ) sql += " AND page_is_redirect=1" ;
-		if ( params.redirects == "none" ) sql += " AND page_is_redirect=0" ;
+		if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
+		if ( params.redirects == "none" ) sql += " AND p.page_is_redirect=0" ;
 	}
+	
+	
+	// Negative categories
+	if ( has_neg_cats ) {
+		for ( auto i = cat_neg.begin() ; i != cat_neg.end() ; i++ ) {
+			sql += " AND NOT EXISTS (SELECT * FROM categorylinks WHERE cl_from=p.page_id AND cl_to IN (" ;
+			sql += listEscapedStrings ( db , *i ) ;
+			sql += "))" ;
+		}
+	}
+	
+	
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
 //	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
