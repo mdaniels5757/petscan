@@ -53,10 +53,15 @@ string TPlatform::process () {
 	splitParamIntoVector ( getParam("templates_yes","") , db_params.templates_yes ) ;
 	splitParamIntoVector ( getParam("templates_any","") , db_params.templates_any ) ;
 	splitParamIntoVector ( getParam("templates_no" ,"") , db_params.templates_no  ) ;
-	
 	if ( getParam("templates_use_talk_yes","") != "" ) db_params.templates_yes_talk_page = true ;
 	if ( getParam("templates_use_talk_any","") != "" ) db_params.templates_any_talk_page = true ;
 	if ( getParam("templates_use_talk_no" ,"") != "" ) db_params.templates_no_talk_page  = true ;
+
+	// Add linked from
+	splitParamIntoVector ( getParam("outlinks_yes","") , db_params.linked_from_all ) ;
+	splitParamIntoVector ( getParam("outlinks_any","") , db_params.linked_from_any ) ;
+	splitParamIntoVector ( getParam("outlinks_no" ,"") , db_params.linked_from_none  ) ;
+	
 	
 	TPageList pagelist ( getWiki() ) ;
 	

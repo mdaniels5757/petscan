@@ -201,6 +201,20 @@ string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> inp
 	return ret ;
 }
 
+string TSourceDatabase::LinksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
+	string ret ;
+	ret += "(SELECT * FROM pagelinks,page pfrom WHERE pfrom.page_id=pl_from AND pl_title=p.page_title AND pl_from_namespace=p.page_namespace AND pl_namespace=0 AND pfrom.page_title" ;
+	
+	if ( input.size() > 1 ) {
+		ret += " IN (" + listEscapedStrings ( db , input ) + ")" ;
+	} else {
+		ret += "=" + listEscapedStrings ( db , input ) ;
+	}
+
+	ret += ")" ;
+	return ret ;
+}
+
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
@@ -210,10 +224,12 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
 	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
 	bool has_pos_templates = params.templates_yes.size()+params.templates_any.size() > 0 ;
+	bool has_pos_linked_from = params.linked_from_all.size()+params.linked_from_any.size() > 0 ;
 
 	string primary ;
 	if ( has_pos_cats ) primary = "categories" ;
 	else if ( has_pos_templates ) primary = "templates" ;
+	else if ( has_pos_linked_from ) primary = "links_from" ;
 	else {
 		cout << "No categories\n" ;
 		return false ;
@@ -256,12 +272,10 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		
 		//	if ( $giu ) $sql .= " AND gil_to=page_title" ;
 		}
-	} else if ( primary == "templates" ) {
+	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 		sql += " FROM page WHERE 1=1" ;
 	}
-	
-	// TODO templates as primary
 	
 	// Negative categories
 	if ( has_neg_cats ) {
@@ -277,7 +291,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( has_pos_templates ) {
 		// All
 		for ( auto i = params.templates_yes.begin() ; i != params.templates_yes.end() ; i++ ) {
-//			vector <string> tmp = { db.escape(*i) } ;
 			sql += " AND EXISTS " + templateSubquery ( db , { db.escape(*i) } , params.templates_yes_talk_page ) ;
 		}
 		
@@ -292,6 +305,13 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		sql += " AND NOT EXISTS " + templateSubquery ( db , params.templates_no , params.templates_no_talk_page ) ;
 	}
 	
+	// Links from
+	for ( auto i = params.linked_from_all.begin() ; i != params.linked_from_all.end() ; i++ ) {
+		sql += " AND EXISTS " + LinksFromSubquery ( db , { db.escape(*i) } ) ;
+	}
+	if ( !params.linked_from_any.empty() ) sql += " AND EXISTS " + LinksFromSubquery ( db , params.linked_from_any ) ;
+	if ( !params.linked_from_none.empty() ) sql += " AND NOT EXISTS " + LinksFromSubquery ( db , params.linked_from_none ) ;
+
 
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
@@ -302,7 +322,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 //	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
 //	sql += " ORDER BY cl0.cl_sortkey" ;
 
-	cout << sql << endl ;
+//	cout << sql << endl ;
 	
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
