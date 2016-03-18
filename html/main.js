@@ -4,8 +4,10 @@ var default_params = {
 	'edits[bots]':'both',
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
+	'combination':'subset',
 	'format':'html',
 	'sortby':'none',
+	'depth':'0',
 	'sortorder':'ascending'
 } ;
 
@@ -23,7 +25,9 @@ function deXSS ( s ) {
 
 function getUrlVars () {
 	var vars = {} ;
-	var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	var params = $('#querystring').text() ;
+	if ( params == '' ) params = window.location.href.slice(window.location.href.indexOf('?') + 1) ;
+	var hashes = params.split('&');
 	if ( hashes.length >0 && hashes[0] == window.location.href ) hashes.shift() ;
 	$.each ( hashes , function ( i , j ) {
 		var hash = j.split('=');
@@ -42,6 +46,30 @@ function _t ( k , alt_lang = '' ) {
 	return ret ;
 }
 
+function setPermalink ( q ) {
+	q = q.replace ( /&{0,1}doit=[^&]*&{0,1}/ , '&' ) ; // Removing auto-run
+	
+	// Removing empty parameters
+	var lq ;
+	do {
+		lq = q ;
+		q = q.replace ( /&[a-z_]+=&/g , '&' ) ;
+	} while ( lq != q ) ;
+	
+	// Removing default values
+	$.each ( default_params , function ( k , v ) {
+		var key = '&{0,1}' + encodeURIComponent(k) + '=' + encodeURIComponent(v) + '&{0,1}' ;
+		var r = new RegExp ( key ) ;
+		q = q.replace ( r , '&' ) ;
+	} ) ;
+	
+	var url = '//petscan.wmflabs.org/?' + q ;
+	var h = _t("query_url") ;
+	h = h.replace ( /\$1/ , url+"&doit=" ) ;
+	h = h.replace ( /\$2/ , url ) ;
+	$('#permalink').html ( h ) ;
+}
+
 function applyParameters () {
 	
 	namespaces_selected = [] ;
@@ -57,7 +85,7 @@ function applyParameters () {
 		$('input:radio[name="'+name+'"][value="'+value+'"]').prop('checked', true);
 		
 		$('input[type="text"][name="'+name+'"]').val ( deXSS(value) ) ;
-		$('input[type="number"][name="'+name+'"]').val ( value*1 ) ;
+		$('input[type="number"][name="'+name+'"]').val ( parseInt(value) ) ;
 		$('textarea[name="'+name+'"]').val ( deXSS(value.replace(/\+/g,' ')) ) ;
 		
 		if ( value == '1' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
@@ -73,6 +101,10 @@ function applyParameters () {
 		loadNamespaces() ;
 	}
 	wait2load_ns() ;
+	
+	var q = $('#querystring').text() ;
+	if ( q != '' ) setPermalink ( q ) ;
+	
 	$('body').show() ;
 }
 

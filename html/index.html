@@ -67,7 +67,7 @@ div.form-group.row > label:first-child {
 <div class="row">
 <div class="col-md-12">
 
-<form id='main_form' method='get' action='?'>
+<form id='main_form' method='post' action='?'>
 
 <ul class="nav nav-tabs" role="tablist">
 	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span class='l_categories'></span></a></li>
@@ -111,7 +111,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_combination"></label>
 <div class="col-sm-10">
-<div class="radio-inline"><label><input type="radio" name="combination" value="subset" checked> <span class='l_comb_subset'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="combination" value="subset"> <span class='l_comb_subset'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="combination" value="union"> <span class='l_comb_union'></span></label></div>
 </div>
 </div>
@@ -127,7 +127,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_show_redirects"></label>
 <div class="col-sm-4">
-<div class="radio-inline"><label><input type="radio" name="show_redirects" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="show_redirects" value="both"> <span class='l_edits_both'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="show_redirects" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="show_redirects" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
@@ -136,7 +136,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_bots'></span></label>
 <div class="col-sm-4">
-<div class="radio-inline"><label><input type="radio" name="edits[bots]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[bots]" value="both"> <span class='l_edits_both'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[bots]" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[bots]" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
@@ -145,7 +145,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_anons'></span></label>
 <div class="col-sm-4">
-<div class="radio-inline"><label><input type="radio" name="edits[anons]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[anons]" value="both"> <span class='l_edits_both'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[anons]" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[anons]" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
@@ -154,7 +154,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"><span class='l_edits'></span>: <span class='l_edit_flagged'></span></label>
 <div class="col-sm-4">
-<div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="both" checked> <span class='l_edits_both'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="both"> <span class='l_edits_both'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
@@ -242,6 +242,11 @@ Sort
 
 <input type='hidden' name='interface_language' value='en' />
 </form>
+
+<div>
+<span id='querystring' style='display:none'><!--querystring--></span>
+<span id='permalink'></span>
+</div>
 
 </div>
 

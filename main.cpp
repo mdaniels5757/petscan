@@ -23,8 +23,17 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
     string out ;
     string type = "application/json" ;
 
+	string method = mg_str2string ( hm->method ) ;
 	string path = mg_str2string ( hm->uri ) ;
-	string query = mg_str2string ( hm->query_string ) ;
+	string query ;
+	if ( method == "GET" ) {
+		query = mg_str2string ( hm->query_string ) ;
+	} else if ( method == "POST" ) {
+		query = mg_str2string(hm->body) ;
+	} else {
+		cout << "Unknown method " << method << endl ;
+		return ;
+	}
 //	cout << "!!: " << path << " with " << query << endl ;
 	
 	if ( path == "/" && !query.empty() ) {
@@ -61,8 +70,15 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 			// Replace in HTML output
 			if ( type == "text/html" ) {
-				string key = "<!--output-->" ;
-				size_t pos = out.find(key) ;
+				string key ;
+				size_t pos ;
+
+				key = "<!--querystring-->" ;
+				pos = out.find(key) ;
+				out = out.substr(0,pos) + query + out.substr(pos+key.length()) ;
+				
+				key = "<!--output-->" ;
+				pos = out.find(key) ;
 				out = out.substr(0,pos) + results + out.substr(pos+key.length()) ;
 			} else {
 				out.swap ( results ) ;
