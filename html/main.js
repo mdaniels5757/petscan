@@ -88,7 +88,7 @@ function applyParameters () {
 		$('input[type="number"][name="'+name+'"]').val ( parseInt(value) ) ;
 		$('textarea[name="'+name+'"]').val ( deXSS(value.replace(/\+/g,' ')) ) ;
 		
-		if ( value == '1' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
+		if ( value == '1' || value == 'on' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
 		
 	} ) ;
 	

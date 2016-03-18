@@ -13,6 +13,19 @@ void TPlatform::parseCats ( string input , vector <TSourceDatabaseCatDepth> &out
 	}
 }
 
+void TPlatform::splitParamIntoVector ( string input , vector <string> &output ) {
+	output.clear() ;
+	vector <string> v ;
+	split ( input , v , '\n' ) ;
+	for ( auto i = v.begin() ; i != v.end() ; i++ ) {
+		string s = trim ( *i ) ;
+		if ( !s.empty() ) {
+			s[0] = toupper(s[0]) ;
+			output.push_back ( s ) ;
+		}
+	}
+}
+
 string TPlatform::process () {
 
 	TSourceDatabase db ( this ) ;
@@ -36,6 +49,14 @@ string TPlatform::process () {
 	parseCats ( getParam ( "categories" , "" ) , db_params.positive ) ;
 	parseCats ( getParam ( "negcats" , "" ) , db_params.negative ) ;
 	
+	// Add templates
+	splitParamIntoVector ( getParam("templates_yes","") , db_params.templates_yes ) ;
+	splitParamIntoVector ( getParam("templates_any","") , db_params.templates_any ) ;
+	splitParamIntoVector ( getParam("templates_no" ,"") , db_params.templates_no  ) ;
+	
+	if ( getParam("templates_use_talk_yes","") != "" ) db_params.templates_yes_talk_page = true ;
+	if ( getParam("templates_use_talk_any","") != "" ) db_params.templates_any_talk_page = true ;
+	if ( getParam("templates_use_talk_no" ,"") != "" ) db_params.templates_no_talk_page  = true ;
 	
 	TPageList pagelist ( getWiki() ) ;
 	

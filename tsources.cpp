@@ -166,7 +166,7 @@ string TSourceDatabase::listEscapedStrings ( TWikidataDB &db , vector <string> &
 	cout << "Merging " << s.size() << " entries...\n" ;
 	for ( auto i = s.begin() ; i != s.end() ; i++ ) {
 		if ( i != s.begin() ) ret += "," ;
-		ret += string("'") + db.escape(*i) + "'" ;
+		ret += string("'") + db.escape(space2_(*i)) + "'" ;
 	}
 	return ret ;
 }
@@ -182,6 +182,25 @@ bool TSourceDatabase::parseCategoryList ( TWikidataDB &db , vector <TSourceDatab
 	return !( output.empty() || output[0].empty() ) ;
 }
 
+string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page ) {
+	string ret ;
+	
+	if ( use_talk_page ) {
+		ret += "(SELECT * FROM templatelinks,page pt WHERE MOD(p.page_namespace,2)=0 AND pt.page_title=p.page_title AND pt.page_namespace=p.page_namespace+1 AND tl_from=pt.page_id AND tl_namespace=10 AND tl_title" ;
+	} else {
+		ret += "(SELECT * FROM templatelinks WHERE tl_from=page_id AND tl_namespace=10 AND tl_title" ;
+	}
+	
+	if ( input.size() > 1 ) {
+		ret += " IN (" + listEscapedStrings ( db , input ) + ")" ;
+	} else {
+		ret += "=" + listEscapedStrings ( db , input ) ;
+	}
+
+	ret += ")" ;
+	return ret ;
+}
+
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
@@ -190,49 +209,59 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	vector <vector<string> > cat_pos , cat_neg ;
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
 	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
+	bool has_pos_templates = params.templates_yes.size()+params.templates_any.size() > 0 ;
 
-	if ( !has_pos_cats ) {
+	string primary ;
+	if ( has_pos_cats ) primary = "categories" ;
+	else if ( has_pos_templates ) primary = "templates" ;
+	else {
 		cout << "No categories\n" ;
 		return false ;
 	}
 	
 	string sql ;
-	if ( params.combine == "subset" ) {
-//		sql = "SELECT DISTINCT p.*" ;
-		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+	
+	if ( primary == "categories" ) {
+		// TODO union, list
+		if ( params.combine == "subset" ) {
+	//		sql = "SELECT DISTINCT p.*" ;
+			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 
-//		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
-		sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
-		sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
-		sql += ")) cl0" ;
-		for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
-			char tmp[200] ;
-			sprintf ( tmp , " INNER JOIN categorylinks cl%d on cl0.cl_from=cl%d.cl_from and cl%d.cl_to IN (" , a , a , a ) ;
-			sql += tmp ;
-			sql += listEscapedStrings ( db , cat_pos[a] ) ;
-			sql += ")" ;
-		}
-
-		sql += " INNER JOIN (page p" ;
-	//	if ( $giu ) $sql .= ",globalimagelinks g" ;
-		sql += ") on p.page_id=cl0.cl_from" ;
-		
-		if ( params.page_namespace_ids.size() > 0 ) {
-			sql += " AND p.page_namespace IN(" ;
-			for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
-				if ( i != params.page_namespace_ids.begin() ) sql += "," ;
+	//		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
+			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
+			sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
+			sql += ")) cl0" ;
+			for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
 				char tmp[200] ;
-				sprintf ( tmp , "%d" , *i ) ;
+				sprintf ( tmp , " INNER JOIN categorylinks cl%d on cl0.cl_from=cl%d.cl_from and cl%d.cl_to IN (" , a , a , a ) ;
 				sql += tmp ;
+				sql += listEscapedStrings ( db , cat_pos[a] ) ;
+				sql += ")" ;
 			}
-			sql += ")" ;
-		}
+
+			sql += " INNER JOIN (page p" ;
+		//	if ( $giu ) $sql .= ",globalimagelinks g" ;
+			sql += ") on p.page_id=cl0.cl_from" ;
 		
-	//	if ( $giu ) $sql .= " AND gil_to=page_title" ;
-		if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
-		if ( params.redirects == "none" ) sql += " AND p.page_is_redirect=0" ;
+			if ( params.page_namespace_ids.size() > 0 ) {
+				sql += " AND p.page_namespace IN(" ;
+				for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
+					if ( i != params.page_namespace_ids.begin() ) sql += "," ;
+					char tmp[200] ;
+					sprintf ( tmp , "%d" , *i ) ;
+					sql += tmp ;
+				}
+				sql += ")" ;
+			}
+		
+		//	if ( $giu ) $sql .= " AND gil_to=page_title" ;
+		}
+	} else if ( primary == "templates" ) {
+		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+		sql += " FROM page WHERE 1=1" ;
 	}
 	
+	// TODO templates as primary
 	
 	// Negative categories
 	if ( has_neg_cats ) {
@@ -243,13 +272,37 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		}
 	}
 	
+	// Templates as secondary; template namespace only!
+	// TODO talk page
+	if ( has_pos_templates ) {
+		// All
+		for ( auto i = params.templates_yes.begin() ; i != params.templates_yes.end() ; i++ ) {
+//			vector <string> tmp = { db.escape(*i) } ;
+			sql += " AND EXISTS " + templateSubquery ( db , { db.escape(*i) } , params.templates_yes_talk_page ) ;
+		}
+		
+		// Any
+		if ( !params.templates_any.empty() ) {
+			sql += " AND EXISTS " + templateSubquery ( db , params.templates_any , params.templates_any_talk_page ) ;
+		}
+	}
 	
+	// Negative templates
+	if ( !params.templates_no.empty() ) {
+		sql += " AND NOT EXISTS " + templateSubquery ( db , params.templates_no , params.templates_no_talk_page ) ;
+	}
+	
+
+	// Misc
+	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
+	if ( params.redirects == "none" ) sql += " AND p.page_is_redirect=0" ;
+
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
 //	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
 //	sql += " ORDER BY cl0.cl_sortkey" ;
 
-//	cout << sql << endl ;
+	cout << sql << endl ;
 	
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;

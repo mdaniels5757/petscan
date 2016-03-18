@@ -209,10 +209,10 @@ class TSourceDatabaseParams {
 public:
 	vector <TSourceDatabaseCatDepth> positive , negative ;
 	vector <uint16_t> page_namespace_ids ;
-	vector <string> templates_all , templates_any , templates_none ;
-	bool templates_all_talk_page = false ;
+	vector <string> templates_yes , templates_any , templates_no ;
+	bool templates_yes_talk_page = false ;
 	bool templates_any_talk_page = false ;
-	bool templates_none_talk_page = false ;
+	bool templates_no_talk_page = false ;
 	vector <string> linked_from_all , linked_from_any , linked_from_none ;
 	
 	string wiki = "enwiki" ;
@@ -235,6 +235,7 @@ protected:
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
 	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
+	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page ) ;
 } ;
 
 
@@ -254,6 +255,7 @@ protected:
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string getLink ( const TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
+	void splitParamIntoVector ( string input , vector <string> &output ) ;
 } ;
 
 
