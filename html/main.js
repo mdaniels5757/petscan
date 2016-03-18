@@ -116,6 +116,8 @@ function setInterfaceLanguage ( l ) {
 		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
 		$('.l_'+k).html ( v ) ;
 	} ) ;
+	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan2/'+l } ) ;
+	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan2/Interface#'+l.toUpperCase() } ) ;
 	return false ;
 }
 
@@ -253,5 +255,17 @@ $(document).ready ( function () {
 	$('input[name="language"]').focus() ;
 	$('#doit').click ( function () {
 		$('#main_form').submit() ;
+	} ) ;
+	
+	$('#tab-list').click ( function () {
+		if ( $('#main_form div.tab-pane').length > 0 ) {
+			$('#tab-list').text ( "Tabs" ) ;
+			$('#main_form ul.nav-tabs').hide() ;
+			$('#main_form div.tab-pane').addClass('former-tab-pane').removeClass('tab-pane') ;
+		} else {
+			$('#tab-list').text ( "List" ) ;
+			$('#main_form ul.nav-tabs').show() ;
+			$('#main_form div.former-tab-pane').addClass('tab-pane').removeClass('former-tab-pane') ;
+		}
 	} ) ;
 } ) ;

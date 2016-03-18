@@ -48,18 +48,27 @@ div.form-group.row > label:first-child {
   </div>
   <div class="collapse navbar-toggleable-xs" id="bd-main-nav">
     <nav class="nav navbar-nav">
-      <a class="nav-item nav-link l_toolname" href="/"></a>
-      <a class="nav-item nav-link active" href="/">Documentation</a>
-      <a class="nav-item nav-link " href="/">Examples</a>
+      <a class="nav-item nav-link active l_toolname" href="/"></a>
+      <a class="nav-item nav-link l_manual" href="#"></a>
+      <a class="nav-item nav-link l_interface_text" href="#"></a>
 <!--      <a class="nav-item nav-link" href="http://themes.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Themes');">Themes</a>
       <a class="nav-item nav-link" href="http://expo.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Expo');">Expo</a>
       <a class="nav-item nav-link" href="http://blog.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Blog');">Blog</a>-->
 
-	  <div class="btn-group nav-item nav-link">
-	  	<button type="button" class="btn btn-secondary dropdown-toggle l_interface_language" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-	  	<div class="dropdown-menu" id='interface_languages'></div>
+	  <div class='pull-sm-right'>
+		  <div class="btn-group nav-item nav-link">
+			<button type="button" class="btn btn-secondary dropdown-toggle l_interface_language" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+			<div class="dropdown-menu" id='interface_languages'></div>
+		  </div>
+	  
+		  <div class="btn-group nav-item nav-link">
+			  <button class='btn btn-secondary' id='tab-list'>List</button>
+		  </div>
 	  </div>
+	  
     </nav>
+
+
 </header>
 
 
@@ -232,8 +241,13 @@ Sort
 -->
 
 
-<div>
+<div class='row'>
+<div class="col-sm-2">
 <button id='doit' name='doit' class='btn btn-lg btn-primary l_doit'></button>
+</div>
+<div class="col-sm-10">
+<span id='permalink'></span>
+</div>
 </div>
 
 
@@ -241,12 +255,9 @@ Sort
 
 
 <input type='hidden' name='interface_language' value='en' />
+<span id='querystring' style='display:none'><!--querystring--></span>
 </form>
 
-<div>
-<span id='querystring' style='display:none'><!--querystring--></span>
-<span id='permalink'></span>
-</div>
 
 </div>
 
