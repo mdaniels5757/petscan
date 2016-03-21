@@ -80,10 +80,10 @@ string TPlatform::process () {
 
 
 	processWikidata ( pagelist ) ;
+	processFiles ( pagelist ) ;
 
 
 	// Sort pagelist
-//cout << "SORT PARAM: " << getParam("sortby") << "/" << getParam("sortorder") << endl ;
 	bool asc = !(getParam("sortorder") == "descending") ;
 	if ( getParam("sortby") == "title" ) pagelist.customSort ( PAGE_SORT_TITLE , asc ) ;
 	else if ( getParam("sortby") == "ns_title" ) pagelist.customSort ( PAGE_SORT_NS_TITLE , asc ) ;
@@ -100,6 +100,76 @@ string TPlatform::process () {
 
 	return renderPageList ( pagelist ) ;
 }
+
+
+void TPlatform::processFiles ( TPageList &pl ) {
+	bool file_data = !getParam("ext_image_data","").empty() ;
+	bool file_usage = !getParam("file_usage_data","").empty() ;
+	if ( !file_data && !file_usage ) return ; // Nothing to do
+	
+	TWikidataDB db ( *this , pl.wiki ) ;
+	map <string,TPage *> name2f ;
+	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
+		if ( i->meta.ns != NS_FILE ) continue ; // Files only
+		name2f[space2_(i->getNameWithoutNamespace())] = &(*i) ;
+		if ( name2f.size() < DB_PAGE_BATCH_SIZE ) continue ;
+		annotateFile ( db , name2f , file_data , file_usage ) ;
+	}
+	annotateFile ( db , name2f , file_data , file_usage ) ;
+	
+}
+
+void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) {
+	if ( name2f.empty() ) return ;
+//	cout << "Annotating " << name2f.size() << " files\n" ;
+	
+	vector <string> tmp ;
+	tmp.reserve ( name2f.size() ) ;
+	for ( auto i = name2f.begin() ; i != name2f.end() ; i++ ) tmp.push_back ( i->first ) ;
+	
+	if ( file_usage ) {
+		string sql = "SELECT gil_to,GROUP_CONCAT(gil_wiki,':',gil_page_namespace_id,':',gil_page_namespace,':',gil_page_title SEPARATOR '|') AS x FROM globalimagelinks WHERE gil_to IN (" ;
+		sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
+		sql += ") GROUP BY gil_to" ;
+
+		MYSQL_RES *result = db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			string filename = row[0] ;
+			if ( name2f.find(filename) == name2f.end() ) {
+				cerr << "TPlatform::annotateFile: File not found(1): " << filename << endl ;
+				continue ;
+			}
+			name2f[filename]->meta.misc["gil"] = row[1] ;
+		}
+		mysql_free_result(result);
+		
+	}
+
+	if ( file_data ) {
+		string sql = "SELECT img_name" ;
+		for ( auto i = file_data_keys.begin() ; i != file_data_keys.end() ; i++ ) sql += "," + (*i) ;
+		sql += " FROM image WHERE img_name IN (" ;
+		sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
+		sql += ")" ;
+
+		MYSQL_RES *result = db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			string filename = row[0] ;
+			if ( name2f.find(filename) == name2f.end() ) {
+				cerr << "TPlatform::annotateFile: File not found(2): " << filename << endl ;
+				continue ;
+			}
+			TPage *file = name2f[filename] ;
+			for ( uint32_t i = 0 ; i < file_data_keys.size() ; i++ ) file->meta.misc[file_data_keys[i]] = row[i+1] ;
+		}
+		mysql_free_result(result);
+	}
+	
+	name2f.clear() ;
+}
+
 
 void TPlatform::processWikidata ( TPageList &pl ) {
 	if ( pl.wiki == "wikidatawiki" ) return ; // Well, they all do have an item...
@@ -177,6 +247,9 @@ string TPlatform::getParam ( string key , string default_value ) {
 string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	content_type = "text/html" ;
 
+	bool file_data = !getParam("ext_image_data","").empty() ;
+	bool file_usage = !getParam("file_usage_data","").empty() ;
+
 	string wdi = getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 	
@@ -188,6 +261,10 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	ret += "<table class='table table-sm table-striped'>" ;
 	ret += "<thead><tr><th class='num'>#</th><th class='text-nowrap l_h_title'></th><th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
+	if ( file_data ) {
+		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "<th class='l_h_"+(*k)+"'></th>" ;
+	}
+	if ( file_usage ) ret += "<th class='l_file_usage_data'></th>" ;
 	ret += "</tr></thead>" ;
 	ret += "<tbody>" ;
 	uint32_t cnt = 0 ;
@@ -218,6 +295,20 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 			}
 			ret += "</td>" ;
 		}
+		
+		// File metadata
+		if ( file_data ) {
+			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+				ret += "<td>" ;
+				string t = i->meta.getMisc(*k,"") ;
+				if ( !t.empty() && *k == "img_user_text" ) {
+					ret += "<a target='_blank' href='https://commons.wikimedia.org/wiki/User:"+urlencode(space2_(t))+"'>" + t + "</a>" ;
+				} else ret += t ;
+				ret += "</td>" ;
+			}
+		}
+		if ( file_usage ) ret += "<td>" + i->meta.getMisc("gil","") + "</td>" ;
+		
 		ret += "</tr>" ;
 	}
 	ret += "</tbody>" ;
@@ -233,6 +324,9 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	string ret ;
 	string mode = "catscan" ;
 	content_type = "application/json; charset=utf-8" ;
+
+	bool file_data = !getParam("ext_image_data","").empty() ;
+	bool file_usage = !getParam("file_usage_data","").empty() ;
 	
 	if ( mode == "catscan" ) {
 		char tmp[100] ;
@@ -249,13 +343,21 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 			if ( i != pagelist.pages.begin() ) ret += "," ;
 			ret += "{" ;
 			ret += "\"n\":\"page\"," ;
-			ret += "\"title\":\"" + MyJSON::escapeString(i->name) + "\"," ;
+			ret += "\"title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"," ;
 			ret += "\"id\":\"" + ui2s(i->meta.id) + "\"," ;
 			ret += "\"namespace\":\"" + ui2s(i->meta.ns) + "\"," ;
 			ret += "\"len\":\"" + ui2s(i->meta.size) + "\"," ;
 			ret += "\"touched\":\"" + i->meta.timestamp + "\"," ;
 			ret += "\"nstext\":\"" + MyJSON::escapeString(pagelist.getNamespaceString(i->meta.ns)) + "\"" ;
 			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += ",\"q\":\"Q" + ui2s(i->meta.q) + "\"" ;
+			
+			if ( file_data ) {
+				for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+					ret += ",\"" + (*k) + "\":\"" + MyJSON::escapeString(i->meta.getMisc(*k,"")) + "\"" ;
+				}
+			}
+			if ( file_usage ) ret += ",\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+			
 			ret += "}" ;
 		}
 		ret += "]" ;
@@ -279,8 +381,8 @@ string TPlatform::renderPageList ( TPageList &pagelist ) {
 	return "" ;
 }
 
-string TPlatform::getLink ( const TPage &page ) {
-	string label = page.name ;
+string TPlatform::getLink ( TPage &page ) {
+	string label = page.getNameWithoutNamespace() ;
 	string url = page.name ;
 	std::replace ( label.begin(), label.end(), '_', ' ') ;
 	std::replace ( url.begin(), url.end(), ' ', '_') ;

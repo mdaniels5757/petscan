@@ -1,5 +1,16 @@
 #include "main.h"
 
+string TPage::getNameWithoutNamespace() {
+	if ( meta.ns == 0 ) return name ;
+	return name.substr ( name.find_first_of(':')+1 ) ;
+}
+
+
+string TPageMetadata::getMisc ( const string &key , const string &_default ) {
+	return misc.find(key)==misc.end() ? _default : misc[key] ;
+}
+
+
 string TPageList::getNamespaceString ( const int16_t ns ) {
 	loadNamespaces() ;
 	if ( ns_local.find(ns) != ns_local.end() ) return ns_local[ns] ;

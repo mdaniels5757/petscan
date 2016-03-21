@@ -23,6 +23,9 @@ using namespace std ;
 #define NS_UNKNOWN -999
 #define UNKNOWN_WIKIDATA_ITEM 0
 #define DB_PAGE_BATCH_SIZE 50000
+#define NS_FILE 6
+
+static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
 char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
@@ -117,18 +120,24 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 
 class TPageMetadata {
 public:
+	string getMisc ( const string &key , const string &_default = "" ) ;
+
 	uint32_t id = 0 ;
 	uint32_t size = 0 ;
 	int16_t ns = NS_UNKNOWN ;
 	bool is_full_title = true ;
 	uint32_t q = 0 ;
 	string timestamp ;
+	map <string,string> misc ;
 } ;
 
 class TPage {
 public:
 	TPage ( string s ) { name = s ; }
 	TPage ( string s , int ns = 0 ) { name = space2_(s) ; meta.ns = ns ; }
+	
+	string getNameWithoutNamespace() ;
+	
 	string name ;
 	TPageMetadata meta ;
 } ;
@@ -259,9 +268,11 @@ protected:
 	string renderPageList ( TPageList &pagelist ) ;
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string renderPageListJSON ( TPageList &pagelist ) ;
-	string getLink ( const TPage &page ) ;
+	string getLink ( TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 	void splitParamIntoVector ( string input , vector <string> &output ) ;
+	void processFiles ( TPageList &pl ) ;
+	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) ;
 	void processWikidata ( TPageList &pl ) ;
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
 	float querytime = 0 ; // seconds
