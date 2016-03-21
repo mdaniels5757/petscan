@@ -61,6 +61,11 @@ string TPlatform::process () {
 	if ( getParam("templates_use_talk_yes","") != "" ) db_params.templates_yes_talk_page = true ;
 	if ( getParam("templates_use_talk_any","") != "" ) db_params.templates_any_talk_page = true ;
 	if ( getParam("templates_use_talk_no" ,"") != "" ) db_params.templates_no_talk_page  = true ;
+
+	// Last edit
+	db_params.last_edit_bot = getParam("edits[bots]","both") ;
+	db_params.last_edit_anon = getParam("edits[anons]","both") ;
+	db_params.last_edit_flagged = getParam("edits[flagged]","both") ;
 	
 	// Add misc
 	db_params.redirects = getParam("show_redirects","both") ;

@@ -347,12 +347,23 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( !params.linked_from_none.empty() ) sql += " AND page_id NOT IN " + linksFromSubquery ( db , params.linked_from_none ) ; // " AND NOT EXISTS "
 
 
+	// Last edit
+	if ( params.last_edit_anon == "yes" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=0)" ;
+	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user!=0)" ;
+	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
+	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
+//	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedrevs WHERE fr_rev_id=page_latest AND fr_page_id=page_id)" ;
+//	if ( params.last_edit_flagged == "no" ) sql += " AND NOT EXISTS (SELECT * FROM flaggedrevs WHERE fr_rev_id=page_latest AND fr_page_id=page_id)" ;
+	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
+	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
+
+
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
-//	cout << sql << endl ;
+	cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
