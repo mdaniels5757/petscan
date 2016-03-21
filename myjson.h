@@ -40,7 +40,7 @@ public :
 	inline MyJSON & operator [] ( uint32_t key ) { return a[key] ; } // Arrays
 	inline MyJSON & operator [] ( string key ) { return o[key] ; } // Objects
 
-	string escapeString ( const string &s ) ;
+	static string escapeString ( const string &s ) ;
 	string unescapeString ( const string &input ) ;
 	
 	// TODO operators to cast into string, number

@@ -246,6 +246,11 @@ $(document).ready ( function () {
 	// Legacy parameters
 	if ( typeof p.comb_subset != 'undefined' ) p.combination = 'subset' ;
 	if ( typeof p.comb_union != 'undefined' ) p.combination = 'union' ;
+	if ( typeof p.get_q != 'undefined' ) p.wikidata_item = 'any' ;
+	if ( typeof p.wikidata != 'undefined' ) p.wikidata_item = 'any' ;
+	if ( typeof p.wikidata_no_item != 'undefined' ) p.wikidata_item = 'without' ;
+	
+	
 
 	params = $.extend ( {} , default_params , p ) ;
 	

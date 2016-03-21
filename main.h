@@ -21,6 +21,8 @@ using namespace std ;
 
 
 #define NS_UNKNOWN -999
+#define UNKNOWN_WIKIDATA_ITEM 0
+#define DB_PAGE_BATCH_SIZE 50000
 
 char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
@@ -30,6 +32,7 @@ string getWikiServer ( string wiki ) ;
 bool loadJSONfromURL ( string url , MyJSON &j ) ;
 string space2_ ( string s ) ;
 string _2space ( string s ) ;
+string ui2s ( uint32_t i ) ;
 string escapeURLcomponent ( string s ) ;
 double time_diff(struct timeval x , struct timeval y);
 
@@ -112,14 +115,13 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 }
 
 
-
-
 class TPageMetadata {
 public:
 	uint32_t id = 0 ;
 	uint32_t size = 0 ;
 	int16_t ns = NS_UNKNOWN ;
 	bool is_full_title = true ;
+	uint32_t q = 0 ;
 	string timestamp ;
 } ;
 
@@ -231,12 +233,12 @@ public:
 	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; } ;
 	
 	bool getPages ( TSourceDatabaseParams &params ) ;
+	static string listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces = true ) ;
 
 protected:
 	bool parseCategoryList ( TWikidataDB &db , vector <TSourceDatabaseCatDepth> &input , vector <vector<string> > &output ) ;
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
-	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
 	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page , bool find_not ) ;
 	string linksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
 } ;
@@ -256,9 +258,13 @@ public:
 protected:
 	string renderPageList ( TPageList &pagelist ) ;
 	string renderPageListHTML ( TPageList &pagelist ) ;
+	string renderPageListJSON ( TPageList &pagelist ) ;
 	string getLink ( const TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 	void splitParamIntoVector ( string input , vector <string> &output ) ;
+	void processWikidata ( TPageList &pl ) ;
+	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
+	float querytime = 0 ; // seconds
 } ;
 
 

@@ -187,6 +187,12 @@ string _2space ( string s ) {
 	return ret ;
 }
 
+string ui2s ( uint32_t i ) {
+	char tmp[20] ;
+	sprintf ( tmp , "%d" , i ) ;
+	return string(tmp) ;
+}
+
 //________________________________________________________________________________________________________________________
 
 

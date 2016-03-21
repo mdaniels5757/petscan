@@ -161,12 +161,12 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 //________________________________________________________________________________________________________________________
 
 
-string TSourceDatabase::listEscapedStrings ( TWikidataDB &db , vector <string> &s ) {
+string TSourceDatabase::listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces ) {
 	string ret ;
-	cout << "Merging " << s.size() << " entries...\n" ;
+//	cout << "Merging " << s.size() << " entries...\n" ;
 	for ( auto i = s.begin() ; i != s.end() ; i++ ) {
 		if ( i != s.begin() ) ret += "," ;
-		ret += string("'") + db.escape(space2_(*i)) + "'" ;
+		ret += string("'") + db.escape(fix_spaces?space2_(*i):*i) + "'" ;
 	}
 	return ret ;
 }
@@ -322,7 +322,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
-	if ( params.redirects == "none" ) sql += " AND p.page_is_redirect=0" ;
+	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
 
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
@@ -338,7 +338,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	
 	gettimeofday(&after , NULL);
-//	cout << "Query time " << time_diff(before , after) << "µs\n" ;
 	printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
 	
 //	int num_fields = mysql_num_fields(result);
