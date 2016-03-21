@@ -201,9 +201,10 @@ string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> inp
 	return ret ;
 }
 
-string TSourceDatabase::LinksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
+string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
 	string ret ;
-	ret += "(SELECT * FROM pagelinks,page pfrom WHERE pfrom.page_id=pl_from AND pl_title=p.page_title AND pl_from_namespace=p.page_namespace AND pl_namespace=0 AND pfrom.page_title" ;
+	ret += "( SELECT p_to.page_id FROM page p_to,page p_from,pagelinks WHERE p_from.page_namespace=0 AND p_from.page_id=pl_from AND pl_namespace=p_to.page_namespace AND pl_title=p_to.page_title AND p_from.page_title" ;
+//	ret += "(SELECT * FROM pagelinks,page pfrom WHERE pfrom.page_id=pl_from AND pl_title=p.page_title AND pl_from_namespace=p.page_namespace AND pl_namespace=0 AND pfrom.page_title" ;
 	
 	if ( input.size() > 1 ) {
 		ret += " IN (" + listEscapedStrings ( db , input ) + ")" ;
@@ -231,7 +232,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	else if ( has_pos_templates ) primary = "templates" ;
 	else if ( has_pos_linked_from ) primary = "links_from" ;
 	else {
-		cout << "No categories\n" ;
+		cout << "No starting point\n" ;
 		return false ;
 	}
 	
@@ -307,10 +308,10 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	
 	// Links from
 	for ( auto i = params.linked_from_all.begin() ; i != params.linked_from_all.end() ; i++ ) {
-		sql += " AND EXISTS " + LinksFromSubquery ( db , { db.escape(*i) } ) ;
+		sql += " AND page_id IN " + linksFromSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
 	}
-	if ( !params.linked_from_any.empty() ) sql += " AND EXISTS " + LinksFromSubquery ( db , params.linked_from_any ) ;
-	if ( !params.linked_from_none.empty() ) sql += " AND NOT EXISTS " + LinksFromSubquery ( db , params.linked_from_none ) ;
+	if ( !params.linked_from_any.empty() ) sql += " AND page_id IN " + linksFromSubquery ( db , params.linked_from_any ) ; // " AND EXISTS "
+	if ( !params.linked_from_none.empty() ) sql += " AND page_id NOT IN " + linksFromSubquery ( db , params.linked_from_none ) ; // " AND NOT EXISTS "
 
 
 	// Misc
@@ -322,10 +323,18 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 //	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
 //	sql += " ORDER BY cl0.cl_sortkey" ;
 
-//	cout << sql << endl ;
+	cout << sql << endl ;
 	
+	struct timeval before , after;
+	gettimeofday(&before , NULL);
+
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	
+	gettimeofday(&after , NULL);
+//	cout << "Query time " << time_diff(before , after) << "µs\n" ;
+	printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
+	
 //	int num_fields = mysql_num_fields(result);
 	MYSQL_ROW row;
 	uint32_t cnt = 0 ;
@@ -349,6 +358,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	
 	
 	pl1.pages.swap ( pages ) ;
+	return true ;
 }
 
 

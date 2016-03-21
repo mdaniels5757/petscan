@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <locale.h>
+#include <sys/time.h>
 
 using namespace std ;
 
@@ -30,6 +31,7 @@ bool loadJSONfromURL ( string url , MyJSON &j ) ;
 string space2_ ( string s ) ;
 string _2space ( string s ) ;
 string escapeURLcomponent ( string s ) ;
+double time_diff(struct timeval x , struct timeval y);
 
 class TPlatform ;
 
@@ -236,7 +238,7 @@ protected:
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
 	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
 	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page ) ;
-	string LinksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
+	string linksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
 } ;
 
 
