@@ -329,6 +329,7 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	string ret ;
 	string mode = getParam("output_compatability","catscan") ;
 	string callback = getParam("callback","") ;
+	char tmp[100] ;
 	content_type = "application/json; charset=utf-8" ;
 
 	bool file_data = !getParam("ext_image_data","").empty() ;
@@ -336,7 +337,6 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	
 	if ( !callback.empty() ) ret += callback + "(" ;
 	if ( mode == "catscan" ) {
-		char tmp[100] ;
 		sprintf ( tmp , "%f" , querytime ) ;
 		ret += "{" ;
 		ret += "\"n\":\"result\"," ;
@@ -371,7 +371,39 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += "}" ;
 		ret += "}]" ;
 		ret += "}" ;
+	} else if ( mode == "quick_intersection" ) {
+		string dummy = pagelist.getNamespaceString(0); // Dummy to force namespace loading
+		ret += "{" ;
+		ret += "\"namespaces\":{" ;
+		for ( auto i = pagelist.ns_local.begin() ; i != pagelist.ns_local.end() ; i++ ) {
+			if ( i != pagelist.ns_local.begin() ) ret += "," ;
+			sprintf ( tmp , "\"%d\":\"" , i->first ) ;
+			ret += tmp + MyJSON::escapeString(i->second) + "\"" ;
+		}
+		ret += "}" ;
+		ret += ",\"status\":\"OK\"" ;
+		sprintf ( tmp , "%f" , querytime ) ;
+		ret += ",\"querytime\":\"" + string(tmp) + "s\"" ;
+		ret += ",\"pagecount\":\"" + ui2s(pagelist.size()) + "\"" ;
+		ret += ",\"pages\":[" ;
+
+		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
+			if ( i != pagelist.pages.begin() ) ret += "," ;
+			ret += "{" ;
+			ret += "\"page_id\":\"" + ui2s(i->meta.id) + "\"," ;
+			ret += "\"page_namespace\":\"" + ui2s(i->meta.ns) + "\"," ;
+			ret += "\"page_title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"," ;
+			ret += "\"page_latest\":\"" + i->meta.timestamp + "\"," ;
+			ret += "\"page_len\":\"" + ui2s(i->meta.size) + "\"" ;
+			ret += "}" ;
+		}
+		
+		ret += "]" ;
+		ret += "}" ;
 	}
+	
+	
+	
 	if ( !callback.empty() ) ret += ")" ;
 	
 	return ret ;

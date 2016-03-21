@@ -169,17 +169,17 @@ public:
 		pages.swap ( pl.pages ) ;
 	}
 	void customSort ( uint8_t mode , bool ascending ) ;
+	virtual bool error ( string s ) { return false ; }
 	
 	string wiki ;
 	vector <TPage> pages ;
-	virtual bool error ( string s ) { return false ; }
+	map <int16_t,string> ns_canonical , ns_local ;
 protected:
 	void loadNamespaces () ;
 	bool is_sorted = false ;
 	bool namespaces_loaded = false ;
 	void sort() ;
 	map <string,int16_t> ns_string2id ;
-	map <int16_t,string> ns_canonical , ns_local ;
 } ;
 
 

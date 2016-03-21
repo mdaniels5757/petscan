@@ -9,6 +9,8 @@ var default_params = {
 	'sortby':'none',
 	'depth':'0',
 	'wikidata_item':'no',
+	'output_compatability':'catscan',
+	'interface_language':'en',
 	'sortorder':'ascending'
 } ;
 
