@@ -80,9 +80,9 @@ div.form-group.row > label:first-child {
 
 <ul class="nav nav-tabs" role="tablist">
 	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span class='l_categories'></span></a></li>
-	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_pageprops" role="tab"><span class='l_page_props'>!Page properties</span></a></li>
-	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'>!Templates&links</span></a></li>
-	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span class='l_output'>!Output</span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_pageprops" role="tab"><span class='l_page_props'></span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'></span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span class='l_output'></span></a></li>
 </ul>
 
 <div class="tab-content">
@@ -92,7 +92,7 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_language"></label>
 <div class="col-sm-4"><input type="text" class="form-control" name="language" value='en'></div>
-<div class="col-sm-6"><span class='smaller'>!Use "commons/wikimedia" or "www/wikidata" for the respective projects</span></div>
+<div class="col-sm-6"><span class='smaller' class='l_projects_note'></span></div>
 </div>
 
 <div class="form-group row">
@@ -220,7 +220,7 @@ div.form-group.row > label:first-child {
 </div>
 
 <div class="form-group row">
-<label class="col-sm-2 form-control-label">!Sort order</label>
+<label class="col-sm-2 form-control-label l_sort_order"></label>
 <div class="col-sm-10">
 <div class="radio-inline"><label><input type="radio" name="sortorder" value="ascending"><span class="l_sort_ascending"></label></div>
 <div class="radio-inline"><label><input type="radio" name="sortorder" value="descending"><span class="l_sort_descending"></label></div>
@@ -229,7 +229,7 @@ div.form-group.row > label:first-child {
 
 
 <div class="form-group row">
-<label class="col-sm-2 form-control-label">!Files</label>
+<label class="col-sm-2 form-control-label l_files"></label>
 <div class="col-sm-10">
 <label><input type='checkbox' name='ext_image_data' /> <span class='l_ext_image_data'></span></label>
 <label><input type='checkbox' name='file_usage_data' /> <span class='l_file_usage_data'></span></label>
@@ -240,10 +240,10 @@ div.form-group.row > label:first-child {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_wikidata"></label>
 <div class="col-sm-10">
-<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="no"><span class="l_edits_no">Do not get Wikidata items</label></div>
-<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="any"><span class="l_wikidata_any">!Items, where available</label></div>
-<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="with"><span class="l_wikidata_with">!Only pages with item</label></div>
-<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="without"><span class="l_wikidata_without">!Only pages without item</label></div>
+<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="no"><span class="l_wikidata_no"></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="any"><span class="l_wikidata_any"></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="with"><span class="l_wikidata_with"></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="wikidata_item" value="without"><span class="l_wikidata_without"></span></label></div>
 </div>
 </div>
 

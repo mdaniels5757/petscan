@@ -117,13 +117,13 @@ function setInterfaceLanguage ( l ) {
 		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
 		$('.l_'+k).html ( v ) ;
 	} ) ;
-	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan2/'+l } ) ;
-	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan2/Interface#'+l.toUpperCase() } ) ;
+	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
+	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
 	return false ;
 }
 
 function loadInterface ( init_lang ) {
-	$.getJSON ( 'https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=CatScan2/Interface&format=json&callback=?' , function ( d ) {
+	$.getJSON ( 'https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=?' , function ( d ) {
 		var wt = d.parse.wikitext['*'] ;
 		var rows = wt.split("\n") ;
 		var lang = '' ;
