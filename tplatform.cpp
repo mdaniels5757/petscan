@@ -268,21 +268,88 @@ string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
 	ret += "{| border=1 class='wikitable'\n" ;
 	ret += "!Title !! Page ID !! Namespace !! Size (bytes) !! Last change" ;
 	if ( show_wikidata_item ) ret += " !! Wikidata" ;
+
+	if ( file_data ) {
+		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += " !! " + (*k) ;
+	}
+	
 	ret += "\n" ;
 	
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		ret += "|-\n" ;
-		ret += "| [[" + _2space(i->name) + "]]" ;
+		ret += "| [[:" + _2space(i->name) + "|]]" ;
 		ret += " || " + ui2s(i->meta.id) ;
 		ret += " || " + ui2s(i->meta.ns) ;
 		ret += " || " + ui2s(i->meta.size) ;
 		ret += " || " + i->meta.timestamp ;
-		if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += " || [[:d:Q" + ui2s(i->meta.q) + "|]]" ;
+
+		if ( show_wikidata_item ) {
+			ret += " ||" ;
+			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += "[[:d:Q" + ui2s(i->meta.q) + "|]]" ;
+		}
+
+		if ( file_data ) {
+			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+				ret += " || "  ;
+				string v = i->meta.getMisc(*k,"") ;
+				if ( *k == "img_user_text" && !v.empty() ) ret += "[[User:" + v + "|]]" ;
+				else ret += i->meta.getMisc(*k,"") ;
+			}
+		}
+//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+
 		ret += "\n" ;
 	}
 
-
 	ret += "|}\n" ;
+	return ret ;
+}
+
+string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
+	content_type = "text/tab-separated-values; charset=utf-8" ;
+
+	bool file_data = !getParam("ext_image_data","").empty() ;
+	bool file_usage = !getParam("file_usage_data","").empty() ;
+
+	string wdi = getParam("wikidata_item","no") ;
+	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
+
+	string ret ;
+	ret += "Title\tPage ID\tNamespace\tSize (bytes)\tLast change" ;
+	if ( show_wikidata_item ) ret += "\tWikidata" ;
+
+	if ( file_data ) {
+		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "\t" + (*k) ;
+	}
+	
+	ret += "\n" ;
+	
+	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
+		ret += _2space(i->name) ;
+		ret += "\t" + ui2s(i->meta.id) ;
+		ret += "\t" + ui2s(i->meta.ns) ;
+		ret += "\t" + ui2s(i->meta.size) ;
+		ret += "\t" + i->meta.timestamp ;
+
+		if ( show_wikidata_item ) {
+			ret += "\t" ;
+			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += "Q" + ui2s(i->meta.q) ;
+		}
+
+		if ( file_data ) {
+			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+				ret += "\t" + i->meta.getMisc(*k,"") ;
+			}
+		}
+//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+
+		ret += "\n" ;
+	}
+
+	if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
+//		ret += "\n\nhttps://petscan.wmflabs.org/?" + query ;
+	}
+	
 	return ret ;
 }
 
@@ -490,6 +557,7 @@ string TPlatform::renderPageList ( TPageList &pagelist ) {
 	
 	if ( format == "json" ) return renderPageListJSON ( pagelist ) ;
 	else if ( format == "wiki" ) return renderPageListWiki ( pagelist ) ;
+	else if ( format == "tsv" ) return renderPageListTSV ( pagelist ) ;
 	else return renderPageListHTML ( pagelist ) ;
 	
 	return "" ;

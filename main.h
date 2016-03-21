@@ -270,6 +270,7 @@ protected:
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string renderPageListJSON ( TPageList &pagelist ) ;
 	string renderPageListWiki ( TPageList &pagelist ) ;
+	string renderPageListTSV ( TPageList &pagelist ) ;
 	
 	string getLink ( TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
