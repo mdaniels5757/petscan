@@ -1,7 +1,7 @@
 #include "main.h"
 #include <set>
 
-string TPage::getNameWithoutNamespace() {
+const string TPage::getNameWithoutNamespace() {
 	if ( meta.ns == 0 ) return name ;
 	return name.substr ( name.find_first_of(':')+1 ) ;
 }
@@ -51,8 +51,8 @@ void TPageList::customSort ( uint8_t mode , bool ascending ) {
 
 	switch ( mode ) {
 		case PAGE_SORT_DEFAULT : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.id<b.meta.id;} ) ; break ;
-		case PAGE_SORT_TITLE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.name<b.name;} ) ; break ; // FIXME namespaces
-		case PAGE_SORT_NS_TITLE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.name<b.name;} ) ; break ; // FIXME namespaces
+		case PAGE_SORT_TITLE : std::sort ( pages.begin() , pages.end() , [](TPage a,TPage b){return a.getNameWithoutNamespace()<b.getNameWithoutNamespace();} ) ; break ; // FIXME const
+		case PAGE_SORT_NS_TITLE : std::sort ( pages.begin() , pages.end() , [](TPage a,TPage b){return a.meta.ns!=b.meta.ns?(a.meta.ns<b.meta.ns):(a.getNameWithoutNamespace()<b.getNameWithoutNamespace());} ) ; break ; // FIXME const
 		case PAGE_SORT_SIZE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.size<b.meta.size;} ) ; break ;
 		case PAGE_SORT_DATE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.timestamp<b.meta.timestamp;} ) ; break ;
 	}

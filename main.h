@@ -136,7 +136,7 @@ public:
 	TPage ( string s ) { name = s ; }
 	TPage ( string s , int ns = 0 ) { name = space2_(s) ; meta.ns = ns ; }
 	
-	string getNameWithoutNamespace() ;
+	const string getNameWithoutNamespace() ;
 	
 	string name ;
 	TPageMetadata meta ;
