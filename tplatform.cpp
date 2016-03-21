@@ -327,12 +327,14 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 
 string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	string ret ;
-	string mode = "catscan" ;
+	string mode = getParam("output_compatability","catscan") ;
+	string callback = getParam("callback","") ;
 	content_type = "application/json; charset=utf-8" ;
 
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = !getParam("file_usage_data","").empty() ;
 	
+	if ( !callback.empty() ) ret += callback + "(" ;
 	if ( mode == "catscan" ) {
 		char tmp[100] ;
 		sprintf ( tmp , "%f" , querytime ) ;
@@ -370,6 +372,7 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += "}]" ;
 		ret += "}" ;
 	}
+	if ( !callback.empty() ) ret += ")" ;
 	
 	return ret ;
 }
