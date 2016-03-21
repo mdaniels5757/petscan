@@ -8,6 +8,7 @@ var default_params = {
 	'format':'html',
 	'sortby':'none',
 	'depth':'0',
+	'wikidata_item':'no',
 	'sortorder':'ascending'
 } ;
 

@@ -182,13 +182,19 @@ bool TSourceDatabase::parseCategoryList ( TWikidataDB &db , vector <TSourceDatab
 	return !( output.empty() || output[0].empty() ) ;
 }
 
-string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page ) {
+string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page , bool find_not ) {
 	string ret ;
 	
+	// NOTE: uses different mechanisms
 	if ( use_talk_page ) {
+		if ( find_not ) ret += " AND NOT EXISTS " ;
+		else ret += " AND EXISTS " ;
 		ret += "(SELECT * FROM templatelinks,page pt WHERE MOD(p.page_namespace,2)=0 AND pt.page_title=p.page_title AND pt.page_namespace=p.page_namespace+1 AND tl_from=pt.page_id AND tl_namespace=10 AND tl_title" ;
 	} else {
-		ret += "(SELECT * FROM templatelinks WHERE tl_from=page_id AND tl_namespace=10 AND tl_title" ;
+		if ( find_not ) ret += " AND p.page_id NOT IN " ;
+		else ret += " AND p.page_id IN " ;
+		ret += "(SELECT DISTINCT tl_from FROM templatelinks WHERE tl_namespace=10 AND tl_title" ;
+//		ret += "(SELECT * FROM templatelinks WHERE tl_from=page_id AND tl_namespace=10 AND tl_title" ;
 	}
 	
 	if ( input.size() > 1 ) {
@@ -292,18 +298,18 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( has_pos_templates ) {
 		// All
 		for ( auto i = params.templates_yes.begin() ; i != params.templates_yes.end() ; i++ ) {
-			sql += " AND EXISTS " + templateSubquery ( db , { db.escape(*i) } , params.templates_yes_talk_page ) ;
+			sql += templateSubquery ( db , { db.escape(*i) } , params.templates_yes_talk_page , false ) ;
 		}
 		
 		// Any
 		if ( !params.templates_any.empty() ) {
-			sql += " AND EXISTS " + templateSubquery ( db , params.templates_any , params.templates_any_talk_page ) ;
+			sql += templateSubquery ( db , params.templates_any , params.templates_any_talk_page , false ) ;
 		}
 	}
 	
 	// Negative templates
 	if ( !params.templates_no.empty() ) {
-		sql += " AND NOT EXISTS " + templateSubquery ( db , params.templates_no , params.templates_no_talk_page ) ;
+		sql += templateSubquery ( db , params.templates_no , params.templates_no_talk_page , true ) ;
 	}
 	
 	// Links from

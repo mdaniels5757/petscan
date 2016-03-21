@@ -237,7 +237,7 @@ protected:
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
 	string listEscapedStrings ( TWikidataDB &db , vector <string> &s ) ;
-	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page ) ;
+	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page , bool find_not ) ;
 	string linksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
 } ;
 

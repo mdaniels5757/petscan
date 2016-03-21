@@ -48,6 +48,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		vector <string> parts ;
 		split ( query , parts , '&' ) ;
 		for ( auto i = parts.begin() ; i != parts.end() ; i++ ) {
+			if ( i->empty() ) continue ;
 			vector <string> tmp ;
 			split ( *i , tmp , '=' , 2 ) ;
 			if ( tmp.size() == 1 ) tmp.push_back ( "" ) ;
