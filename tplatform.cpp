@@ -464,7 +464,9 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += "\"n\":\"result\"" + json_comma ;
 		ret += "\"a\":" + json_object_open + "\"querytime_sec\":" + string(tmp) ;
 		if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
-			ret += json_comma + "\"query\":\"" + MyJSON::escapeString ( "https://petscan.wmflabs.org/?" + query ) + "\"" ;
+			json url ( "https://petscan.wmflabs.org/?" + query ) ;
+			ret += json_comma + "\"query\":" + url.dump() ;
+			
 		}
 		ret += json_object_close + json_comma ;
 		ret += "\"*\":" + json_array_open + json_object_open ;
@@ -475,26 +477,28 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 			if ( i != pagelist.pages.begin() ) ret += json_comma ;
 			if ( sparse ) {
-				ret += "\"" + MyJSON::escapeString(i->name) + "\"" ;
+				json name ( i->name ) ;
+				ret += name.dump() ;
 			} else {
-				ret += json_object_open ;
-				ret += "\"n\":\"page\"," ;
-				ret += "\"title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"" + json_comma ;
-				ret += "\"id\":\"" + ui2s(i->meta.id) + "\"" + json_comma ;
-				ret += "\"namespace\":\"" + ui2s(i->meta.ns) + "\"" + json_comma ;
-				ret += "\"len\":\"" + ui2s(i->meta.size) + "\"" + json_comma ;
-				ret += "\"touched\":\"" + i->meta.timestamp + "\"" + json_comma ;
-				ret += "\"nstext\":\"" + MyJSON::escapeString(pagelist.getNamespaceString(i->meta.ns)) + "\"" ;
-				if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret +=  json_comma + "\"q\":\"Q" + ui2s(i->meta.q) + "\"" ;
-			
+				json o = {
+					{"n","page"},
+					{"title",i->getNameWithoutNamespace()},
+					{"id",i->meta.id},
+					{"namespace",i->meta.ns},
+					{"len",i->meta.size},
+					{"touched",i->meta.timestamp},
+					{"nstext",pagelist.getNamespaceString(i->meta.ns)}
+				} ;
+
+				if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) o["q"] = "Q" + ui2s(i->meta.q) ;
+				if ( file_usage ) o["gil"] = i->meta.getMisc("gil","") ;
 				if ( file_data ) {
 					for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
-						ret += json_comma + "\"" + (*k) + "\":\"" + MyJSON::escapeString(i->meta.getMisc(*k,"")) + "\"" ;
+						o[*k] = i->meta.getMisc(*k,"") ;
 					}
 				}
-				if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
-			
-				ret += json_object_close ;
+				
+				ret += o.dump();
 			}
 		}
 		ret += json_array_close ;

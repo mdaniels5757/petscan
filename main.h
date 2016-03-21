@@ -12,12 +12,14 @@
 #include <sstream>
 
 #include "myjson.h"
+#include "json.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <locale.h>
 #include <sys/time.h>
 
 using namespace std ;
+using json = nlohmann::json;
 
 
 #define NS_UNKNOWN -999
