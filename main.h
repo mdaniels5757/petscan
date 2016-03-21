@@ -24,6 +24,7 @@ using namespace std ;
 #define UNKNOWN_WIKIDATA_ITEM 0
 #define DB_PAGE_BATCH_SIZE 50000
 #define NS_FILE 6
+#define MAX_QUERY_OUTPUT_LENGTH 2000
 
 static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
@@ -262,12 +263,14 @@ public:
 	string getParam ( string key , string default_value = "" ) ;
 	
 	map <string,string> config , params ;
-	string content_type ;
+	string content_type , query ;
 
 protected:
 	string renderPageList ( TPageList &pagelist ) ;
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string renderPageListJSON ( TPageList &pagelist ) ;
+	string renderPageListWiki ( TPageList &pagelist ) ;
+	
 	string getLink ( TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 	void splitParamIntoVector ( string input , vector <string> &output ) ;

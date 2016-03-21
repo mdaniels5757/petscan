@@ -42,6 +42,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		
 		TPlatform platform ;
 		if ( !platform.readConfigFile ( CONFIG_FILE ) ) return ; // error
+		platform.query = query ;
 		
 		// Parse query into map
 		map <string,string> params ;
@@ -70,7 +71,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			type = platform.content_type ;
 
 			// Replace in HTML output
-			if ( type == "text/html" ) {
+			if ( platform.params["format"] == "html" ) {
 				string key ;
 				size_t pos ;
 

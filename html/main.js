@@ -10,7 +10,6 @@ var default_params = {
 	'depth':'0',
 	'wikidata_item':'no',
 	'output_compatability':'catscan',
-	'interface_language':'en',
 	'sortorder':'ascending'
 } ;
 

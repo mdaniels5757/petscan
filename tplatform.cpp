@@ -249,8 +249,45 @@ string TPlatform::getParam ( string key , string default_value ) {
 	return default_value ;
 }
 
+string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
+	content_type = "text/plain; charset=utf-8" ;
+
+	bool file_data = !getParam("ext_image_data","").empty() ;
+	bool file_usage = !getParam("file_usage_data","").empty() ;
+
+	string wdi = getParam("wikidata_item","no") ;
+	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
+
+	string ret ;
+	ret += "== " + getParam("combination") + " ==\n" ;
+
+	if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
+		ret += "[https://petscan.wmflabs.org/?" + query + " Regenerate this table].\n\n" ;
+	}
+	
+	ret += "{| border=1 class='wikitable'\n" ;
+	ret += "!Title !! Page ID !! Namespace !! Size (bytes) !! Last change" ;
+	if ( show_wikidata_item ) ret += " !! Wikidata" ;
+	ret += "\n" ;
+	
+	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
+		ret += "|-\n" ;
+		ret += "| [[" + _2space(i->name) + "]]" ;
+		ret += " || " + ui2s(i->meta.id) ;
+		ret += " || " + ui2s(i->meta.ns) ;
+		ret += " || " + ui2s(i->meta.size) ;
+		ret += " || " + i->meta.timestamp ;
+		if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += " || [[:d:Q" + ui2s(i->meta.q) + "|]]" ;
+		ret += "\n" ;
+	}
+
+
+	ret += "|}\n" ;
+	return ret ;
+}
+
 string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
-	content_type = "text/html" ;
+	content_type = "text/html; charset=utf-8" ;
 
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = !getParam("file_usage_data","").empty() ;
@@ -329,8 +366,26 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	string ret ;
 	string mode = getParam("output_compatability","catscan") ;
 	string callback = getParam("callback","") ;
+	bool sparse = !getParam("sparse","").empty() ;
+	bool pretty = !getParam("json-pretty","").empty() ;
 	char tmp[100] ;
+
+	string json_array_open = "[" ;
+	string json_array_close = "]" ;
+	string json_object_open = "{" ;
+	string json_object_close = "}" ;
+	string json_comma = "," ;
+
 	content_type = "application/json; charset=utf-8" ;
+	if ( pretty ) {
+		content_type = "text/html; charset=utf-8" ;
+		ret += "<!DOCTYPE html>\n<html><meta><meta charset='utf-8'/></meta><body><pre>" ;
+		json_array_open = "[\n<div style='margin-left:20px'>" ;
+		json_array_close = "</div>]" ;
+		json_object_open = "{\n<div style='margin-left:20px'>" ;
+		json_object_close = "</div>}" ;
+		json_comma = ",\n" ;
+	}
 
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = !getParam("file_usage_data","").empty() ;
@@ -338,72 +393,90 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 	if ( !callback.empty() ) ret += callback + "(" ;
 	if ( mode == "catscan" ) {
 		sprintf ( tmp , "%f" , querytime ) ;
-		ret += "{" ;
-		ret += "\"n\":\"result\"," ;
-		ret += "\"a\":{\"querytime_sec\":" + string(tmp) + "}," ;
-		ret += "\"*\":[{" ;
-		ret += "\"n\":\"combination\"," ;
-		ret += "\"a\":{" ;
-		ret += "\"type\":\"" + getParam("combination","subset") + "\"," ;
-		ret += "\"*\":[" ;
-		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
-			if ( i != pagelist.pages.begin() ) ret += "," ;
-			ret += "{" ;
-			ret += "\"n\":\"page\"," ;
-			ret += "\"title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"," ;
-			ret += "\"id\":\"" + ui2s(i->meta.id) + "\"," ;
-			ret += "\"namespace\":\"" + ui2s(i->meta.ns) + "\"," ;
-			ret += "\"len\":\"" + ui2s(i->meta.size) + "\"," ;
-			ret += "\"touched\":\"" + i->meta.timestamp + "\"," ;
-			ret += "\"nstext\":\"" + MyJSON::escapeString(pagelist.getNamespaceString(i->meta.ns)) + "\"" ;
-			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += ",\"q\":\"Q" + ui2s(i->meta.q) + "\"" ;
-			
-			if ( file_data ) {
-				for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
-					ret += ",\"" + (*k) + "\":\"" + MyJSON::escapeString(i->meta.getMisc(*k,"")) + "\"" ;
-				}
-			}
-			if ( file_usage ) ret += ",\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
-			
-			ret += "}" ;
+		ret += json_object_open ;
+		ret += "\"n\":\"result\"" + json_comma ;
+		ret += "\"a\":" + json_object_open + "\"querytime_sec\":" + string(tmp) ;
+		if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
+			ret += json_comma + "\"query\":\"" + MyJSON::escapeString ( "https://petscan.wmflabs.org/?" + query ) + "\"" ;
 		}
-		ret += "]" ;
-		ret += "}" ;
-		ret += "}]" ;
-		ret += "}" ;
-	} else if ( mode == "quick_intersection" ) {
+		ret += json_object_close + json_comma ;
+		ret += "\"*\":" + json_array_open + json_object_open ;
+		ret += "\"n\":\"combination\"" + json_comma ;
+		ret += "\"a\":" + json_object_open ;
+		ret += "\"type\":\"" + getParam("combination","subset") + "\"" + json_comma ;
+		ret += "\"*\":"+json_array_open ;
+		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
+			if ( i != pagelist.pages.begin() ) ret += json_comma ;
+			if ( sparse ) {
+				ret += "\"" + MyJSON::escapeString(i->name) + "\"" ;
+			} else {
+				ret += json_object_open ;
+				ret += "\"n\":\"page\"," ;
+				ret += "\"title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"" + json_comma ;
+				ret += "\"id\":\"" + ui2s(i->meta.id) + "\"" + json_comma ;
+				ret += "\"namespace\":\"" + ui2s(i->meta.ns) + "\"" + json_comma ;
+				ret += "\"len\":\"" + ui2s(i->meta.size) + "\"" + json_comma ;
+				ret += "\"touched\":\"" + i->meta.timestamp + "\"" + json_comma ;
+				ret += "\"nstext\":\"" + MyJSON::escapeString(pagelist.getNamespaceString(i->meta.ns)) + "\"" ;
+				if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret +=  json_comma + "\"q\":\"Q" + ui2s(i->meta.q) + "\"" ;
+			
+				if ( file_data ) {
+					for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+						ret += json_comma + "\"" + (*k) + "\":\"" + MyJSON::escapeString(i->meta.getMisc(*k,"")) + "\"" ;
+					}
+				}
+				if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+			
+				ret += json_object_close ;
+			}
+		}
+		ret += json_array_close ;
+		ret += json_object_close ;
+		ret += json_object_close + json_array_close ;
+		ret += json_object_close ;
+	} else if ( mode == "quick-intersection" ) {
 		string dummy = pagelist.getNamespaceString(0); // Dummy to force namespace loading
-		ret += "{" ;
-		ret += "\"namespaces\":{" ;
+		ret += json_object_open ;
+		ret += "\"namespaces\":"+json_object_open ;
 		for ( auto i = pagelist.ns_local.begin() ; i != pagelist.ns_local.end() ; i++ ) {
-			if ( i != pagelist.ns_local.begin() ) ret += "," ;
+			if ( i != pagelist.ns_local.begin() ) ret += json_comma ;
 			sprintf ( tmp , "\"%d\":\"" , i->first ) ;
 			ret += tmp + MyJSON::escapeString(i->second) + "\"" ;
 		}
-		ret += "}" ;
-		ret += ",\"status\":\"OK\"" ;
+		ret += json_object_close ;
+		ret += ",\"status\":\"OK\"" + json_comma ;
+		if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
+			ret += "\"query\":\"" + MyJSON::escapeString ( "https://petscan.wmflabs.org/?" + query ) + "\"" + json_comma ;
+		}
 		sprintf ( tmp , "%f" , querytime ) ;
-		ret += ",\"querytime\":\"" + string(tmp) + "s\"" ;
-		ret += ",\"pagecount\":\"" + ui2s(pagelist.size()) + "\"" ;
-		ret += ",\"pages\":[" ;
+		ret += "\"start\":\"0\"" + json_comma ;
+		ret += "\"max\":\"" + ui2s(pagelist.size()+1) + "\"" + json_comma ;
+		ret += "\"querytime\":\"" + string(tmp) + "s\"" + json_comma ;
+		ret += "\"pagecount\":\"" + ui2s(pagelist.size()) + "\"" + json_comma ;
+		ret += "\"pages\":" ;
+		ret += json_array_open ;
 
 		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
-			if ( i != pagelist.pages.begin() ) ret += "," ;
-			ret += "{" ;
-			ret += "\"page_id\":\"" + ui2s(i->meta.id) + "\"," ;
-			ret += "\"page_namespace\":\"" + ui2s(i->meta.ns) + "\"," ;
-			ret += "\"page_title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"," ;
-			ret += "\"page_latest\":\"" + i->meta.timestamp + "\"," ;
-			ret += "\"page_len\":\"" + ui2s(i->meta.size) + "\"" ;
-			ret += "}" ;
+			if ( i != pagelist.pages.begin() ) ret += json_comma ;
+			if ( sparse ) {
+				ret += "\"" + MyJSON::escapeString(i->name) + "\"" ;
+			} else {
+				ret += json_object_open ;
+				ret += "\"page_id\":\"" + ui2s(i->meta.id) + "\"" + json_comma ;
+				ret += "\"page_namespace\":\"" + ui2s(i->meta.ns) + "\"" + json_comma ;
+				ret += "\"page_title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"" + json_comma ;
+				ret += "\"page_latest\":\"" + i->meta.timestamp + "\"" + json_comma ;
+				ret += "\"page_len\":\"" + ui2s(i->meta.size) + "\"" ;
+				ret += json_object_close ;
+			}
 		}
 		
-		ret += "]" ;
-		ret += "}" ;
+		ret += json_array_close ;
+		ret += json_object_close ;
 	}
 	
 	
-	
+	if ( pretty ) ret += "</pre></body></html>" ;
 	if ( !callback.empty() ) ret += ")" ;
 	
 	return ret ;
@@ -416,6 +489,7 @@ string TPlatform::renderPageList ( TPageList &pagelist ) {
 	content_type = "text/html; charset=utf-8" ; // Default
 	
 	if ( format == "json" ) return renderPageListJSON ( pagelist ) ;
+	else if ( format == "wiki" ) return renderPageListWiki ( pagelist ) ;
 	else return renderPageListHTML ( pagelist ) ;
 	
 	return "" ;

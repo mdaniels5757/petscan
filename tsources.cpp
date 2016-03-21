@@ -363,7 +363,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
-	cout << sql << endl ;
+//	cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
