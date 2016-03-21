@@ -1,4 +1,5 @@
 #include "main.h"
+#include <set>
 
 string TPage::getNameWithoutNamespace() {
 	if ( meta.ns == 0 ) return name ;
@@ -256,9 +257,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	string sql ;
 	
 	if ( primary == "categories" ) {
-		// TODO union, list
 		if ( params.combine == "subset" ) {
-	//		sql = "SELECT DISTINCT p.*" ;
 			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 
 	//		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
@@ -273,23 +272,40 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 				sql += ")" ;
 			}
 
-			sql += " INNER JOIN (page p" ;
-		//	if ( $giu ) $sql .= ",globalimagelinks g" ;
-			sql += ") on p.page_id=cl0.cl_from" ;
-		
-			if ( params.page_namespace_ids.size() > 0 ) {
-				sql += " AND p.page_namespace IN(" ;
-				for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
-					if ( i != params.page_namespace_ids.begin() ) sql += "," ;
-					char tmp[200] ;
-					sprintf ( tmp , "%d" , *i ) ;
-					sql += tmp ;
-				}
-				sql += ")" ;
+		} else if ( params.combine == "union" ) {
+			cout << "UNION!\n" ;
+			
+			// Merge and unique subcat list
+			vector <string> tmp ;
+			for ( uint32_t a = 0 ; a < cat_pos.size() ; a++ ) {
+				tmp.insert ( tmp.end() , cat_pos[a].begin() , cat_pos[a].end() ) ;
 			}
-		
-		//	if ( $giu ) $sql .= " AND gil_to=page_title" ;
+			set <string> s ( tmp.begin() , tmp.end() ) ;
+			tmp.assign ( s.begin() , s.end() ) ;
+			
+			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
+			sql += listEscapedStrings ( db , tmp ) ;
+			sql += ")) cl0" ;
+			cout << sql << endl ;
 		}
+
+		sql += " INNER JOIN (page p" ;
+		sql += ") on p.page_id=cl0.cl_from" ;
+	
+		if ( params.page_namespace_ids.size() > 0 ) {
+			sql += " AND p.page_namespace IN(" ;
+			for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
+				if ( i != params.page_namespace_ids.begin() ) sql += "," ;
+				char tmp[200] ;
+				sprintf ( tmp , "%d" , *i ) ;
+				sql += tmp ;
+			}
+			sql += ")" ;
+		}
+	
+
+
 	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 		sql += " FROM page WHERE 1=1" ;
@@ -335,12 +351,8 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
 
-
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
-//	if ( $giu ) $sql .= ",gil_wiki,gil_page" ;
-//	sql += " ORDER BY cl0.cl_sortkey" ;
-
-	cout << sql << endl ;
+//	cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
