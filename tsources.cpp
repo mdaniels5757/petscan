@@ -1,5 +1,12 @@
 #include "main.h"
 #include <set>
+#include <time.h>
+
+// Zero-pad
+string pad ( string s , int num = 2 ) {
+	while ( s.length() < num ) s = "0" + s ;
+	return s ;
+}
 
 const string TPage::getNameWithoutNamespace() {
 	if ( meta.ns == 0 ) return name ;
@@ -243,7 +250,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( *platform , wiki ) ;
-	
+
 	vector <vector<string> > cat_pos , cat_neg ;
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
 	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
@@ -259,12 +266,17 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		return false ;
 	}
 	
+	string lc ;
+	if ( params.minlinks > -1 || params.maxlinks > -1 ) {
+		lc = ",(SELECT count(*) FROM pagelinks WHERE pl_from=p.page_id) AS link_count" ;
+	}
+	
 	string sql ;
 	
 	if ( primary == "categories" ) {
 		if ( params.combine == "subset" ) {
 			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
-
+			sql += lc ;
 	//		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
 			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
 			sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
@@ -278,7 +290,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 			}
 
 		} else if ( params.combine == "union" ) {
-			cout << "UNION!\n" ;
 			
 			// Merge and unique subcat list
 			vector <string> tmp ;
@@ -289,6 +300,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 			tmp.assign ( s.begin() , s.end() ) ;
 			
 			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+			sql += lc ;
 			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
 			sql += listEscapedStrings ( db , tmp ) ;
 			sql += ")) cl0" ;
@@ -357,18 +369,54 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user!=0)" ;
 	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
 	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
-//	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedrevs WHERE fr_rev_id=page_latest AND fr_page_id=page_id)" ;
-//	if ( params.last_edit_flagged == "no" ) sql += " AND NOT EXISTS (SELECT * FROM flaggedrevs WHERE fr_rev_id=page_latest AND fr_page_id=page_id)" ;
 	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
 	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
+	
+	
+	if ( !params.max_age.empty() ) {
+		time_t now = time(0) ; // Seconds
+		int hours = atoi ( params.max_age.c_str() ) ; // Hours
+		now -= hours*60*60 ;
+		struct tm *utc = gmtime ( &now ) ; // Will apparently be deleted by system later on
+		string after = ui2s(utc->tm_year+1900) + pad(ui2s(utc->tm_mon+1),2) + pad(ui2s(utc->tm_mday),2) + pad(ui2s(utc->tm_hour)) + pad(ui2s(utc->tm_min)) + pad(ui2s(utc->tm_sec)) ;
+		params.before = "" ;
+		params.after = after ;
+	}
+	
+	
+	if ( params.only_new_since ) {
+		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+	} else {
+		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+	}
 
 
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
+	if ( params.larger > -1 ) sql += " AND p.page_len>=" + ui2s(params.larger) ;
+	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
+	
+cout << ">> " << params.larger << endl ;
 
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
-//	cout << sql << endl ;
+
+	vector <string> having ;	
+	if ( params.minlinks > -1 ) having.push_back ( "link_count>=" + ui2s(params.minlinks) ) ;
+	if ( params.maxlinks > -1 ) having.push_back ( "link_count<=" + ui2s(params.maxlinks) ) ;
+
+	if ( !having.empty() ) {
+		sql += " HAVING" ;
+		for ( auto i = having.begin() ; i != having.end() ; i++ ) {
+			sql += i == having.begin() ? " " : " AND " ;
+			sql += *i ;
+		}
+	}
+	
+	
+	cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);

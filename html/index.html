@@ -133,6 +133,47 @@ div.form-group.row > label:first-child {
 <div class="col-sm-10" id='namespaces'></div>
 </div>
 
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"><span class='l_size'></span></label>
+<div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_larger"></div><input class="form-control" name="larger" placeholder="(bytes)" value="" type="text"></div>
+</div><div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_smaller"></div><input class="form-control" name="smaller" placeholder="(bytes)" value="" type="text"></div>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"><span class='l_link_number'></span></label>
+<div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_minlinks"></div><input class="form-control" name="minlinks" placeholder="#" value="" type="text"></div>
+</div><div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_maxlinks"></div><input class="form-control" name="maxlinks" placeholder="#" value="" type="text"></div>
+</div>
+</div>
+
+
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"><span class='l_edits'></span></label>
+<div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_before"></div><input class="form-control" name="before" placeholder="YYYYMMDDHHMMSS (shorter allowed)" value="" type="text"></div>
+</div><div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_after"></div><input class="form-control" name="after" placeholder="YYYYMMDDHHMMSS (shorter allowed)" value="" type="text"></div>
+</div></div>
+<div class="form-group row">
+<div class="col-sm-2">
+</div><div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_max_age"></div><input class="form-control" name="max_age" placeholder="hours since current UTC time" value="" type="text"></div>
+</div><div class="col-sm-6">
+<label><input type='checkbox' name='only_new' /> <span class='l_only_new'></span></label>
+</div>
+</div>
+
+
+
+
+
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_show_redirects"></label>
 <div class="col-sm-4">
@@ -167,8 +208,8 @@ div.form-group.row > label:first-child {
 <div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="yes"> <span class='l_edits_yes'></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="edits[flagged]" value="no"> <span class='l_edits_no'></span></label></div>
 </div>
-
 </div>
+
 
 </div> <!--tab panel-->
 
@@ -288,6 +329,7 @@ Sort
 
 
 <input type='hidden' name='interface_language' value='en' />
+<input type='hidden' name='active_tab' value='' />
 <span id='querystring' style='display:none'><!--querystring--></span>
 </form>
 

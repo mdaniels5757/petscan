@@ -71,6 +71,17 @@ string TPlatform::process () {
 	// Add misc
 	db_params.redirects = getParam("show_redirects","both") ;
 	db_params.combine = getParam("combination","subset") ;
+	db_params.larger = atoi ( getParam("larger","-1",true).c_str() ) ;
+	db_params.smaller = atoi ( getParam("smaller","-1",true).c_str() ) ;
+	db_params.minlinks = atoi ( getParam("minlinks","-1",true).c_str() ) ;
+	db_params.maxlinks = atoi ( getParam("maxlinks","-1",true).c_str() ) ;
+
+	// Time/date range
+	db_params.before = getParam("before","") ;
+	db_params.after = getParam("after","") ;
+	db_params.max_age = getParam("max_age","") ;
+	if ( getParam("only_new" ,"") != "" ) db_params.only_new_since  = true ;
+	
 
 	// Add linked from
 	splitParamIntoVector ( getParam("outlinks_yes","") , db_params.linked_from_all ) ;
@@ -245,9 +256,12 @@ string TPlatform::getWiki () {
 	return l+p ;
 }
 
-string TPlatform::getParam ( string key , string default_value ) {
+string TPlatform::getParam ( string key , string default_value , bool ignore_empty ) {
 	auto i = params.find(key) ;
-	if ( i != params.end() ) return i->second ;
+	if ( i != params.end() ) {
+		if ( ignore_empty && i->second.empty() ) return default_value ;
+		return i->second ;
+	}
 	return default_value ;
 }
 
@@ -508,6 +522,7 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += json_object_close + json_array_close ;
 		ret += json_object_close ;
 	} else if ( mode == "quick-intersection" ) {
+//		bool group_by_key = !getParam("group_by_key","").empty() ; // Not supported
 		string dummy = pagelist.getNamespaceString(0); // Dummy to force namespace loading
 		ret += json_object_open ;
 		ret += "\"namespaces\":"+json_object_open ;

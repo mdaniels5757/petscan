@@ -232,6 +232,9 @@ public:
 	string last_edit_bot = "either" ;
 	string last_edit_anon = "either" ;
 	string last_edit_flagged = "either" ;
+	int32_t larger , smaller , minlinks , maxlinks ;
+	string before , after , max_age ;
+	bool only_new_since = false ;
 } ;
 
 class TSourceDatabase : public TSource {
@@ -256,7 +259,7 @@ public:
 	bool error ( string s ) { cout << s << endl ; return false ; } ;
 	string process() ;
 	string getWiki () ;
-	string getParam ( string key , string default_value = "" ) ;
+	string getParam ( string key , string default_value = "" , bool ignore_empty = false ) ;
 	
 	map <string,string> config , params ;
 	string content_type , query ;

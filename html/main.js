@@ -10,6 +10,7 @@ var default_params = {
 	'depth':'0',
 	'wikidata_item':'no',
 	'output_compatability':'catscan',
+	'active_tab':'tab_categories',
 	'sortorder':'ascending'
 } ;
 
@@ -106,6 +107,11 @@ function applyParameters () {
 	
 	var q = $('#querystring').text() ;
 	if ( q != '' ) setPermalink ( q ) ;
+
+	if ( typeof params.active_tab != 'undefined' ) {
+		var tab = '#' + params.active_tab.replace(/ /g,'_') ; //$('input[name="active_tab"]').val() ;
+		$('#main_form ul.nav-tabs a[href="'+tab+'"').click() ;
+	}
 	
 	$('body').show() ;
 }
@@ -250,6 +256,7 @@ $(document).ready ( function () {
 	if ( typeof p.get_q != 'undefined' ) p.wikidata_item = 'any' ;
 	if ( typeof p.wikidata != 'undefined' ) p.wikidata_item = 'any' ;
 	if ( typeof p.wikidata_no_item != 'undefined' ) p.wikidata_item = 'without' ;
+	if ( typeof p.giu != 'undefined' ) p.file_usage_data = 'on' ;
 	
 	
 
@@ -264,6 +271,13 @@ $(document).ready ( function () {
 		$('#main_form').submit() ;
 	} ) ;
 	
+	$('#main_form ul.nav-tabs a').click ( function (e) {
+		e.preventDefault() ;
+		var o = $(this) ;
+		$('input[name="active_tab"]').val ( o.attr('href').replace(/^\#/,'') ) ;
+//		return false ;
+	} ) ;
+	
 	$('#tab-list').click ( function () {
 		if ( $('#main_form div.tab-pane').length > 0 ) {
 			$('#tab-list').text ( "Tabs" ) ;
@@ -275,4 +289,5 @@ $(document).ready ( function () {
 			$('#main_form div.former-tab-pane').addClass('tab-pane').removeClass('former-tab-pane') ;
 		}
 	} ) ;
+	
 } ) ;

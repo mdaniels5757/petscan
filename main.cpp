@@ -34,7 +34,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		cout << "Unknown method " << method << endl ;
 		return ;
 	}
-//	cout << "!!: " << path << " with " << query << endl ;
+
+	if ( path == "/" ) cout << path << " | " << query << endl ;
 	
 	if ( path == "/" && !query.empty() ) {
 	
@@ -55,7 +56,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			if ( tmp.size() == 1 ) tmp.push_back ( "" ) ;
 			tmp[0] = urldecode ( tmp[0] ) ;
 			tmp[1] = urldecode ( tmp[1] ) ;
-			cout << "  " << tmp[0] << " = " << tmp[1] << endl ;
+//			cout << "  " << tmp[0] << " = " << tmp[1] << endl ;
 			platform.params[tmp[0]] = tmp[1] ;
 		}
 
