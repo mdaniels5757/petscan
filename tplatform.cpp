@@ -1,4 +1,5 @@
 #include "main.h"
+#include <fstream>
 
 void TPlatform::parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) {
 	vector <string> pos ;
@@ -517,7 +518,8 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += json_object_close ;
 		ret += ",\"status\":\"OK\"" + json_comma ;
 		if ( query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
-			ret += "\"query\":\"" + MyJSON::escapeString ( "https://petscan.wmflabs.org/?" + query ) + "\"" + json_comma ;
+			json url ( "https://petscan.wmflabs.org/?" + query ) ;
+			ret += "\"query\":" + url.dump() + json_comma ;
 		}
 		sprintf ( tmp , "%f" , querytime ) ;
 		ret += "\"start\":\"0\"" + json_comma ;
@@ -530,15 +532,17 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 			if ( i != pagelist.pages.begin() ) ret += json_comma ;
 			if ( sparse ) {
-				ret += "\"" + MyJSON::escapeString(i->name) + "\"" ;
+				json name ( i->name ) ;
+				ret += name.dump() ;
 			} else {
-				ret += json_object_open ;
-				ret += "\"page_id\":\"" + ui2s(i->meta.id) + "\"" + json_comma ;
-				ret += "\"page_namespace\":\"" + ui2s(i->meta.ns) + "\"" + json_comma ;
-				ret += "\"page_title\":\"" + MyJSON::escapeString(i->getNameWithoutNamespace()) + "\"" + json_comma ;
-				ret += "\"page_latest\":\"" + i->meta.timestamp + "\"" + json_comma ;
-				ret += "\"page_len\":\"" + ui2s(i->meta.size) + "\"" ;
-				ret += json_object_close ;
+				json o = {
+					{"page_id",i->meta.id},
+					{"page_namespace",i->meta.ns},
+					{"page_title",i->getNameWithoutNamespace()},
+					{"page_latest",i->meta.timestamp},
+					{"page_len",i->meta.size}
+				} ;
+				ret += o.dump() ;
 			}
 		}
 		
@@ -579,14 +583,8 @@ string TPlatform::getLink ( TPage &page ) {
 }
 
 bool TPlatform::readConfigFile ( string filename ) {
-	char *buffer = loadFileFromDisk ( filename ) ;
-	MyJSON j ( buffer ) ;
-	free (buffer);
-	
-	for ( auto i = j.o.begin() ; i != j.o.end() ; i++ ) {
-		if ( i->first == "" ) continue ;
-		config[i->first] = i->second.s ;
-	}
-
+	ifstream in ( filename.c_str() ) ;
+	json j ( in ) ;
+	for ( auto i = j.begin() ; i != j.end() ; i++ ) config[i.key()] = i.value() ;
 	return true ;
 }
