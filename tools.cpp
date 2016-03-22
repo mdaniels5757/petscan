@@ -6,6 +6,8 @@ string getWikiServer ( string wiki ) {
 	if ( wiki == "wikidatawiki" ) return "www.wikidata.org" ;
 	if ( wiki == "commonswiki" ) return "commons.wikimedia.org" ;
 	if ( wiki == "metawiki" ) return "commons.wikimedia.org" ;
+	if ( wiki == "mediawikiwiki" ) return "www.mediawiki.org" ;
+	if ( wiki == "specieswiki" ) return "species.wikimedia.org" ;
 	
 	for ( size_t a = 0 ; a+3 < wiki.length() ; a++ ) {
 		if ( wiki[a]=='w' && wiki[a+1]=='i' && wiki[a+2]=='k' ) {
@@ -139,7 +141,7 @@ const std::string urldecode (
 //________________________________________________________________________________________________________________________
 
 
-bool loadJSONfromURL ( string url , MyJSON &j ) {
+bool loadJSONfromURL ( string url , json &j ) {
 	CURL *curl;
 	curl = curl_easy_init();
 	if ( !curl ) return false ;
@@ -152,15 +154,13 @@ bool loadJSONfromURL ( string url , MyJSON &j ) {
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "wdq-agent/1.0"); // fake agent
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "petscan-agent/1.0"); // fake agent
 	
 	CURLcode res = curl_easy_perform(curl);
 	if (res != CURLE_OK) return false ;
 	if ( chunk.size == 0 || !chunk.memory ) return false ;
 	
-	
 	char *text = chunk.memory ;
-//	if(chunk.memory) free(chunk.memory);
 	curl_easy_cleanup(curl);
 
 	if ( *text != '{' ) {
@@ -168,7 +168,8 @@ bool loadJSONfromURL ( string url , MyJSON &j ) {
 		return false ;
 	}
 	
-	j.parse ( text ) ;
+	j = json::parse ( text ) ;
+	
 	free ( text ) ;
 	return true ;
 }

@@ -27,20 +27,23 @@ void TPageList::loadNamespaces () {
 	if ( namespaces_loaded ) return ;
 	if ( wiki.empty() ) return ;
 	namespaces_loaded = true ;
+
 	// Load Namespace JSON
-	MyJSON j ;
+	json j ;
 	string url = "https://" + getWikiServer ( wiki ) + "/w/api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases&format=json" ;
 	if ( !loadJSONfromURL ( url , j ) ) return ;
 	
-	for ( auto i = j["query"]["namespaces"].o.begin() ; i != j["query"]["namespaces"].o.end() ; i++ ) {
-		uint16_t num = atoi ( i->first.c_str() ) ;
-		map <string,MyJSON> *v = &(i->second.o ) ;
-		if ( v->find("canonical") != v->end() ) {
-			ns_string2id[(*v)["canonical"].s] = num ;
-			ns_canonical[num] = (*v)["canonical"].s ;
+	for ( auto i = j["query"]["namespaces"].begin() ; i != j["query"]["namespaces"].end() ; i++ ) {
+		uint16_t num = atoi(i.key().c_str()) ;
+		auto v = i.value() ;
+		
+		if ( v["canonical"].is_string() ) {
+			ns_string2id[v["canonical"]] = num ;
+			ns_canonical[num] = v["canonical"] ;
 		}
-		ns_string2id[(*v)["*"].s] = num ;
-		ns_local[num] = (*v)["*"].s ;
+
+		ns_string2id[v["*"]] = num ;
+		ns_local[num] = v["*"] ;
 	}
 	
 	// TODO aliases
@@ -135,14 +138,16 @@ bool TSourceSPARQL::runQuery ( string query ) {
 	clear() ;
 	wiki = "wikidatawiki" ;
 	
-	MyJSON j ;
+	json j ;
 	string url = "https://query.wikidata.org/sparql?format=json&query=" + escapeURLcomponent ( sparql_prefixes + query ) ;
 	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
-
-	string item_key = j["head"]["vars"][0].s ;
-	pages.reserve ( j["results"]["bindings"].a.size() ) ;
-	for ( uint32_t i = 0 ; i < j["results"]["bindings"].a.size() ; i++ ) {
-		string v = j["results"]["bindings"][i][item_key]["value"].s ;
+	
+	
+	
+	string item_key = j["head"]["vars"][0] ;
+	pages.reserve ( j["results"]["bindings"].size() ) ;
+	for ( uint32_t i = 0 ; i < j["results"]["bindings"].size() ; i++ ) {
+		string v = j["results"]["bindings"][i][item_key]["value"] ;
 		const char *last , *c ;
 		for ( last = NULL , c = v.c_str() ; *c ; c++ ) {
 			if ( *c == '/' ) last = c+1 ;
@@ -158,15 +163,16 @@ bool TSourceSPARQL::runQuery ( string query ) {
 
 
 bool TSourcePagePile::getPile ( uint32_t id ) {
-	MyJSON j ;
 	char s[200] ;
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
+	json j ;
 	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
 
 	clear() ;
-	wiki = j["wiki"].s ;
-	for ( uint32_t i = 0 ; i < j["pages"].size() ; i++ ) pages.push_back ( TPage ( j["pages"][i].s , 0 ) ) ;
+	wiki = j["wiki"] ;
+	for ( auto &p: j["pages"] ) pages.push_back ( TPage ( p , 0 ) ) ; // TODO namespace detection
+
 	return true ;
 }
 
@@ -175,7 +181,6 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 
 string TSourceDatabase::listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces ) {
 	string ret ;
-//	cout << "Merging " << s.size() << " entries...\n" ;
 	for ( auto i = s.begin() ; i != s.end() ; i++ ) {
 		if ( i != s.begin() ) ret += "," ;
 		ret += string("'") + db.escape(fix_spaces?space2_(*i):*i) + "'" ;

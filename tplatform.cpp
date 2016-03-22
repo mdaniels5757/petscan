@@ -239,6 +239,7 @@ string TPlatform::getWiki () {
 	string l = getParam ( "language" , "en" ) ;
 	string p = getParam ( "project" , "wikipedia" ) ;
 	if ( l == "wikidata" || p == "wikidata" ) return "wikidatawiki" ;
+	if ( l == "wikispecies" || p == "wikispecies" ) return "specieswiki" ;
 	if ( l == "commons" || l == "meta" ) return l+"wiki" ;
 	if ( p == "wikipedia" ) return l+"wiki" ;
 	return l+p ;
@@ -297,7 +298,7 @@ string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
 				else ret += i->meta.getMisc(*k,"") ;
 			}
 		}
-//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + ...
 
 		ret += "\n" ;
 	}
@@ -342,7 +343,7 @@ string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
 				ret += "\t" + i->meta.getMisc(*k,"") ;
 			}
 		}
-//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + MyJSON::escapeString(i->meta.getMisc("gil","")) + "\"" ;
+//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + ...
 
 		ret += "\n" ;
 	}
@@ -512,8 +513,10 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 		ret += "\"namespaces\":"+json_object_open ;
 		for ( auto i = pagelist.ns_local.begin() ; i != pagelist.ns_local.end() ; i++ ) {
 			if ( i != pagelist.ns_local.begin() ) ret += json_comma ;
-			sprintf ( tmp , "\"%d\":\"" , i->first ) ;
-			ret += tmp + MyJSON::escapeString(i->second) + "\"" ;
+			sprintf ( tmp , "\"%d\":" , i->first ) ;
+			ret += tmp ;
+			json j ( i->second ) ;
+			ret += j.dump() ;
 		}
 		ret += json_object_close ;
 		ret += ",\"status\":\"OK\"" + json_comma ;

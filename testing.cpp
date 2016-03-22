@@ -2,24 +2,7 @@
 
 
 int main(void) {
-
 	curl_global_init(CURL_GLOBAL_ALL);
-
-/*
-	// JSON string escape testing
-	setlocale(LC_ALL, "");
-    cout << "LC_ALL: " << setlocale(LC_ALL, NULL) << endl;
-    cout << "LC_CTYPE: " << setlocale(LC_CTYPE, NULL) << endl;	
-
-	MyJSON j ;
-	string s = "ბერლინი" ;
-	string t = j.escapeString ( s ) ;
-	string u = j.unescapeString ( t ) ;
-	cout << s << endl ;
-	cout << t << endl ;
-	cout << u << endl ;
-	exit ( 0 ) ;
-*/
 
 	cout << "Running..." << endl ;
 
@@ -33,7 +16,6 @@ int main(void) {
 		for ( int a = 0 ; a < 5 ; a++ ) cout << sparql.pages[a].name << endl ;
 	}
 
-
 	TSourcePagePile pp ( &p ) ;
 	if ( pp.getPile ( 2567 ) ) {
 		cout << "Read " << pp.size() << " items\n" ;
@@ -41,6 +23,7 @@ int main(void) {
 	}
 
 	sparql.intersect ( pp ) ;
+	
 	cout << "Now " << sparql.size() << " items\n" ;
 
 /*

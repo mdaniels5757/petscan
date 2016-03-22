@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <sstream>
 
-#include "myjson.h"
 #include "json.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -35,7 +34,7 @@ void split ( const string &input , vector <string> &v , char delim , uint32_t ma
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
-bool loadJSONfromURL ( string url , MyJSON &j ) ;
+bool loadJSONfromURL ( string url , json &j ) ;
 string space2_ ( string s ) ;
 string _2space ( string s ) ;
 string ui2s ( uint32_t i ) ;
@@ -48,17 +47,12 @@ class TWikidataDB {
 public:
 	TWikidataDB () {} ;
 	TWikidataDB ( TPlatform &platform , string wiki ) ;
-//	bool updateRecentChanges ( TItemSet &target ) ;
-//	void getRedirects ( map <TItemNumber,bool> &remove ) ;
-//	void getDeletedItems ( map <TItemNumber,bool> &remove ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
 	string escape ( string s ) ;
 	string space2_ ( string s ) ;
 	~TWikidataDB () ;
-
-	uint32_t batch_size ; // ATTENTION: If this is lower than the number of edits in a specific second, it may cause a loop. Default is 1000; keep it well >100 !
 	
 protected:
 	MYSQL mysql;
