@@ -30,8 +30,6 @@ void TPlatform::splitParamIntoVector ( string input , vector <string> &output ) 
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
-
-	TSourceDatabase db ( this ) ;
 	TSourceDatabaseParams db_params ;
 	db_params.wiki = getWiki() ;
 	
@@ -87,14 +85,39 @@ string TPlatform::process () {
 	splitParamIntoVector ( getParam("outlinks_yes","") , db_params.linked_from_all ) ;
 	splitParamIntoVector ( getParam("outlinks_any","") , db_params.linked_from_any ) ;
 	splitParamIntoVector ( getParam("outlinks_no" ,"") , db_params.linked_from_none  ) ;
-	
+
 	
 	TPageList pagelist ( getWiki() ) ;
+	string common_wiki = getParam("common_wiki","cats") ;
+
+	TSourceDatabase db ( this ) ;
+	TSourceSPARQL sparql ( this ) ;
 	
-	if ( db.getPages ( db_params ) ) {
-		pagelist.swap ( db ) ;
+	map <string,string> wikis ;
+	wikis["cats"] = getWiki() ;
+	wikis["manual"] = getParam("manual_list_wiki","") ;
+	wikis["wikidata"] = "wikidatawiki" ;
+	
+	if ( wikis.find(common_wiki) == wikis.end() ) common_wiki = "cats" ; // Fallback
+
+	if ( 1 ) { // TODO
+		if ( db.getPages ( db_params ) ) {
+			db.convertToWiki ( wikis[common_wiki] ) ;
+			pagelist.swap ( db ) ;
+		}
 	}
 
+	if ( !getParam("sparql","" ).empty() ) {
+		if ( sparql.runQuery ( getParam("sparql","" ) ) ) {
+			sparql.convertToWiki ( wikis[common_wiki] ) ;
+			pagelist.intersect ( sparql ) ;
+		}
+	}
+	
+	// TODO manual_list
+	// TODO PagePile
+	
+	wiki = pagelist.wiki ;
 
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
@@ -111,7 +134,6 @@ string TPlatform::process () {
 	else if ( getParam("sortby") == "incoming_links" ) pagelist.customSort ( PAGE_SORT_INCOMING_LINKS , asc ) ;
 	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
 	
-
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
@@ -124,7 +146,7 @@ void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_usage = !getParam("file_usage_data","").empty() ;
 	if ( !file_data && !file_usage ) return ; // Nothing to do
 	
-	TWikidataDB db ( *this , pl.wiki ) ;
+	TWikidataDB db ( pl.wiki ) ;
 	map <string,TPage *> name2f ;
 	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
 		if ( i->meta.ns != NS_FILE ) continue ; // Files only
@@ -188,13 +210,14 @@ void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , 
 }
 
 
+// TODO use TPageList methods instead!
 void TPlatform::processWikidata ( TPageList &pl ) {
 	if ( pl.wiki == "wikidatawiki" ) return ; // Well, they all do have an item...
 	string wdi = getParam("wikidata_item","no") ;
 	if ( wdi != "any" && wdi != "with" && wdi != "without" ) return ;
 
 	uint32_t with_wikidata_item = 0 ;
-	TWikidataDB db ( *this , string("wikidatawiki") ) ;
+	TWikidataDB db ( string("wikidatawiki") ) ;
 	map <string,TPage *> name2o ;
 	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
 		name2o[_2space(i->name)] = &(*i) ;
@@ -247,13 +270,15 @@ uint32_t TPlatform::annotateWikidataItem ( TWikidataDB &db , string wiki , map <
 }
 
 string TPlatform::getWiki () {
+	if ( !wiki.empty() ) return wiki ;
 	string l = getParam ( "language" , "en" ) ;
 	string p = getParam ( "project" , "wikipedia" ) ;
-	if ( l == "wikidata" || p == "wikidata" ) return "wikidatawiki" ;
-	if ( l == "wikispecies" || p == "wikispecies" ) return "specieswiki" ;
-	if ( l == "commons" || l == "meta" ) return l+"wiki" ;
-	if ( p == "wikipedia" ) return l+"wiki" ;
-	return l+p ;
+	if ( l == "wikidata" || p == "wikidata" ) wiki = "wikidatawiki" ;
+	else if ( l == "wikispecies" || p == "wikispecies" ) wiki = "specieswiki" ;
+	else if ( l == "commons" || l == "meta" ) wiki = l+"wiki" ;
+	else if ( p == "wikipedia" ) wiki = l+"wiki" ;
+	else wiki = l+p ;
+	return wiki ;
 }
 
 string TPlatform::getParam ( string key , string default_value , bool ignore_empty ) {

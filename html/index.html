@@ -82,6 +82,7 @@ div.form-group.row > label:first-child {
 	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span class='l_categories'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_pageprops" role="tab"><span class='l_page_props'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span class='l_templates_links'></span></a></li>
+	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_other_sources" role="tab"><span class='l_other_sources'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span class='l_output'></span></a></li>
 </ul>
 
@@ -232,6 +233,53 @@ div.form-group.row > label:first-child {
 
 
 </div> <!--tab panel-->
+<div class="tab-pane" id="tab_other_sources" role="tabpanel">
+
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_sparql"></label>
+<div class="col-sm-10">
+<textarea class="form-control ph_sparql_note" name='sparql' rows=4 style="width:100%"></textarea>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_manual_list"></label>
+<div class="col-sm-10">
+<textarea class="form-control ph_manual_list_note" name='manual_list' rows=4 style="width:100%"></textarea>
+</div>
+</div>
+<div class="form-group row">
+<div class="col-sm-2"></div>
+<div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_manual_list_wiki"></div><input class="form-control ph_manual_list_wiki_note" name="manual_list_wiki" value="" type="text"></div>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_pagepile"></label>
+<div class="col-sm-4">
+<input type="text" class="form-control ph_pagepile_note" name='pagepile' />
+</div>
+</div>
+
+
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label l_common_wiki"></label>
+<div class="col-sm-10">
+<div class="radio-inline"><label><input type="radio" name="common_wiki" value="cats"> <span class='l_common_wiki_cats'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="common_wiki" value="pagepile"> <span class='l_common_wiki_pagepile'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="common_wiki" value="manual"> <span class='l_common_wiki_manual'></span></label></div>
+<div class="radio-inline"><label><input type="radio" name="common_wiki" value="wikidata"> <span class='l_common_wiki_wikidata'></span></label></div>
+</div>
+</div>
+
+
+
+
+
+</div> <!--tab panel-->
 <div class="tab-pane" id="tab_output" role="tabpanel">
 
 <div class="form-group row">
@@ -315,7 +363,7 @@ Sort
 -->
 
 
-<div class='row'>
+<div class='row' style='padding-top:10px;margin-top:20px;'>
 <div class="col-sm-2">
 <button id='doit' name='doit' class='btn btn-lg btn-primary l_doit'></button>
 </div>

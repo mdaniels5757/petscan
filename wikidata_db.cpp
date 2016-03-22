@@ -1,11 +1,12 @@
 #include "main.h"
 
+TPlatform *root_platform ;
+
 //________________________________________________________________________________________________
 
 #define DB_ESCAPE_BUFFER_SIZE 10000
 
-TWikidataDB::TWikidataDB ( TPlatform &platform , string wiki ) {
-	_platform = &platform ;
+TWikidataDB::TWikidataDB ( string wiki ) {
 	setHostDBFromWiki ( wiki ) ;
 	curl_global_init(CURL_GLOBAL_ALL);
 	doConnect(true) ;
@@ -28,9 +29,14 @@ void TWikidataDB::doConnect ( bool first ) {
 			exit ( 0 ) ;
 		}*/
 	}
-	
-	string user = _platform->config["user"] ;
-	string password = _platform->config["password"] ;
+
+	if ( root_platform == NULL ) {
+		cout << "Root platform not set\n" ;
+		exit ( 1 ) ;
+	}
+
+	string user = root_platform->config["user"] ;
+	string password = root_platform->config["password"] ;
 	mysql_init(&mysql);
 	mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ;
 //	printf("MySQL Server Version is %s\n",mysql_get_server_info(&mysql));

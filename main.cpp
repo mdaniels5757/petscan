@@ -39,7 +39,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	
 	if ( path == "/" && !query.empty() ) {
 	
-		cout << "Running query!\n" ;
+//		cout << "Running query!\n" ;
 		
 		TPlatform platform ;
 		if ( !platform.readConfigFile ( CONFIG_FILE ) ) return ; // error
@@ -106,10 +106,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	} else {
 		char reply[1000];
 
-		/* Simulate long calculation */
-	//    sleep(3);
-
-//		cout << hm->uri.p << endl ;
 
 		/* Send the reply */
 		snprintf(reply, sizeof(reply), "{ \"uri\": \"%.*s\" }\n",
@@ -133,19 +129,19 @@ int main(void) {
 	struct mg_mgr mgr;
 	struct mg_connection *nc;
 
-	TPlatform p ;
-	if ( !p.readConfigFile ( CONFIG_FILE ) ) exit ( 1 ) ;
+	root_platform = new TPlatform ;
+	if ( !root_platform->readConfigFile ( CONFIG_FILE ) ) exit ( 1 ) ;
 
 	mg_mgr_init(&mgr, NULL);
-	nc = mg_bind(&mgr, p.config["port"].c_str() , ev_handler); // s_http_port
+	nc = mg_bind(&mgr, root_platform->config["port"].c_str() , ev_handler); // s_http_port
 	mg_set_protocol_http_websocket(nc);
 
 	/* For each new connection, execute ev_handler in a separate thread */
 	mg_enable_multithreading(nc);
 
-	printf("Starting multi-threaded server on port %s\n", p.config["port"].c_str() ); // s_http_port
+	cout << "STARTING SERVER\tport " << root_platform->config["port"] << endl ;
 	for (;;) {
-		mg_mgr_poll(&mgr, atoi(p.config["timeout"].c_str()) );
+		mg_mgr_poll(&mgr, atoi(root_platform->config["timeout"].c_str()) );
 	}
 	mg_mgr_free(&mgr);
 

@@ -11,6 +11,7 @@ var default_params = {
 	'wikidata_item':'no',
 	'output_compatability':'catscan',
 	'active_tab':'tab_categories',
+	'common_wiki':'cats',
 	'sortorder':'ascending'
 } ;
 

@@ -129,6 +129,88 @@ void TPageList::merge ( TPageList &pl ) {
 	pages = nl ;
 }
 
+void TPageList::convertToWiki ( string new_wiki ) {
+	if ( wiki == new_wiki ) return ; // No conversion required
+	if ( wiki != "wikidatawiki" ) convertToWikidata() ;
+	convertWikidataToWiki ( new_wiki ) ;
+}
+
+void TPageList::convertWikidataToWiki ( string new_wiki ) {
+	if ( wiki != "wikidatawiki" ) return ;
+	if ( new_wiki == wiki ) return ;
+
+	TWikidataDB db ( string("wikidatawiki") ) ;
+	string sql = "SELECT DISTINCT ips_site_page FROM wb_items_per_site WHERE ips_site_id='" + db.escape(new_wiki) + "' AND ips_item_id IN (0" ; // 0 is dummy
+	for ( auto &i: pages ) {
+		if ( i.meta.ns != 0 ) continue ;
+		sql += "," + i.name.substr(1) ;
+	}
+	sql += ")" ;
+	
+	TPageList nl ( new_wiki ) ;
+	nl.pages.reserve ( size() ) ;
+	
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		nl.pages.push_back ( TPage ( string(row[0]) ) ) ; // TODO namespace detection
+	}
+	mysql_free_result(result);
+	
+	swap ( nl ) ;
+}
+
+void TPageList::convertToWikidata () {
+	if ( wiki == "wikidatawiki" ) return ; // Well, they all do have an item...
+
+	TWikidataDB db ( string("wikidatawiki") ) ;
+	map <string,TPage *> name2o ;
+	for ( auto i = pages.begin() ; i != pages.end() ; i++ ) {
+		name2o[_2space(i->name)] = &(*i) ;
+		if ( name2o.size() < DB_PAGE_BATCH_SIZE ) continue ;
+		annotateWikidataItem ( db , wiki , name2o ) ;
+	}
+	annotateWikidataItem ( db , wiki , name2o ) ;
+	
+	TPageList nl ( "wikidatawiki" ) ;
+	nl.pages.reserve ( size() ) ;
+	for ( auto i = pages.begin() ; i != pages.end() ; i++ ) {
+		if ( i->meta.q == UNKNOWN_WIKIDATA_ITEM ) continue ;
+		nl.pages.push_back ( TPage ( "Q"+ui2s(i->meta.q) , 0 ) ) ;
+	}
+	swap ( nl ) ;
+}
+
+uint32_t TPageList::annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) {
+	uint32_t ret = 0 ;
+	if ( name2o.empty() ) return ret ;
+//	cout << "Annotating " << name2o.size() << " pages with items\n" ;
+	
+	vector <string> tmp ;
+	tmp.reserve ( name2o.size() ) ;
+	for ( auto i = name2o.begin() ; i != name2o.end() ; i++ ) tmp.push_back ( i->first ) ;
+	
+	string sql = "SELECT ips_site_page,ips_item_id FROM wb_items_per_site WHERE ips_site_id='" + db.escape(wiki) + "' AND ips_site_page IN (" ;
+	sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
+	sql += ")" ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		if ( name2o.find(row[0]) == name2o.end() ) {
+			cerr << "TPlatform::annotateWikidataItem: Page not found: " << row[0] << endl ;
+			continue ;
+		}
+		name2o[row[0]]->meta.q = atol(row[1]) ;
+		ret++ ;
+	}
+	mysql_free_result(result);
+	
+	name2o.clear() ;
+	return ret ;
+}
+
+
 //________________________________________________________________________________________________________________________
 
 
@@ -249,7 +331,7 @@ string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> in
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
-	TWikidataDB db ( *platform , wiki ) ;
+	TWikidataDB db ( wiki ) ;
 
 	vector <vector<string> > cat_pos , cat_neg ;
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
@@ -399,8 +481,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.larger > -1 ) sql += " AND p.page_len>=" + ui2s(params.larger) ;
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
 	
-cout << ">> " << params.larger << endl ;
-
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
 
 	vector <string> having ;	
@@ -416,7 +496,7 @@ cout << ">> " << params.larger << endl ;
 	}
 	
 	
-	cout << sql << endl ;
+//	cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);

@@ -27,7 +27,10 @@ using json = nlohmann::json;
 #define NS_FILE 6
 #define MAX_QUERY_OUTPUT_LENGTH 2000
 
+class TPlatform ;
+
 static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
+extern TPlatform *root_platform ;
 
 char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
@@ -41,12 +44,10 @@ string ui2s ( uint32_t i ) ;
 string escapeURLcomponent ( string s ) ;
 double time_diff(struct timeval x , struct timeval y);
 
-class TPlatform ;
-
 class TWikidataDB {
 public:
 	TWikidataDB () {} ;
-	TWikidataDB ( TPlatform &platform , string wiki ) ;
+	TWikidataDB ( string wiki ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
@@ -57,12 +58,9 @@ public:
 protected:
 	MYSQL mysql;
 	string _host , _config_file , _database ;
-	TPlatform *_platform ;
 	
-//	char *getTextFromURL ( string url ) ;
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
-
 
 	struct MemoryStruct {
 	  char *memory;
@@ -130,7 +128,6 @@ public:
 
 class TPage {
 public:
-	TPage ( string s ) { name = s ; }
 	TPage ( string s , int ns = 0 ) { name = space2_(s) ; meta.ns = ns ; }
 	
 	const string getNameWithoutNamespace() ;
@@ -161,18 +158,22 @@ public:
 	inline int32_t size () { return pages.size() ; }
 	string getNamespaceString ( const int16_t ns ) ;
 	int16_t getNamespaceNumber ( const string &ns ) ;
+	void convertToWiki ( string new_wiki ) ;
+	void convertWikidataToWiki ( string new_wiki ) ;
 	inline void swap ( TPageList &pl ) {
 		wiki.swap ( pl.wiki ) ;
 		pages.swap ( pl.pages ) ;
 	}
 	void customSort ( uint8_t mode , bool ascending ) ;
 	virtual bool error ( string s ) { return false ; }
+	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
 	
 	string wiki ;
 	vector <TPage> pages ;
 	map <int16_t,string> ns_canonical , ns_local ;
 protected:
 	void loadNamespaces () ;
+	void convertToWikidata () ;
 	bool is_sorted = false ;
 	bool namespaces_loaded = false ;
 	void sort() ;
@@ -279,6 +280,7 @@ protected:
 	void processWikidata ( TPageList &pl ) ;
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
 	float querytime = 0 ; // seconds
+	string wiki ;
 } ;
 
 

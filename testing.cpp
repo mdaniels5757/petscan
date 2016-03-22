@@ -7,6 +7,7 @@ int main(void) {
 	cout << "Running..." << endl ;
 
 	TPlatform p ;
+	root_platform = &p ;
 	if ( !p.readConfigFile ( "config.json" ) ) exit ( 1 ) ;
 
 	TSourceSPARQL sparql ( &p ) ;
