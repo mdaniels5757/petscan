@@ -123,6 +123,7 @@ function setInterfaceLanguage ( l ) {
 	$.each ( interface_text['en'] , function ( k , v ) {
 		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
 		$('.l_'+k).html ( v ) ;
+		$('.ph_'+k).attr ( { placeholder:v } ) ;
 	} ) ;
 	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
 	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
@@ -213,8 +214,6 @@ function loadNamespaces () {
 			return h ;
 		}
 		
-//		var h = "<h3><span class='l_namespaces'>" + _t('namespaces') + "</span> " + lp + "</h3>" ;
-//		var h = "<div><tt>" + lp + "</tt></div>" ;
 		$(".current_wiki").text ( lp ) ;
 		h = "" ;
 		h += "<div class='smaller'>" ;
