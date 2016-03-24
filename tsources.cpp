@@ -2,13 +2,6 @@
 #include <set>
 #include <time.h>
 
-//________________________________________________________________________________________________________________________
-
-// Zero-pad
-string pad ( string s , int num = 2 ) {
-	while ( s.length() < num ) s = "0" + s ;
-	return s ;
-}
 
 //________________________________________________________________________________________________________________________
 
@@ -164,7 +157,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	else if ( has_pos_templates ) primary = "templates" ;
 	else if ( has_pos_linked_from ) primary = "links_from" ;
 	else {
-		cout << "No starting point for DB\n" ;
+//		cout << "No starting point for DB\n" ;
 		return false ;
 	}
 	
@@ -281,7 +274,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		int hours = atoi ( params.max_age.c_str() ) ; // Hours
 		now -= hours*60*60 ;
 		struct tm *utc = gmtime ( &now ) ; // Will apparently be deleted by system later on
-		string after = ui2s(utc->tm_year+1900) + pad(ui2s(utc->tm_mon+1),2) + pad(ui2s(utc->tm_mday),2) + pad(ui2s(utc->tm_hour)) + pad(ui2s(utc->tm_min)) + pad(ui2s(utc->tm_sec)) ;
+		string after = ui2s(utc->tm_year+1900) + pad(ui2s(utc->tm_mon+1),2,'0') + pad(ui2s(utc->tm_mday),2,'0') + pad(ui2s(utc->tm_hour),2,'0') + pad(ui2s(utc->tm_min),2,'0') + pad(ui2s(utc->tm_sec),2,'0') ;
 		params.before = "" ;
 		params.after = after ;
 	}

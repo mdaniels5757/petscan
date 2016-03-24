@@ -278,6 +278,24 @@ $(document).ready ( function () {
 //		return false ;
 	} ) ;
 	
+	function highlightMissingWiki () {
+		var o = $('textarea[name="manual_list"]') ;
+		var wo = $('input[name="manual_list_wiki"]') ;
+		var text = o.val() ;
+		var wiki = wo.val() ;
+		var wop = $(wo.parents("div.input-group").get(0)) ;
+		if ( $.trim(text) != '' && $.trim(wiki) == '' ) {
+			wop.addClass ( 'has-danger' ) ;
+			$('#doit').prop('disabled', true)
+		} else {
+			wop.removeClass ( 'has-danger' ) ;
+			$('#doit').prop('disabled', false)
+		}
+	}
+	$('textarea[name="manual_list"]').keyup ( highlightMissingWiki ) ;
+	$('input[name="manual_list_wiki"]').keyup ( highlightMissingWiki ) ;
+	highlightMissingWiki() ;
+	
 	$('#tab-list').click ( function () {
 		if ( $('#main_form div.tab-pane').length > 0 ) {
 			$('#tab-list').text ( "Tabs" ) ;

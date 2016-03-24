@@ -47,6 +47,8 @@ string _2space ( string s ) ;
 string ui2s ( uint32_t i ) ;
 string escapeURLcomponent ( string s ) ;
 double time_diff(struct timeval x , struct timeval y);
+string pad ( string s , int num , char c ) ;
+
 
 class TWikidataDB {
 public:
@@ -165,14 +167,12 @@ public:
 	int16_t getNamespaceNumber ( const string &ns ) ;
 	void convertToWiki ( string new_wiki ) ;
 	void convertWikidataToWiki ( string new_wiki ) ;
-	inline void swap ( TPageList &pl ) {
-		wiki.swap ( pl.wiki ) ;
-		pages.swap ( pl.pages ) ;
-	}
+	void swap ( TPageList &pl ) ;
 	void customSort ( uint8_t mode , bool ascending ) ;
 	virtual bool error ( string s ) { return false ; }
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
 	void join ( string cmd , TPageList &pl ) ;
+	void loadMissingMetadata () ;
 	
 	string wiki ;
 	vector <TPage> pages ;

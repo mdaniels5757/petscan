@@ -6,11 +6,18 @@
 void TPage::determineNamespace ( TPageList *pl ) {
 	if ( meta.ns != NS_UNKNOWN ) return ; // Already set
 	size_t pos = name.find_first_of ( ':' ) ;
-	if ( pos == string::npos ) return ; // No namespace divider
+	if ( pos == string::npos ) { // No namespace divider, main namespace assumed
+		meta.ns = 0 ;
+		return ;
+	}
 	string ns_name = name.substr(0,pos) ;
-	if ( ns_name.empty() ) return ; // Paranoia
+	if ( ns_name.empty() ) { // ":"-prefixed
+		meta.ns = 0 ;
+		name = name.substr(1) ;
+		return ;
+	}
 	if ( ns_name[0] >= 'a' && ns_name[0] <= 'z' ) ns_name[0] -= 'a'-'A' ;
-	cout << ns_name << endl ;
+	meta.ns = pl->getNamespaceNumber ( ns_name ) ;
 }
 
 const string TPage::getNameWithoutNamespace() {
@@ -37,6 +44,7 @@ string TPageList::getNamespaceString ( const int16_t ns ) {
 
 int16_t TPageList::getNamespaceNumber ( const string &ns ) {
 	loadNamespaces() ;
+	if ( ns_string2id.find(ns) != ns_string2id.end() ) return ns_string2id[ns] ;
 	return 0 ;
 }
 
@@ -224,12 +232,34 @@ uint32_t TPageList::annotateWikidataItem ( TWikidataDB &db , string wiki , map <
 
 
 void TPageList::join ( string cmd , TPageList &pl ) {
+	cout << "me: " << wiki << ", other: " << pl.wiki << endl ;
 	if ( !data_loaded ) {
+		cout << "Swapping for " << pl.size() << " pages (having " << size() << ")\n" ;
 		swap ( pl ) ;
 		return ;
 	}
 	
+	cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
 	if ( cmd == "intersect" ) intersect ( pl ) ;
 	else if ( cmd == "merge" ) merge ( pl ) ;
+	cout << " resulting in " << size() << " pages.\n" ;
 //	else 
+}
+
+void TPageList::swap ( TPageList &pl ) {
+	wiki.swap ( pl.wiki ) ;
+	pages.swap ( pl.pages ) ;
+	{ bool tmp = data_loaded ; data_loaded = pl.data_loaded ; pl.data_loaded = tmp ; }
+}
+
+void TPageList::loadMissingMetadata () {
+	map <int16_t,vector <TPage *> > ns_page ;
+	for ( auto p: pages ) {
+		if ( p.meta.id != 0 ) continue ;
+		ns_page[p.meta.ns].push_back ( &p ) ;
+	}
+	if ( ns_page.empty() ) return ;
+	
+	TWikidataDB db ( wiki ) ;
+	
 }

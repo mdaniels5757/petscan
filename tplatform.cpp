@@ -182,7 +182,6 @@ void TPlatform::processFiles ( TPageList &pl ) {
 
 void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) {
 	if ( name2f.empty() ) return ;
-//	cout << "Annotating " << name2f.size() << " files\n" ;
 	
 	vector <string> tmp ;
 	tmp.reserve ( name2f.size() ) ;
@@ -593,7 +592,8 @@ string TPlatform::renderPageListJSON ( TPageList &pagelist ) {
 }
 
 string TPlatform::renderPageList ( TPageList &pagelist ) {
-	string format = getParam ( "format" , "html" ) ;
+	string format = getParam ( "format" , "html" , true ) ;
+	params["format"] = format ;
 	string ret ;
 	
 	content_type = "text/html; charset=utf-8" ; // Default
