@@ -216,7 +216,6 @@ void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , 
 }
 
 
-// TODO use TPageList methods instead!
 void TPlatform::processWikidata ( TPageList &pl ) {
 	if ( pl.wiki == "wikidatawiki" ) return ; // Well, they all do have an item...
 	string wdi = getParam("wikidata_item","no") ;
@@ -228,9 +227,9 @@ void TPlatform::processWikidata ( TPageList &pl ) {
 	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
 		name2o[_2space(i->name)] = &(*i) ;
 		if ( name2o.size() < DB_PAGE_BATCH_SIZE ) continue ;
-		with_wikidata_item += annotateWikidataItem ( db , pl.wiki , name2o ) ;
+		with_wikidata_item += pl.annotateWikidataItem ( db , pl.wiki , name2o ) ;
 	}
-	with_wikidata_item += annotateWikidataItem ( db , pl.wiki , name2o ) ;
+	with_wikidata_item += pl.annotateWikidataItem ( db , pl.wiki , name2o ) ;
 	
 	if ( wdi == "any" ) return ; // No further processing
 	if ( wdi == "with" and with_wikidata_item == pl.size() ) return ; // Shortcut: All pages have a wikidata item
@@ -244,35 +243,6 @@ void TPlatform::processWikidata ( TPageList &pl ) {
 		nl.pages.push_back ( *i ) ;
 	}
 	pl.swap ( nl ) ;
-}
-
-uint32_t TPlatform::annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) {
-	uint32_t ret = 0 ;
-	if ( name2o.empty() ) return ret ;
-//	cout << "Annotating " << name2o.size() << " pages with items\n" ;
-	
-	vector <string> tmp ;
-	tmp.reserve ( name2o.size() ) ;
-	for ( auto i = name2o.begin() ; i != name2o.end() ; i++ ) tmp.push_back ( i->first ) ;
-	
-	string sql = "SELECT ips_site_page,ips_item_id FROM wb_items_per_site WHERE ips_site_id='" + db.escape(wiki) + "' AND ips_site_page IN (" ;
-	sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
-	sql += ")" ;
-
-	MYSQL_RES *result = db.getQueryResults ( sql ) ;
-	MYSQL_ROW row;
-	while ((row = mysql_fetch_row(result))) {
-		if ( name2o.find(row[0]) == name2o.end() ) {
-			cerr << "TPlatform::annotateWikidataItem: Page not found: " << row[0] << endl ;
-			continue ;
-		}
-		name2o[row[0]]->meta.q = atol(row[1]) ;
-		ret++ ;
-	}
-	mysql_free_result(result);
-	
-	name2o.clear() ;
-	return ret ;
 }
 
 string TPlatform::getWiki () {

@@ -281,7 +281,6 @@ protected:
 	void processFiles ( TPageList &pl ) ;
 	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) ;
 	void processWikidata ( TPageList &pl ) ;
-	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	
 	float querytime = 0 ; // seconds
