@@ -27,10 +27,7 @@ void TPlatform::splitParamIntoVector ( string input , vector <string> &output ) 
 	}
 }
 
-string TPlatform::process () {
-	struct timeval before , after;
-	gettimeofday(&before , NULL);
-	TSourceDatabaseParams db_params ;
+void TPlatform::setDatabaseParameters ( TSourceDatabaseParams &db_params ) {
 	db_params.wiki = getWiki() ;
 	
 	// Get valid namespaces
@@ -85,6 +82,15 @@ string TPlatform::process () {
 	splitParamIntoVector ( getParam("outlinks_yes","") , db_params.linked_from_all ) ;
 	splitParamIntoVector ( getParam("outlinks_any","") , db_params.linked_from_any ) ;
 	splitParamIntoVector ( getParam("outlinks_no" ,"") , db_params.linked_from_none  ) ;
+}
+
+string TPlatform::process () {
+	struct timeval before , after;
+	gettimeofday(&before , NULL);
+
+	TSourceDatabaseParams db_params ;
+	setDatabaseParameters ( db_params ) ;
+	
 
 	
 	TPageList pagelist ( getWiki() ) ;

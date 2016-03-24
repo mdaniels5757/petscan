@@ -32,6 +32,9 @@ class TPlatform ;
 static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 extern TPlatform *root_platform ;
 
+std::string &ltrim(std::string &s) ;
+std::string &rtrim(std::string &s) ;
+std::string &trim(std::string &s) ;
 char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
 const std::string urlencode( const std::string& s ) ;
@@ -279,28 +282,10 @@ protected:
 	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) ;
 	void processWikidata ( TPageList &pl ) ;
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
+	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
+	
 	float querytime = 0 ; // seconds
 	string wiki ;
 } ;
-
-
-
-
-// trim from start
-static inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
-}
-
-// trim from end
-static inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
-}
-
-// trim from both ends
-static inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
-}
 
 #endif
