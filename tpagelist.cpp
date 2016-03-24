@@ -232,18 +232,17 @@ uint32_t TPageList::annotateWikidataItem ( TWikidataDB &db , string wiki , map <
 
 
 void TPageList::join ( string cmd , TPageList &pl ) {
-	cout << "me: " << wiki << ", other: " << pl.wiki << endl ;
+//	cout << "me: " << wiki << ", other: " << pl.wiki << endl ;
 	if ( !data_loaded ) {
-		cout << "Swapping for " << pl.size() << " pages (having " << size() << ")\n" ;
+//		cout << "Swapping for " << pl.size() << " pages (having " << size() << ")\n" ;
 		swap ( pl ) ;
 		return ;
 	}
 	
-	cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
+//	cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
 	if ( cmd == "intersect" ) intersect ( pl ) ;
 	else if ( cmd == "merge" ) merge ( pl ) ;
-	cout << " resulting in " << size() << " pages.\n" ;
-//	else 
+//	cout << " resulting in " << size() << " pages.\n" ;
 }
 
 void TPageList::swap ( TPageList &pl ) {
@@ -253,10 +252,10 @@ void TPageList::swap ( TPageList &pl ) {
 }
 
 void TPageList::loadMissingMetadata () {
-	if ( wiki == 'wikidatawiki' ) return ;
+	if ( wiki == "wikidatawiki" ) return ;
 	
 	map <int16_t,vector <TPage *> > ns_page ;
-	for ( auto p: pages ) {
+	for ( auto &p: pages ) {
 		if ( p.meta.id != 0 ) continue ;
 		ns_page[p.meta.ns].push_back ( &p ) ;
 	}
@@ -265,19 +264,34 @@ void TPageList::loadMissingMetadata () {
 	TWikidataDB db ( wiki ) ;
 	for ( auto i = ns_page.begin() ; i != ns_page.end() ; i++ ) {
 		vector < vector<TPage *> > ml ;
-		ml.push_back ( vector<TPage *> ) ;
-		for ( auto j: i->second ) {
-			if ( ml[ml.size()-1].size() >= DB_PAGE_BATCH_SIZE ) ml.push_back ( vector<TPage *> ) ;
+		ml.push_back ( vector<TPage *> () ) ;
+		for ( auto &j: i->second ) {
+			if ( ml[ml.size()-1].size() >= DB_PAGE_BATCH_SIZE ) ml.push_back ( vector<TPage *> () ) ;
 			ml[ml.size()-1].push_back ( j ) ;
 		}
-		for ( auto batch: ml ) {
-			string sql = "SELECT * FROM page WHERE page_namespace=" + ui2s(i->first) + " AND page_title IN (" ;
+		for ( auto &batch: ml ) {
+			map <string,TPage *> name2page ;
+			string sql = "SELECT page_title,page_id,page_len,page_touched FROM page WHERE page_namespace=" + ui2s(i->first) + " AND page_title IN (" ;
 			for ( auto j = batch.begin() ; j != batch.end() ; j++ ) {
+				string name = (*j)->getNameWithoutNamespace() ;
+				name2page[name] = *j ;
 				if ( j != batch.begin() ) sql += "," ;
-				sql += "'" + db.escape(*j) + "'" ;
+				sql += "'" + db.escape(name) + "'" ;
 			}
 			sql += ")" ;
-			cout << sql << endl ;
+			
+			MYSQL_RES *result = db.getQueryResults ( sql ) ;
+			MYSQL_ROW row;
+			while ((row = mysql_fetch_row(result))) {
+				string name ( row[0] ) ;
+				if ( name2page.find(name) == name2page.end() ) continue ; // Say what?
+				TPage *p = name2page[name] ;
+				p->meta.id = atol(row[1]) ;
+				p->meta.size = atol(row[2]) ;
+				p->meta.timestamp = row[3] ;
+			}
+			mysql_free_result(result);
+			
 		}
 	}
 }

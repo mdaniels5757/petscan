@@ -401,6 +401,12 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	sprintf ( tmp , "<hr/><h2><a name='results'></a>%ld results</h2>" , pagelist.pages.size() ) ;
 	ret += tmp ;
 	if ( pagelist.pages.size() == 0 ) return ret ; // No need for empty table
+	
+	if ( pagelist.size() > MAX_HTML_RESULTS ) {
+		ret += "<div class='alert alert-warning'>Only the first " + ui2s(MAX_HTML_RESULTS) + " results are shown in HTML, so as to not crash your browser; other formats will have complete results.</div>" ;
+		pagelist.pages.resize ( MAX_HTML_RESULTS ) ;
+	}
+	
 	ret += "<table class='table table-sm table-striped'>" ;
 	ret += "<thead><tr><th class='num'>#</th><th class='text-nowrap l_h_title'></th><th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;

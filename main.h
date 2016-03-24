@@ -23,9 +23,10 @@ using json = nlohmann::json;
 
 #define NS_UNKNOWN -999
 #define UNKNOWN_WIKIDATA_ITEM 0
-#define DB_PAGE_BATCH_SIZE 50000
+#define DB_PAGE_BATCH_SIZE 100000
 #define NS_FILE 6
 #define MAX_QUERY_OUTPUT_LENGTH 2000
+#define MAX_HTML_RESULTS 10000
 
 class TPlatform ;
 class TPageList ;
@@ -134,7 +135,7 @@ public:
 
 class TPage {
 public:
-	TPage ( string s , int ns = NS_UNKNOWN ) { name = space2_(trim(_2space(s))) ; meta.ns = ns ; }
+	TPage ( string s = "" , int ns = NS_UNKNOWN ) { name = space2_(trim(_2space(s))) ; meta.ns = ns ; }
 	
 	const string getNameWithoutNamespace() ;
 	void determineNamespace ( TPageList *pl ) ;
