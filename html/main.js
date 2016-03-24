@@ -152,7 +152,8 @@ function loadInterface ( init_lang ) {
 			interface_text[lang][m[1]] = m[2] ;
 		} ) ;
 		
-		$('#interface_languages a.dropdown-item').click ( function () {
+		$('#interface_languages a.dropdown-item').click ( function (e) {
+			e.preventDefault();
 			var o = $(this) ;
 			var lang = o.text().toLowerCase() ;
 			setInterfaceLanguage ( lang ) ;
