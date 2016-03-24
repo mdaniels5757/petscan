@@ -77,5 +77,4 @@ void TWikidataDB::finishWithError ( string msg ) {
 	if ( msg.empty() ) fprintf(stderr, "%s\n", mysql_error(&mysql));
 	else fprintf(stderr, "%s\n", msg.c_str());
 	mysql_close(&mysql);
-	exit(1);        
 }
