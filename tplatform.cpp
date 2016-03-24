@@ -159,6 +159,8 @@ string TPlatform::process () {
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
+	pagelist.loadMissingMetadata() ;
+
 	return renderPageList ( pagelist ) ;
 }
 

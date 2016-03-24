@@ -253,6 +253,8 @@ void TPageList::swap ( TPageList &pl ) {
 }
 
 void TPageList::loadMissingMetadata () {
+	if ( wiki == 'wikidatawiki' ) return ;
+	
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto p: pages ) {
 		if ( p.meta.id != 0 ) continue ;
@@ -261,5 +263,21 @@ void TPageList::loadMissingMetadata () {
 	if ( ns_page.empty() ) return ;
 	
 	TWikidataDB db ( wiki ) ;
-	
+	for ( auto i = ns_page.begin() ; i != ns_page.end() ; i++ ) {
+		vector < vector<TPage *> > ml ;
+		ml.push_back ( vector<TPage *> ) ;
+		for ( auto j: i->second ) {
+			if ( ml[ml.size()-1].size() >= DB_PAGE_BATCH_SIZE ) ml.push_back ( vector<TPage *> ) ;
+			ml[ml.size()-1].push_back ( j ) ;
+		}
+		for ( auto batch: ml ) {
+			string sql = "SELECT * FROM page WHERE page_namespace=" + ui2s(i->first) + " AND page_title IN (" ;
+			for ( auto j = batch.begin() ; j != batch.end() ; j++ ) {
+				if ( j != batch.begin() ) sql += "," ;
+				sql += "'" + db.escape(*j) + "'" ;
+			}
+			sql += ")" ;
+			cout << sql << endl ;
+		}
+	}
 }
