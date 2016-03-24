@@ -98,6 +98,8 @@ string TPlatform::process () {
 
 	TSourceDatabase db ( this ) ;
 	TSourceSPARQL sparql ( this ) ;
+	TSourcePagePile pagepile ( this ) ;
+	TSourceManual manual ( this ) ;
 	
 	map <string,string> wikis ;
 	wikis["cats"] = getWiki() ;
@@ -106,22 +108,36 @@ string TPlatform::process () {
 	
 	if ( wikis.find(common_wiki) == wikis.end() ) common_wiki = "cats" ; // Fallback
 
-	if ( 1 ) { // TODO
+	if ( 1 ) {
 		if ( db.getPages ( db_params ) ) {
 			db.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.swap ( db ) ;
+			pagelist.join ( "intersect" , db ) ;
 		}
 	}
 
 	if ( !getParam("sparql","" ).empty() ) {
-		if ( sparql.runQuery ( getParam("sparql","" ) ) ) {
+		if ( sparql.runQuery ( getParam("sparql","") ) ) {
 			sparql.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.intersect ( sparql ) ;
+			pagelist.join ( "intersect" , sparql ) ;
 		}
 	}
 	
-	// TODO manual_list
-	// TODO PagePile
+	if ( !getParam("manual_list","").empty() ) {
+		manual.wiki = wikis["manual"] ;
+		vector <string> v ;
+		split ( getParam("manual_list","") , v , '\n' ) ;
+		if ( manual.parseList ( v ) ) {
+			manual.convertToWiki ( wikis[common_wiki] ) ;
+			pagelist.join ( "intersect" , manual ) ;
+		}
+	}
+	
+	if ( !getParam("pagepile","").empty() ) {
+		if ( pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) {
+			pagepile.convertToWiki ( wikis[common_wiki] ) ;
+			pagelist.join ( "intersect" , pagepile ) ;
+		}
+	}
 	
 	wiki = pagelist.wiki ;
 

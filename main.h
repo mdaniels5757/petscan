@@ -28,13 +28,14 @@ using json = nlohmann::json;
 #define MAX_QUERY_OUTPUT_LENGTH 2000
 
 class TPlatform ;
+class TPageList ;
 
 static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 extern TPlatform *root_platform ;
 
-std::string &ltrim(std::string &s) ;
-std::string &rtrim(std::string &s) ;
-std::string &trim(std::string &s) ;
+string ltrim(std::string s) ;
+string rtrim(string s) ;
+string trim(string s) ;
 char *loadFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
 const std::string urlencode( const std::string& s ) ;
@@ -131,9 +132,10 @@ public:
 
 class TPage {
 public:
-	TPage ( string s , int ns = 0 ) { name = space2_(s) ; meta.ns = ns ; }
+	TPage ( string s , int ns = NS_UNKNOWN ) { name = space2_(trim(_2space(s))) ; meta.ns = ns ; }
 	
 	const string getNameWithoutNamespace() ;
+	void determineNamespace ( TPageList *pl ) ;
 	
 	string name ;
 	TPageMetadata meta ;
@@ -170,6 +172,7 @@ public:
 	void customSort ( uint8_t mode , bool ascending ) ;
 	virtual bool error ( string s ) { return false ; }
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
+	void join ( string cmd , TPageList &pl ) ;
 	
 	string wiki ;
 	vector <TPage> pages ;
@@ -181,6 +184,7 @@ protected:
 	bool namespaces_loaded = false ;
 	void sort() ;
 	map <string,int16_t> ns_string2id ;
+	bool data_loaded = false ;
 } ;
 
 
@@ -188,9 +192,9 @@ protected:
 class TSource : public TPageList {
 public:
 	TSource ( TPlatform *p = NULL ) { platform = p ; } ;
-	TPlatform *platform ;
-	
 	virtual bool error ( string s ) ;
+
+	TPlatform *platform ;
 } ;
 
 
@@ -207,8 +211,13 @@ protected:
 class TSourcePagePile : public TSource {
 public:
 	TSourcePagePile ( TPlatform *p = NULL ) { platform = p ; } ;
-	
 	bool getPile ( uint32_t id ) ;
+} ;
+
+class TSourceManual : public TSource {
+public:
+	TSourceManual ( TPlatform *p = NULL ) { platform = p ; } ;
+	bool parseList ( vector <string> &v ) ;
 } ;
 
 
