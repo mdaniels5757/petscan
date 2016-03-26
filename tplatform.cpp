@@ -166,7 +166,7 @@ string TPlatform::process () {
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
-	pagelist.loadMissingMetadata ( "en" ) ;
+	pagelist.loadMissingMetadata ( getParam("interface_language","en") ) ;
 
 	return renderPageList ( pagelist ) ;
 }
