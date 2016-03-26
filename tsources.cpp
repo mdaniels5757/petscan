@@ -157,7 +157,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	else if ( has_pos_templates ) primary = "templates" ;
 	else if ( has_pos_linked_from ) primary = "links_from" ;
 	else {
-//		cout << "No starting point for DB\n" ;
+//		if(DEBUG_OUTPUT) cout << "No starting point for DB\n" ;
 		return false ;
 	}
 	
@@ -200,7 +200,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
 			sql += listEscapedStrings ( db , tmp ) ;
 			sql += ")) cl0" ;
-			cout << sql << endl ;
+			if(DEBUG_OUTPUT) cout << sql << endl ;
 		}
 
 		sql += " INNER JOIN (page p" ;
@@ -310,7 +310,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	}
 	
 	
-//	cout << sql << endl ;
+//	if(DEBUG_OUTPUT) cout << sql << endl ;
 	
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
@@ -319,7 +319,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	
 	gettimeofday(&after , NULL);
-	printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
+	if(DEBUG_OUTPUT) printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
 	
 //	int num_fields = mysql_num_fields(result);
 	MYSQL_ROW row;
@@ -342,7 +342,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 	pl1.pages.swap ( pages ) ;
 
-	cout << "Got " << pages.size() << " pages\n" ;	
+	if(DEBUG_OUTPUT) cout << "Got " << pages.size() << " pages\n" ;	
 	
 
 	data_loaded = true ;
@@ -392,7 +392,7 @@ void TSourceDatabase::getCategoriesInTree ( TWikidataDB &db , string name , int1
 	ret.clear() ;
 	ret.reserve ( tmp.size() ) ;
 	for ( auto i = tmp.begin() ; i != tmp.end() ; i++ ) {
-//		cout << "FOUND: " << i->first << endl ;
+//		if(DEBUG_OUTPUT) cout << "FOUND: " << i->first << endl ;
 		ret.push_back ( i->first ) ;
 	}
 }

@@ -10,6 +10,9 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 #include "json.hpp"
 #include <stdio.h>
@@ -20,6 +23,7 @@
 using namespace std ;
 using json = nlohmann::json;
 
+#define DEBUG_OUTPUT 0
 
 #define NS_UNKNOWN -999
 #define UNKNOWN_WIKIDATA_ITEM 0
@@ -33,11 +37,13 @@ class TPageList ;
 
 static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 extern TPlatform *root_platform ;
+extern std::mutex g_root_platform_mutex;
 
 string ltrim(std::string s) ;
 string rtrim(string s) ;
 string trim(string s) ;
 char *loadFileFromDisk ( string filename ) ;
+string loadAndCacheFileFromDisk ( string filename ) ;
 void split ( const string &input , vector <string> &v , char delim , uint32_t max = 0 ) ;
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
@@ -184,6 +190,7 @@ protected:
 	bool is_sorted = false ;
 	bool namespaces_loaded = false ;
 	void sort() ;
+	
 	map <string,int16_t> ns_string2id ;
 	bool data_loaded = false ;
 } ;
@@ -270,6 +277,7 @@ protected:
 class TPlatform {
 public:
 	bool readConfigFile ( string filename ) ;
+	void setConfig ( TPlatform &p ) ;
 	bool error ( string s ) { cout << s << endl ; return false ; } ;
 	string process() ;
 	string getWiki () ;

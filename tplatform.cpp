@@ -625,6 +625,10 @@ string TPlatform::getLink ( TPage &page ) {
 	return "<a target='_blank' href='" + url + "'>" + label + "</a>" ;
 }
 
+void TPlatform::setConfig ( TPlatform &p ) {
+	config = p.config ;
+}
+
 bool TPlatform::readConfigFile ( string filename ) {
 	ifstream in ( filename.c_str() ) ;
 	json j ( in ) ;

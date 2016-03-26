@@ -1,6 +1,7 @@
 #include "main.h"
 
-TPlatform *root_platform ;
+ TPlatform *root_platform ;
+std::mutex g_root_platform_mutex;
 
 //________________________________________________________________________________________________
 
@@ -29,6 +30,9 @@ void TWikidataDB::doConnect ( bool first ) {
 			exit ( 0 ) ;
 		}*/
 	}
+	
+	std::lock_guard<std::mutex> guard(g_root_platform_mutex);
+	
 
 	if ( root_platform == NULL ) {
 		cout << "Root platform not set\n" ;

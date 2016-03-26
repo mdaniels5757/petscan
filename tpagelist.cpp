@@ -98,6 +98,8 @@ void TPageList::intersect ( TPageList &pl ) {
 		error ( "Intersecting " + wiki + " and " + pl.wiki + " not possible" ) ;
 		return ;
 	}
+	if(DEBUG_OUTPUT) cout << "Intersecting " << size() << " and " << pl.size() << " entries on " << wiki << endl ;
+	
 	sort() ;
 	pl.sort() ;
 	vector <TPage> nl ;
@@ -178,6 +180,7 @@ void TPageList::convertWikidataToWiki ( string new_wiki ) {
 	mysql_free_result(result);
 	
 	swap ( nl ) ;
+	data_loaded = true ;
 }
 
 void TPageList::convertToWikidata () {
@@ -199,12 +202,13 @@ void TPageList::convertToWikidata () {
 		nl.pages.push_back ( TPage ( "Q"+ui2s(i->meta.q) , 0 ) ) ;
 	}
 	swap ( nl ) ;
+	data_loaded = true ;
 }
 
 uint32_t TPageList::annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) {
 	uint32_t ret = 0 ;
 	if ( name2o.empty() ) return ret ;
-//	cout << "Annotating " << name2o.size() << " pages with items\n" ;
+//	if(DEBUG_OUTPUT) cout << "Annotating " << name2o.size() << " pages with items\n" ;
 	
 	vector <string> tmp ;
 	tmp.reserve ( name2o.size() ) ;
@@ -232,27 +236,30 @@ uint32_t TPageList::annotateWikidataItem ( TWikidataDB &db , string wiki , map <
 
 
 void TPageList::join ( string cmd , TPageList &pl ) {
-//	cout << "me: " << wiki << ", other: " << pl.wiki << endl ;
+	if(DEBUG_OUTPUT) cout << "me: " << wiki << ", other: " << pl.wiki << endl ;
 	if ( !data_loaded ) {
-//		cout << "Swapping for " << pl.size() << " pages (having " << size() << ")\n" ;
+		if(DEBUG_OUTPUT) cout << "Swapping for " << pl.size() << " pages (having " << size() << ")\n" ;
 		swap ( pl ) ;
 		return ;
 	}
 	
-//	cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
+	if(DEBUG_OUTPUT) cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
 	if ( cmd == "intersect" ) intersect ( pl ) ;
 	else if ( cmd == "merge" ) merge ( pl ) ;
-//	cout << " resulting in " << size() << " pages.\n" ;
+	if(DEBUG_OUTPUT) cout << " resulting in " << size() << " pages.\n" ;
 }
 
 void TPageList::swap ( TPageList &pl ) {
 	wiki.swap ( pl.wiki ) ;
 	pages.swap ( pl.pages ) ;
+	ns_canonical.swap ( pl.ns_canonical ) ;
+	ns_local.swap ( pl.ns_local ) ;
+	ns_string2id.swap ( pl.ns_string2id ) ;
 	{ bool tmp = data_loaded ; data_loaded = pl.data_loaded ; pl.data_loaded = tmp ; }
 }
 
 void TPageList::loadMissingMetadata () {
-	if ( wiki == "wikidatawiki" ) return ;
+//	if ( wiki == "wikidatawiki" ) return ;
 	
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto &p: pages ) {

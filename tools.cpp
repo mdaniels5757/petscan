@@ -1,4 +1,6 @@
 #include "main.h"
+#include <fstream>
+#include <streambuf>
 
 
 // trim from start
@@ -50,24 +52,36 @@ string getWikiServer ( string wiki ) {
 //________________________________________________________________________________________________________________________
 
 char *loadFileFromDisk ( string filename ) {
+//printf ( "BEGIN %s\n" , filename.c_str() ) ;
 	char * buffer;
 	size_t result;
   	FILE *pFile = fopen ( filename.c_str() , "rb" );
-	if (pFile==NULL) { cerr << "Cannot open file " << filename << endl ; exit ( 0 ) ; }
+	if (pFile==NULL) { if(DEBUG_OUTPUT) cout << "Cannot open file " << filename << endl ; return NULL ; }
 	
 	fseek (pFile , 0 , SEEK_END);
 	long lSize = ftell (pFile);
 	rewind (pFile);
 	
 	buffer = (char*) malloc (sizeof(char)*(lSize+1));
-	if (buffer == NULL) { cerr << "Memory error while reading file " << filename << endl ; exit ( 0 ) ; }
+	if (buffer == NULL) { if(DEBUG_OUTPUT) cout << "Memory error while reading file " << filename << endl ; return NULL ; }
 
 	result = fread (buffer,1,lSize,pFile);
-	if (result != lSize) { cerr << "Reading error for file " << filename << endl ; exit ( 0 ) ; }
+	if (result != lSize) { if(DEBUG_OUTPUT) cout << "Reading error for file " << filename << endl ; return NULL ; }
 	fclose (pFile);
 	buffer[lSize] = 0 ;
 	
+//printf ( "END %s\n" , filename.c_str() ) ;
 	return buffer ;
+}
+
+map <string,string> file_cache ;
+
+string loadAndCacheFileFromDisk ( string filename ) {
+	if ( file_cache.find(filename) != file_cache.end() ) return file_cache[filename] ;
+	ifstream ifs(filename.c_str());
+	string content ( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) ) ;
+	file_cache[filename] = content ;
+	return file_cache[filename] ;
 }
 
 
