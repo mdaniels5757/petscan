@@ -25,7 +25,6 @@ const string TPage::getNameWithoutNamespace() {
 	return name.substr ( name.find_first_of(':')+1 ) ;
 }
 
-
 //________________________________________________________________________________________________________________________
 
 string TPageMetadata::getMisc ( const string &key , const string &_default ) {
@@ -258,9 +257,7 @@ void TPageList::swap ( TPageList &pl ) {
 	{ bool tmp = data_loaded ; data_loaded = pl.data_loaded ; pl.data_loaded = tmp ; }
 }
 
-void TPageList::loadMissingMetadata () {
-//	if ( wiki == "wikidatawiki" ) return ;
-	
+void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto &p: pages ) {
 		if ( p.meta.id != 0 ) continue ;
@@ -301,4 +298,29 @@ void TPageList::loadMissingMetadata () {
 			
 		}
 	}
+
+	if ( wiki != "wikidatawiki" ) return ;
+	if ( wikidata_language.empty() ) return ;
+	if ( ns_page.find(0) == ns_page.end() ) return ; // Huh?
+	if ( ns_page[0].size() == 0 ) return ;
+	
+	// Getting labels and descriptions for items (ns0)
+	map <string,TPage*> item2page ;
+	string sql = "select term_entity_id,term_text,term_type from wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_entity_id IN (0" ;
+	for ( auto i = ns_page[0].begin() ; i != ns_page[0].end() ; i++ ) {
+		item2page[(*i)->name.substr(1)] = *i ;
+		sql += "," + (*i)->name.substr(1) ;
+	}
+	sql += ")" ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		string name ( row[0] ) ;
+		if ( item2page.find(name) == item2page.end() ) continue ; // Say what?
+		TPage *p = item2page[name] ;
+		p->meta.misc[row[2]] = row[1] ;
+	}
+	mysql_free_result(result);
+	
 }

@@ -111,6 +111,7 @@ string TPlatform::process () {
 	
 	if ( wikis.find(common_wiki) == wikis.end() ) common_wiki = "cats" ; // Fallback
 
+	// TODO run these in separate threads
 	if ( 1 ) {
 		if ( db.getPages ( db_params ) ) {
 			db.convertToWiki ( wikis[common_wiki] ) ;
@@ -124,7 +125,7 @@ string TPlatform::process () {
 			pagelist.join ( "intersect" , sparql ) ;
 		}
 	}
-	
+
 	if ( !getParam("manual_list","").empty() ) {
 		manual.wiki = wikis["manual"] ;
 		vector <string> v ;
@@ -141,6 +142,9 @@ string TPlatform::process () {
 			pagelist.join ( "intersect" , pagepile ) ;
 		}
 	}
+	
+	// TODO join threads here
+	
 	
 	wiki = pagelist.wiki ;
 
@@ -162,7 +166,7 @@ string TPlatform::process () {
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
-	pagelist.loadMissingMetadata() ;
+	pagelist.loadMissingMetadata ( "en" ) ;
 
 	return renderPageList ( pagelist ) ;
 }
@@ -393,6 +397,7 @@ string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
 string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	content_type = "text/html; charset=utf-8" ;
 
+	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = !getParam("file_usage_data","").empty() ;
 
@@ -400,8 +405,11 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 	
 	string ret ;
+	ret += "<hr/>" ;
+	if ( pagelist.wiki == "wikidatawiki" ) ret += "<div id='autolist_box'></div>" ;
+	
 	char tmp[1000] ;
-	sprintf ( tmp , "<hr/><h2><a name='results'></a>%ld results</h2>" , pagelist.pages.size() ) ;
+	sprintf ( tmp , "<h2><a name='results'></a>%ld results</h2>" , pagelist.pages.size() ) ;
 	ret += tmp ;
 	if ( pagelist.pages.size() == 0 ) return ret ; // No need for empty table
 	
@@ -410,8 +418,10 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		pagelist.pages.resize ( MAX_HTML_RESULTS ) ;
 	}
 	
-	ret += "<table class='table table-sm table-striped'>" ;
-	ret += "<thead><tr><th class='num'>#</th><th class='text-nowrap l_h_title'></th><th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
+	ret += "<div style='clear:both'><table class='table table-sm table-striped' id='main_table'>" ;
+	ret += "<thead><tr><th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
+	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ; //"<th class='text-nowrap l_h_wd_label'></th>" ;
+	ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
 	if ( file_data ) {
 		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "<th class='l_h_"+(*k)+"'></th>" ;
@@ -428,7 +438,8 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		ret += "<tr>" ;
 		sprintf ( tmp , "<td class='num'>%d</td>" , cnt ) ;
 		ret += tmp ;
-		ret += "<td style='width:100%'>" + getLink ( *i ) + "</td>" ;
+		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) + "</td>" ;
+		if ( is_wikidata ) ret += "<td>" + i->meta.getMisc("description","") + "</td>" ;
 		sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.id ) ; // ID
 		ret += tmp ;
 		ret += "<td>"+nsname+"</td>" ; // Namespace name
@@ -464,7 +475,7 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		ret += "</tr>" ;
 	}
 	ret += "</tbody>" ;
-	ret += "</table>" ;
+	ret += "</table></div>" ;
 	
 	sprintf ( tmp , "<div style='font-size:8pt'>Query took %2.2f seconds.</div>" , querytime ) ;
 	ret += tmp ;
@@ -624,8 +635,17 @@ string TPlatform::getLink ( TPage &page ) {
 	std::replace ( url.begin(), url.end(), ' ', '_') ;
 	// TODO escape '
 //	url = urlencode ( url ) ;
-	url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
-	return "<a target='_blank' href='" + url + "'>" + label + "</a>" ;
+
+	string ret = label ;
+	if ( wiki == "wikidatawiki" && page.meta.misc.find("label") != page.meta.misc.end() ) {
+		url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
+		ret = "<a target='_blank' href='" + url + "'>" + page.meta.misc["label"] + "</a>" ;
+		ret += " <small><tt>[" + label + "]</tt></small>" ;
+	} else {
+		url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
+		ret = "<a target='_blank' href='" + url + "'>" + label + "</a>" ;
+	}
+	return ret ;
 }
 
 void TPlatform::setConfig ( TPlatform &p ) {

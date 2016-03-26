@@ -16,6 +16,7 @@ bool TSource::error ( string s ) {
 
 
 bool TSourceSPARQL::runQuery ( string query ) {
+	if ( query.empty() ) return false ;
 	clear() ;
 	wiki = "wikidatawiki" ;
 	

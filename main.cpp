@@ -18,6 +18,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	if (ev != MG_EV_HTTP_REQUEST)  return ;
 
 //	threads_running++ ;
+	c->flags |= MG_F_SEND_AND_CLOSE;
 	struct http_message *hm = (struct http_message *) p;
 
 	string out , path , query ;
