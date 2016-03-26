@@ -3,6 +3,8 @@
 
 #define CONFIG_FILE "config.json"
 
+vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
+
 int threads_running = 0 ;
 
 string mg_str2string ( const mg_str &s ) {
@@ -35,7 +37,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		return ;
 	}
 
-	if ( path == "/" ) if(DEBUG_OUTPUT) cout << path << " | " << query << endl ;
+	if ( path == "/" ) {if(DEBUG_OUTPUT) cout << path << " | " << query << endl ;}
 
 	if ( path == "/" && !query.empty() ) {
 
@@ -117,6 +119,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		 
 		out = reply ;
 	}
+
 //printf("0\n");
 	mg_printf(c, "HTTP/1.1 200 OK\r\n"
 			  "Content-Type: %s\r\n"

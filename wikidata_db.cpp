@@ -1,6 +1,6 @@
 #include "main.h"
 
- TPlatform *root_platform ;
+TPlatform *root_platform ;
 std::mutex g_root_platform_mutex;
 
 //________________________________________________________________________________________________

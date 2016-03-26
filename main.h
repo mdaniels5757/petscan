@@ -35,7 +35,7 @@ using json = nlohmann::json;
 class TPlatform ;
 class TPageList ;
 
-static vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
+extern vector <string> file_data_keys ;
 extern TPlatform *root_platform ;
 extern std::mutex g_root_platform_mutex;
 

@@ -74,9 +74,12 @@ char *loadFileFromDisk ( string filename ) {
 	return buffer ;
 }
 
+
+std::mutex g_file_cache_mutex;
 map <string,string> file_cache ;
 
 string loadAndCacheFileFromDisk ( string filename ) {
+	std::lock_guard<std::mutex> guard(g_file_cache_mutex);
 	if ( file_cache.find(filename) != file_cache.end() ) return file_cache[filename] ;
 	ifstream ifs(filename.c_str());
 	string content ( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) ) ;
