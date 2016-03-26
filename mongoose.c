@@ -564,7 +564,9 @@ double cs_time() {
  * license, as set out in <http://cesanta.com/products.html>.
  */
 
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS /* Disable deprecation warning in VS2005+ */
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1454,14 +1456,15 @@ size_t mbuf_insert(struct mbuf *a, size_t off, const void *buf, size_t len) {
     }
     a->len += len;
   } else if ((p = (char *) MBUF_REALLOC(
-                  a->buf, (a->len + len) * MBUF_SIZE_MULTIPLIER)) != NULL) {
+                  a->buf, (size_t)((a->len + len) * MBUF_SIZE_MULTIPLIER))) !=
+             NULL) {
     a->buf = p;
     memmove(a->buf + off + len, a->buf + off, a->len - off);
     if (buf != NULL) {
       memcpy(a->buf + off, buf, len);
     }
     a->len += len;
-    a->size = a->len * MBUF_SIZE_MULTIPLIER;
+    a->size = (size_t)(a->len * MBUF_SIZE_MULTIPLIER);
   } else {
     len = 0;
   }
@@ -2157,7 +2160,6 @@ static void mg_destroy_conn(struct mg_connection *conn) {
 #endif
   mbuf_free(&conn->recv_mbuf);
   mbuf_free(&conn->send_mbuf);
-  mbuf_free(&conn->endpoints);
 
   memset(conn, 0, sizeof(*conn));
   MG_FREE(conn);
@@ -4159,6 +4161,10 @@ int mg_normalize_uri_path(const struct mg_str *in, struct mg_str *out) {
 /* Amalgamated: #include "common/sha1.h" */
 /* Amalgamated: #include "common/md5.h" */
 
+#ifndef MG_DISABLE_HTTP_WEBSOCKET
+#define MG_WS_NO_HOST_HEADER_MAGIC ((char *) 0x1)
+#endif
+
 enum mg_http_proto_data_type { DATA_NONE, DATA_FILE, DATA_PUT };
 
 struct mg_http_proto_data_file {
@@ -4187,6 +4193,8 @@ struct mg_http_proto_data {
   struct mbuf strm_state; /* Used by multi-part streaming */
 #endif
   struct mg_http_proto_data_chuncked chunk;
+  struct mbuf endpoints; /* Used by mg_register_http_endpoint */
+  mg_event_handler_t endpoint_handler;
 };
 
 static void mg_http_conn_destructor(void *proto_data);
@@ -4232,6 +4240,7 @@ static void mg_http_conn_destructor(void *proto_data) {
 #ifdef MG_ENABLE_HTTP_STREAMING_MULTIPART
   mbuf_free(&pd->strm_state);
 #endif
+  mbuf_free(&pd->endpoints);
   free(proto_data);
 }
 
@@ -4916,6 +4925,7 @@ MG_INTERNAL size_t mg_handle_chunked(struct mg_connection *nc,
 
 static mg_event_handler_t mg_http_get_endpoint_handler(
     struct mg_connection *nc, struct mg_str *uri_path) {
+  struct mg_http_proto_data *pd;
   size_t pos = 0;
   mg_event_handler_t ret = NULL;
   int matched, matched_max = 0;
@@ -4924,16 +4934,18 @@ static mg_event_handler_t mg_http_get_endpoint_handler(
     return NULL;
   }
 
-  while (pos < nc->endpoints.len) {
+  pd = mg_http_get_proto_data(nc);
+
+  while (pos < pd->endpoints.len) {
     size_t name_len;
-    memcpy(&name_len, nc->endpoints.buf + pos, sizeof(name_len));
-    if ((matched = mg_match_prefix_n(nc->endpoints.buf + pos + sizeof(size_t),
+    memcpy(&name_len, pd->endpoints.buf + pos, sizeof(name_len));
+    if ((matched = mg_match_prefix_n(pd->endpoints.buf + pos + sizeof(size_t),
                                      name_len, uri_path->p, uri_path->len)) !=
         -1) {
       if (matched > matched_max) {
         /* Looking for the longest suitable handler */
         memcpy(&ret,
-               nc->endpoints.buf + pos + sizeof(name_len) + (name_len + 1),
+               pd->endpoints.buf + pos + sizeof(name_len) + (name_len + 1),
                sizeof(ret));
         matched_max = matched;
       }
@@ -5001,11 +5013,16 @@ static void mg_http_store_stream_info(struct mbuf *buf,
 
 static void mg_http_call_endpoint_handler(struct mg_connection *nc, int ev,
                                           struct http_message *hm) {
-  mg_event_handler_t uri_handler =
-      ev == MG_EV_HTTP_REQUEST
-          ? mg_http_get_endpoint_handler(nc->listener, &hm->uri)
-          : NULL;
-  mg_call(nc, uri_handler ? uri_handler : nc->handler, ev, hm);
+  struct mg_http_proto_data *pd = mg_http_get_proto_data(nc);
+
+  if (pd->endpoint_handler == NULL || ev == MG_EV_HTTP_REQUEST) {
+    pd->endpoint_handler =
+        ev == MG_EV_HTTP_REQUEST
+            ? mg_http_get_endpoint_handler(nc->listener, &hm->uri)
+            : NULL;
+  }
+  mg_call(nc, pd->endpoint_handler ? pd->endpoint_handler : nc->handler, ev,
+          hm);
 }
 
 #ifdef MG_ENABLE_HTTP_STREAMING_MULTIPART
@@ -5047,11 +5064,30 @@ void mg_http_handler(struct mg_connection *nc, int ev, void *ev_data) {
   struct mg_str *vec;
 #endif
   if (ev == MG_EV_CLOSE) {
-    /*
-     * For HTTP messages without Content-Length, always send HTTP message
-     * before MG_EV_CLOSE message.
-     */
-    if (io->len > 0 && mg_parse_http(io->buf, io->len, hm, is_req) > 0) {
+#ifdef MG_ENABLE_HTTP_STREAMING_MULTIPART
+    if (pd->strm_state.len != 0) {
+      /*
+       * Multipart message is in progress, but we get close
+       * MG_EV_HTTP_PART_END with error flag
+       */
+      struct mg_http_stream_info si;
+      struct mg_http_multipart_part mp;
+      memset(&mp, 0, sizeof(mp));
+
+      mg_http_parse_stream_info(&pd->strm_state, &si);
+
+      mp.status = -1;
+      mp.var_name = si.var_name.p;
+      mp.file_name = si.file_name.p;
+      mg_call(nc, pd->endpoint_handler ? pd->endpoint_handler : nc->handler,
+              MG_EV_HTTP_PART_END, &mp);
+    } else
+#endif
+        if (io->len > 0 && mg_parse_http(io->buf, io->len, hm, is_req) > 0) {
+      /*
+      * For HTTP messages without Content-Length, always send HTTP message
+      * before MG_EV_CLOSE message.
+      */
       int ev2 = is_req ? MG_EV_HTTP_REQUEST : MG_EV_HTTP_REPLY;
       hm->message.len = io->len;
       hm->body.len = io->buf + io->len - hm->body.p;
@@ -5365,9 +5401,11 @@ void mg_set_protocol_http_websocket(struct mg_connection *nc) {
 
 #ifndef MG_DISABLE_HTTP_WEBSOCKET
 
-void mg_send_websocket_handshake(struct mg_connection *nc, const char *uri,
-                                 const char *extra_headers) {
-  unsigned long random = (unsigned long) uri;
+void mg_send_websocket_handshake2(struct mg_connection *nc, const char *path,
+                                  const char *host, const char *protocol,
+                                  const char *extra_headers) {
+  /* pretty poor source of randomness, TODO fix */
+  unsigned long random = (unsigned long) path;
   char key[sizeof(random) * 3];
 
   mg_base64_encode((unsigned char *) &random, sizeof(random), key);
@@ -5376,9 +5414,26 @@ void mg_send_websocket_handshake(struct mg_connection *nc, const char *uri,
             "Upgrade: websocket\r\n"
             "Connection: Upgrade\r\n"
             "Sec-WebSocket-Version: 13\r\n"
-            "Sec-WebSocket-Key: %s\r\n"
-            "%s\r\n",
-            uri, key, extra_headers == NULL ? "" : extra_headers);
+            "Sec-WebSocket-Key: %s\r\n",
+            path, key);
+
+  /* TODO(mkm): take default hostname from http proto data if host == NULL */
+  if (host != MG_WS_NO_HOST_HEADER_MAGIC) {
+    mg_printf(nc, "Host: %s\r\n", host);
+  }
+  if (protocol != NULL) {
+    mg_printf(nc, "Sec-WebSocket-Protocol: %s\r\n", protocol);
+  }
+  if (extra_headers != NULL) {
+    mg_printf(nc, "%s", extra_headers);
+  }
+  mg_printf(nc, "\r\n");
+}
+
+void mg_send_websocket_handshake(struct mg_connection *nc, const char *path,
+                                 const char *extra_headers) {
+  mg_send_websocket_handshake2(nc, path, MG_WS_NO_HOST_HEADER_MAGIC, NULL,
+                               extra_headers);
 }
 
 #endif /* MG_DISABLE_HTTP_WEBSOCKET */
@@ -7357,52 +7412,75 @@ void mg_serve_http(struct mg_connection *nc, struct http_message *hm,
 
 #endif /* MG_DISABLE_FILESYSTEM */
 
-struct mg_connection *mg_connect_http(struct mg_mgr *mgr,
-                                      mg_event_handler_t ev_handler,
-                                      const char *url,
-                                      const char *extra_headers,
-                                      const char *post_data) {
-  struct mg_connection *nc = NULL;
-  char *addr = NULL;
-  const char *path = NULL;
-  int use_ssl = 0, addr_len = 0, port_i = -1;
+/* returns 0 on success, -1 on error */
+static int mg_http_common_url_parse(const char *url, const char *schema,
+                                    const char *schema_tls, int *use_ssl,
+                                    char **addr, int *port_i,
+                                    const char **path) {
+  int addr_len = 0;
 
-  if (memcmp(url, "http://", 7) == 0) {
-    url += 7;
-  } else if (memcmp(url, "https://", 8) == 0) {
-    url += 8;
-    use_ssl = 1;
+  if (memcmp(url, schema, strlen(schema)) == 0) {
+    url += strlen(schema);
+  } else if (memcmp(url, schema_tls, strlen(schema_tls)) == 0) {
+    url += strlen(schema_tls);
+    *use_ssl = 1;
 #ifndef MG_ENABLE_SSL
-    return NULL; /* SSL is not enabled, cannot do HTTPS URLs */
+    return -1; /* SSL is not enabled, cannot do HTTPS URLs */
 #endif
   }
 
   while (*url != '\0') {
-    addr = (char *) MG_REALLOC(addr, addr_len + 5 /* space for port too. */);
-    if (addr == NULL) {
+    *addr = (char *) MG_REALLOC(*addr, addr_len + 5 /* space for port too. */);
+    if (*addr == NULL) {
       DBG(("OOM"));
-      return NULL;
+      return -1;
     }
     if (*url == '/') {
       url++;
       break;
     }
-    if (*url == ':') port_i = addr_len;
-    addr[addr_len++] = *url;
-    addr[addr_len] = '\0';
+    if (*url == ':') *port_i = addr_len;
+    (*addr)[addr_len++] = *url;
+    (*addr)[addr_len] = '\0';
     url++;
   }
   if (addr_len == 0) goto cleanup;
-  if (port_i < 0) {
-    port_i = addr_len;
-    strcpy(addr + port_i, use_ssl ? ":443" : ":80");
+  if (*port_i < 0) {
+    *port_i = addr_len;
+    strcpy(*addr + *port_i, *use_ssl ? ":443" : ":80");
   } else {
-    port_i = -1;
+    *port_i = -1;
   }
 
-  if (path == NULL) path = url;
+  if (*path == NULL) *path = url;
 
-  DBG(("%s %s", addr, path));
+  if (**path == '\0') *path = "/";
+
+  DBG(("%s %s", *addr, *path));
+
+  return 0;
+
+cleanup:
+  MG_FREE(*addr);
+  return -1;
+}
+
+struct mg_connection *mg_connect_ws(struct mg_mgr *mgr,
+                                    mg_event_handler_t ev_handler,
+                                    const char *url, const char *protocol,
+                                    const char *extra_headers) {
+  struct mg_connection *nc = NULL;
+  char *addr = NULL;
+  int port_i = -1;
+  const char *path = NULL;
+  int use_ssl = 0;
+
+  if (mg_http_common_url_parse(url, "ws://", "wss://", &use_ssl, &addr, &port_i,
+                               &path) < 0) {
+    DBG(("%p: error parsing wss url: %s", (void *) nc, url));
+    return NULL;
+  }
+
   if ((nc = mg_connect(mgr, addr, ev_handler)) != NULL) {
     mg_set_protocol_http_websocket(nc);
 
@@ -7414,6 +7492,42 @@ struct mg_connection *mg_connect_http(struct mg_mgr *mgr,
 
     /* If the port was addred by us, restore the original host. */
     if (port_i >= 0) addr[port_i] = '\0';
+
+    mg_send_websocket_handshake2(nc, path, addr, protocol, extra_headers);
+  }
+
+  MG_FREE(addr);
+  return nc;
+}
+
+struct mg_connection *mg_connect_http(struct mg_mgr *mgr,
+                                      mg_event_handler_t ev_handler,
+                                      const char *url,
+                                      const char *extra_headers,
+                                      const char *post_data) {
+  struct mg_connection *nc = NULL;
+  char *addr = NULL;
+  int port_i = -1;
+  const char *path = NULL;
+  int use_ssl = 0;
+
+  if (mg_http_common_url_parse(url, "http://", "https://", &use_ssl, &addr,
+                               &port_i, &path) < 0) {
+    return NULL;
+  }
+
+  if ((nc = mg_connect(mgr, addr, ev_handler)) != NULL) {
+    mg_set_protocol_http_websocket(nc);
+
+    if (use_ssl) {
+#ifdef MG_ENABLE_SSL
+      mg_set_ssl(nc, NULL, NULL);
+#endif
+    }
+
+    /* If the port was addred by us, restore the original host. */
+    if (port_i >= 0) addr[port_i] = '\0';
+
     mg_printf(nc, "%s /%s HTTP/1.1\r\nHost: %s\r\nContent-Length: %" SIZE_T_FMT
                   "\r\n%s\r\n%s",
               post_data == NULL ? "GET" : "POST", path, addr,
@@ -7422,7 +7536,6 @@ struct mg_connection *mg_connect_http(struct mg_mgr *mgr,
               post_data == NULL ? "" : post_data);
   }
 
-cleanup:
   MG_FREE(addr);
   return nc;
 }
@@ -7473,10 +7586,11 @@ size_t mg_parse_multipart(const char *buf, size_t buf_len, char *var_name,
 
 void mg_register_http_endpoint(struct mg_connection *nc, const char *uri_path,
                                mg_event_handler_t handler) {
+  struct mg_http_proto_data *pd = mg_http_get_proto_data(nc);
   size_t len = strlen(uri_path);
-  mbuf_append(&nc->endpoints, &len, sizeof(len));
-  mbuf_append(&nc->endpoints, uri_path, len + 1);
-  mbuf_append(&nc->endpoints, &handler, sizeof(handler));
+  mbuf_append(&pd->endpoints, &len, sizeof(len));
+  mbuf_append(&pd->endpoints, uri_path, len + 1);
+  mbuf_append(&pd->endpoints, &handler, sizeof(handler));
 }
 
 #endif /* MG_DISABLE_HTTP */
@@ -8978,18 +9092,18 @@ static int mg_get_ip_address_of_nameserver(char *name, size_t name_len) {
   char subkey[512], value[128],
       *key = "SYSTEM\\ControlSet001\\Services\\Tcpip\\Parameters\\Interfaces";
 
-  if ((err = RegOpenKey(HKEY_LOCAL_MACHINE, key, &hKey)) != ERROR_SUCCESS) {
+  if ((err = RegOpenKeyA(HKEY_LOCAL_MACHINE, key, &hKey)) != ERROR_SUCCESS) {
     fprintf(stderr, "cannot open reg key %s: %d\n", key, err);
     ret = -1;
   } else {
     for (ret = -1, i = 0;
-         RegEnumKey(hKey, i, subkey, sizeof(subkey)) == ERROR_SUCCESS; i++) {
+         RegEnumKeyA(hKey, i, subkey, sizeof(subkey)) == ERROR_SUCCESS; i++) {
       DWORD type, len = sizeof(value);
-      if (RegOpenKey(hKey, subkey, &hSub) == ERROR_SUCCESS &&
-          (RegQueryValueEx(hSub, "NameServer", 0, &type, (void *) value,
-                           &len) == ERROR_SUCCESS ||
-           RegQueryValueEx(hSub, "DhcpNameServer", 0, &type, (void *) value,
-                           &len) == ERROR_SUCCESS)) {
+      if (RegOpenKeyA(hKey, subkey, &hSub) == ERROR_SUCCESS &&
+          (RegQueryValueExA(hSub, "NameServer", 0, &type, (void *) value,
+                            &len) == ERROR_SUCCESS ||
+           RegQueryValueExA(hSub, "DhcpNameServer", 0, &type, (void *) value,
+                            &len) == ERROR_SUCCESS)) {
         /*
          * See https://github.com/cesanta/mongoose/issues/176
          * The value taken from the registry can be empty, a single

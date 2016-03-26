@@ -1,6 +1,9 @@
 #include "main.h"
 #include <fstream>
 
+vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
+
+
 void TPlatform::parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) {
 	vector <string> pos ;
 	split ( input , pos , '\n' ) ;
