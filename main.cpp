@@ -5,7 +5,8 @@
 
 vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
-int threads_running = 0 ;
+//int threads_running = 0 ;
+std::mutex g_main_mutex;
 
 string mg_str2string ( const mg_str &s ) {
 	string ret ;
@@ -18,23 +19,25 @@ string mg_str2string ( const mg_str &s ) {
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	if (ev != MG_EV_HTTP_REQUEST)  return ;
 
-	threads_running++ ;
+//	threads_running++ ;
 	struct http_message *hm = (struct http_message *) p;
 
-	string out ;
+	string out , path , query ;
 	string type = "application/json" ;
 
-	string method = mg_str2string ( hm->method ) ;
-	string path = mg_str2string ( hm->uri ) ;
-	string query ;
-	if ( method == "GET" ) {
-		query = mg_str2string ( hm->query_string ) ;
-	} else if ( method == "POST" ) {
-		query = mg_str2string(hm->body) ;
-	} else {
-		if(DEBUG_OUTPUT) cout << "Unknown method " << method << endl ;
-		threads_running-- ;
-		return ;
+	if ( 1 ) {
+		std::lock_guard<std::mutex> lock(g_main_mutex);
+		string method = mg_str2string ( hm->method ) ;
+		path = mg_str2string ( hm->uri ) ;
+		if ( method == "GET" ) {
+			query = mg_str2string ( hm->query_string ) ;
+		} else if ( method == "POST" ) {
+			query = mg_str2string(hm->body) ;
+		} else {
+			if(DEBUG_OUTPUT) cout << "Unknown method " << method << endl ;
+//			threads_running-- ;
+			return ;
+		}
 	}
 
 	if ( path == "/" ) {if(DEBUG_OUTPUT) cout << path << " | " << query << endl ;}
@@ -129,7 +132,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			  type.c_str() ,
 			  (int) out.length(), out.c_str());
 
-	threads_running-- ;
+//	threads_running-- ;
 }
 
 int main(void) {
