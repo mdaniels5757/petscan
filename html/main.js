@@ -128,10 +128,11 @@ function setInterfaceLanguage ( l ) {
 	} ) ;
 	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
 	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
+//	if ( typeof autolist != 'undefined' ) autolist.setInterfaceLanguage ( l ) ;
 	return false ;
 }
 
-function loadInterface ( init_lang ) {
+function loadInterface ( init_lang , callback ) {
 	$.getJSON ( 'https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=?' , function ( d ) {
 		var wt = d.parse.wikitext['*'] ;
 		var rows = wt.split("\n") ;
@@ -166,6 +167,7 @@ function loadInterface ( init_lang ) {
 		$('input[name="project"]').keyup ( loadNamespaces ) ;
 		
 		applyParameters() ;
+		if ( typeof callback != 'undefined' ) callback() ;
 	} ) ;
 }
 
@@ -269,7 +271,9 @@ function initializeInterface () {
 	var l = 'en' ;
 	if ( typeof params.interface_language != 'undefined' ) l = params.interface_language ;
 	
-	loadInterface ( l ) ;
+	loadInterface ( l , function () {
+		autolist = new AutoList () ;
+	} ) ;
 	$('input[name="language"]').focus() ;
 	$('#doit').click ( function () {
 		$('#main_form').submit() ;
@@ -279,7 +283,6 @@ function initializeInterface () {
 		e.preventDefault() ;
 		var o = $(this) ;
 		$('input[name="active_tab"]').val ( o.attr('href').replace(/^\#/,'') ) ;
-//		return false ;
 	} ) ;
 	
 	function highlightMissingWiki () {
@@ -314,5 +317,5 @@ function initializeInterface () {
 }
 
 $(document).ready ( function () {
-	autolist = new AutoList ( initializeInterface ) ;
+	initializeInterface() ;
 } ) ;
