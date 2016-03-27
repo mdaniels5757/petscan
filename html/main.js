@@ -247,6 +247,28 @@ function loadNamespaces () {
 
 var autolist ;
 
+
+// Converts a WDQ input box to SPARQL via wdq2sparql, if possible
+function wdq2sparql ( wdq , sparql_selector ) {
+	$(sparql_selector).prop('disabled', true);
+	
+	$.get ( 'https://tools.wmflabs.org/wdq2sparql/w2s.php' , {
+		wdq:wdq
+	} , function ( d ) {
+		$(sparql_selector).prop('disabled', false);
+		if ( d.match ( /^<!DOCTYPE/ ) ) {
+			alert ( _t('wdq2sparql_fail') ) ;
+			return ;
+		}
+		d = d.replace ( /^prefix.+$/mig , '' ) ;
+		d = d.replace ( /\s+/g , ' ' ) ;
+		d = $.trim ( d ) ;
+		$(sparql_selector).val ( d ) ;
+	} ) ;
+	
+	return false ;
+}
+
 function initializeInterface () {
 	var p = getUrlVars() ;
 	
@@ -283,6 +305,14 @@ function initializeInterface () {
 		e.preventDefault() ;
 		var o = $(this) ;
 		$('input[name="active_tab"]').val ( o.attr('href').replace(/^\#/,'') ) ;
+	} ) ;
+	
+	$('#wdq2sparql').click ( function ( e ) {
+		e.preventDefault() ;
+		var wdq = prompt ( _t('wdq2sparql_prompt') , '' ) ;
+		if ( wdq == null || $.trim(wdq) == '' ) return false ;
+		wdq2sparql ( wdq , 'input[name="sparql"]' ) ;
+		return false ;
 	} ) ;
 	
 	function highlightMissingWiki () {
