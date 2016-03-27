@@ -166,7 +166,9 @@ string TPlatform::process () {
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
-	pagelist.loadMissingMetadata ( getParam("interface_language","en") ) ;
+	string wikidata_label_language = getParam ( "wikidata_label_language" , "" ) ;
+	if ( wikidata_label_language.empty() ) wikidata_label_language = getParam("interface_language","en") ;
+	pagelist.loadMissingMetadata ( wikidata_label_language ) ;
 
 	return renderPageList ( pagelist ) ;
 }
