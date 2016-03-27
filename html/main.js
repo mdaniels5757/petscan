@@ -243,8 +243,11 @@ function loadNamespaces () {
 	return false ;
 }
 
-$(document).ready ( function () {
+var autolist ;
+
+function initializeInterface () {
 	var p = getUrlVars() ;
+	
 
 	// Ensure NS0 is selected by default
 	var cnt = 0 ;
@@ -285,7 +288,7 @@ $(document).ready ( function () {
 		var text = o.val() ;
 		var wiki = wo.val() ;
 		var wop = $(wo.parents("div.input-group").get(0)) ;
-		if ( $.trim(text) != '' && $.trim(wiki) == '' ) {
+		if ( $.trim(text) != '' && !wiki.match(/wiki\s*$/) ) { //$.trim(wiki) == '' ) {
 			wop.addClass ( 'has-danger' ) ;
 			$('#doit').prop('disabled', true)
 		} else {
@@ -308,5 +311,8 @@ $(document).ready ( function () {
 			$('#main_form div.former-tab-pane').addClass('tab-pane').removeClass('former-tab-pane') ;
 		}
 	} ) ;
-	
+}
+
+$(document).ready ( function () {
+	autolist = new AutoList ( initializeInterface ) ;
 } ) ;

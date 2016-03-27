@@ -83,8 +83,8 @@ string loadAndCacheFileFromDisk ( string filename ) {
 	if ( file_cache.find(filename) != file_cache.end() ) return file_cache[filename] ;
 	ifstream ifs(filename.c_str());
 	string content ( (std::istreambuf_iterator<char>(ifs) ), (std::istreambuf_iterator<char>() ) ) ;
-	file_cache[filename] = content ;
-	return file_cache[filename] ;
+//	file_cache[filename] = content ; // DEACTIVATE FOR TESTING
+	return content ;
 }
 
 
