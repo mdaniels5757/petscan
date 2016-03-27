@@ -181,6 +181,7 @@ public:
 	void join ( string cmd , TPageList &pl ) ;
 	void loadMissingMetadata ( string wikidata_language ) ;
 	inline bool hasDataLoaded() { return data_loaded ; }
+	void regexpFilter ( string regexp ) ;
 	
 	string wiki ;
 	vector <TPage> pages ;

@@ -29,7 +29,7 @@ function deXSS ( s ) {
 
 function getUrlVars () {
 	var vars = {} ;
-	var params = $('#querystring').text() ;
+	var params = decodeURIComponent ( $('#querystring').text() ) ;
 	if ( params == '' ) params = window.location.href.slice(window.location.href.indexOf('?') + 1) ;
 	var hashes = params.split('&');
 	if ( hashes.length >0 && hashes[0] == window.location.href ) hashes.shift() ;
@@ -106,7 +106,7 @@ function applyParameters () {
 	}
 	wait2load_ns() ;
 	
-	var q = $('#querystring').text() ;
+	var q = decodeURIComponent ( $('#querystring').text() ) ;
 	if ( q != '' ) setPermalink ( q ) ;
 
 	if ( typeof params.active_tab != 'undefined' ) {

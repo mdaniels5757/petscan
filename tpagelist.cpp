@@ -1,4 +1,5 @@
 #include "main.h"
+#include <regex>
 
 //________________________________________________________________________________________________________________________
 
@@ -323,4 +324,21 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	}
 	mysql_free_result(result);
 	
+}
+
+void TPageList::regexpFilter ( string regexp ) {
+	if ( trim(regexp).empty() ) return ;
+	
+	bool is_wikidata = wiki == "wikidatawiki" ;
+	std::regex re ( regexp , std::regex_constants::icase ) ; // icase doesn't work for some reason
+	vector <TPage> pl ;
+	for ( auto i = pages.begin() ; i != pages.end() ; i++ ) {
+		bool matches = std::regex_match ( i->name , re ) ;
+		if ( !matches && is_wikidata ) {
+			string label = i->meta.getMisc ( "label" , "" ) ;
+			matches = std::regex_match ( label , re ) ;
+		}
+		if ( matches ) pl.push_back ( *i ) ;
+	}
+	pages.swap ( pl ) ;
 }
