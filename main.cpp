@@ -1,9 +1,30 @@
 #include "main.h"
 #include "mongoose.h"
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <ctime>
 
 #define CONFIG_FILE "config.json"
 
-//int threads_running = 0 ;
+std::mutex g_log_mutex;
+
+void add2log ( string s ) {
+	std::lock_guard<std::mutex> lock(g_log_mutex);
+
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    
+    char file[200] , timestamp[200] ;
+    strftime ( file , sizeof(file) , "./%Y-%m.log" , &tm ) ;
+    strftime ( timestamp , sizeof(timestamp) , "%d-%m-%Y %H-%M-%S" , &tm ) ;
+    
+    ofstream outfile;
+    outfile.open(file, std::ios_base::app);
+    outfile << timestamp << "\t" << s << endl ;
+    outfile.close() ;
+}
+
 std::mutex g_main_mutex;
 
 string mg_str2string ( const mg_str &s ) {
@@ -17,7 +38,6 @@ string mg_str2string ( const mg_str &s ) {
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	if (ev != MG_EV_HTTP_REQUEST)  return ;
 
-//	threads_running++ ;
 	c->flags |= MG_F_SEND_AND_CLOSE;
 	struct http_message *hm = (struct http_message *) p;
 
@@ -34,12 +54,14 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			query = mg_str2string(hm->body) ;
 		} else {
 			if(DEBUG_OUTPUT) cout << "Unknown method " << method << endl ;
-//			threads_running-- ;
 			return ;
 		}
 	}
 
-	if ( path == "/" ) {if(DEBUG_OUTPUT) cout << path << " | " << query << endl ;}
+	if ( path == "/" ) {
+		add2log ( "query\t" + query ) ;
+		if(DEBUG_OUTPUT) cout << path << " | " << query << endl ;
+	}
 
 	if ( path == "/" && !query.empty() ) {
 
@@ -122,7 +144,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		out = reply ;
 	}
 
-//printf("0\n");
 	mg_printf(c, "HTTP/1.1 200 OK\r\n"
 			  "Content-Type: %s\r\n"
 			  "Content-Length: %d\r\n"
@@ -131,7 +152,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			  type.c_str() ,
 			  (int) out.length(), out.c_str());
 
-//	threads_running-- ;
 }
 
 int main(void) {
@@ -150,6 +170,7 @@ int main(void) {
 	mg_enable_multithreading(nc);
 
 	cout << "STARTING SERVER\tport " << root_platform->config["port"] << endl ;
+	add2log ( "STARTING" ) ;
 	for (;;) {
 		mg_mgr_poll(&mgr, timeout );
 	}
