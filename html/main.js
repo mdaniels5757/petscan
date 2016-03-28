@@ -41,7 +41,8 @@ function getUrlVars () {
 	return vars;
 }
 
-function _t ( k , alt_lang = '' ) {
+function _t ( k , alt_lang ) {
+	if ( typeof alt_lang == 'undefined' ) alt_lang = '' ;
 	var l = interface_language ;
 	if ( alt_lang != '' ) l = alt_lang ;
 	var ret = "<i>" + k + "</i>" ;
@@ -111,7 +112,7 @@ function applyParameters () {
 
 	if ( typeof params.active_tab != 'undefined' ) {
 		var tab = '#' + params.active_tab.replace(/ /g,'_') ; //$('input[name="active_tab"]').val() ;
-		$('#main_form ul.nav-tabs a[href="'+tab+'"').click() ;
+		$('#main_form ul.nav-tabs a[href="'+tab+'"]').click() ;
 	}
 	
 	$('body').show() ;
@@ -129,6 +130,7 @@ function setInterfaceLanguage ( l ) {
 	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
 	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
 //	if ( typeof autolist != 'undefined' ) autolist.setInterfaceLanguage ( l ) ;
+	$('#doit').attr ( { value : _t('doit') } ) ;
 	return false ;
 }
 
@@ -297,9 +299,9 @@ function initializeInterface () {
 		autolist = new AutoList () ;
 	} ) ;
 	$('input[name="language"]').focus() ;
-	$('#doit').click ( function () {
+/*	$('#doit').click ( function () {
 		$('#main_form').submit() ;
-	} ) ;
+	} ) ;*/
 	
 	$('#main_form ul.nav-tabs a').click ( function (e) {
 		e.preventDefault() ;
