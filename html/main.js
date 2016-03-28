@@ -68,7 +68,7 @@ function setPermalink ( q ) {
 		q = q.replace ( r , '&' ) ;
 	} ) ;
 	
-	var url = '//petscan.wmflabs.org/?' + q ;
+	var url = '/?' + q ;
 	var h = _t("query_url") ;
 	h = h.replace ( /\$1/ , url+"&doit=" ) ;
 	h = h.replace ( /\$2/ , url ) ;
