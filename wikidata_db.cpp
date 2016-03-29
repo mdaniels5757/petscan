@@ -7,6 +7,7 @@ std::mutex g_root_platform_mutex;
 
 #define DB_ESCAPE_BUFFER_SIZE 10000
 
+
 TWikidataDB::TWikidataDB ( string wiki ) {
 	setHostDBFromWiki ( wiki ) ;
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -14,6 +15,13 @@ TWikidataDB::TWikidataDB ( string wiki ) {
 }	
 
 bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
+	vector <string> parts = { "quote" , "source" , "books" , "source" , "news" , "versity" , "voyage" } ;
+	for ( auto p: parts ) {
+		stringReplace ( wiki , "wiki"+p+"wiki" , "wiki"+p ) ;
+	}
+	stringReplace ( wiki , "wikispecieswiki" , "specieswiki" ) ;
+	stringReplace ( wiki , "wiktionarywiki" , "wiktionary" ) ;
+	
 	if ( 0 ) { // Future special cases
 	} else {
 		_host = wiki+".labsdb" ;
@@ -21,7 +29,7 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 	}
 }
 
-void TWikidataDB::doConnect ( bool first ) {	
+void TWikidataDB::doConnect ( bool first ) {
 	if ( !first ) {
 		int i = mysql_ping ( &mysql ) ;
 		if ( i == 0 ) return ; // Connection is already up

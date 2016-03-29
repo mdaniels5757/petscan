@@ -27,7 +27,7 @@ using json = nlohmann::json;
 
 #define NS_UNKNOWN -999
 #define UNKNOWN_WIKIDATA_ITEM 0
-#define DB_PAGE_BATCH_SIZE 300000
+#define DB_PAGE_BATCH_SIZE 1000000
 #define NS_FILE 6
 #define MAX_QUERY_OUTPUT_LENGTH 2000
 #define MAX_HTML_RESULTS 10000
@@ -48,7 +48,8 @@ void split ( const string &input , vector <string> &v , char delim , uint32_t ma
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
-bool loadJSONfromURL ( string url , json &j ) ;
+bool loadJSONfromURL ( string url , json &j , bool use_cache = false ) ;
+void stringReplace(std::string& str, string oldStr, string newStr) ;
 string space2_ ( string s ) ;
 string _2space ( string s ) ;
 string ui2s ( uint32_t i ) ;

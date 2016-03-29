@@ -36,13 +36,13 @@ string getWikiServer ( string wiki ) {
 	if ( wiki == "commonswiki" ) return "commons.wikimedia.org" ;
 	if ( wiki == "metawiki" ) return "commons.wikimedia.org" ;
 	if ( wiki == "mediawikiwiki" ) return "www.mediawiki.org" ;
-	if ( wiki == "specieswiki" ) return "species.wikimedia.org" ;
 	
 	for ( size_t a = 0 ; a+3 < wiki.length() ; a++ ) {
 		if ( wiki[a]=='w' && wiki[a+1]=='i' && wiki[a+2]=='k' ) {
 			string l = wiki.substr(0,a) ;
 			string p = wiki.substr(a) ;
 			if ( p == "wiki" ) p = "wikipedia" ;
+			else p = p.substr ( 0 , p.length()-4 ) ; // remove "wiki"
 			return l+"."+p+".org" ;
 		}
 	}
@@ -185,11 +185,26 @@ const std::string urldecode (
 	return result;
 }
 
+//________________________________________________________________________________________________________________________
+
+void stringReplace(std::string& str, string oldStr, string newStr){
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos){
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+}
 
 //________________________________________________________________________________________________________________________
 
+map <string,string> url_json_cache ;
 
-bool loadJSONfromURL ( string url , json &j ) {
+bool loadJSONfromURL ( string url , json &j , bool use_cache ) {
+	if ( use_cache && url_json_cache.find(url) != url_json_cache.end() ) {
+		string text = url_json_cache[url] ;
+		j = json::parse ( text.c_str() ) ;
+		return true ;
+	}
 	CURL *curl;
 	curl = curl_easy_init();
 	if ( !curl ) return false ;
@@ -217,6 +232,11 @@ bool loadJSONfromURL ( string url , json &j ) {
 	}
 	
 	j = json::parse ( text ) ;
+	
+	if ( use_cache ) {
+		std::lock_guard<std::mutex> guard(g_file_cache_mutex);
+		url_json_cache[url] = string ( text ) ;
+	}
 	
 	free ( text ) ;
 	return true ;

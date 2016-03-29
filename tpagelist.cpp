@@ -56,7 +56,7 @@ void TPageList::loadNamespaces () {
 	// Load Namespace JSON
 	json j ;
 	string url = "https://" + getWikiServer ( wiki ) + "/w/api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases&format=json" ;
-	if ( !loadJSONfromURL ( url , j ) ) return ;
+	if ( !loadJSONfromURL ( url , j , true ) ) return ;
 	
 	for ( auto i = j["query"]["namespaces"].begin() ; i != j["query"]["namespaces"].end() ; i++ ) {
 		uint16_t num = atoi(i.key().c_str()) ;
