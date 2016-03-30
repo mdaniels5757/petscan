@@ -68,6 +68,15 @@ function WiDaR ( callback ) {
 		} , callback ) ;
 	}
 	
+	this.createItemForPage = function ( page , wiki , callback ) {
+		this.abstractCall ( {
+			action:'create_item_from_page',
+			botmode:1,
+			site:wiki,
+			page:page
+		} , callback ) ;
+	}
+	
 	this.setClaim = function ( q , prop , target_q , callback ) {
 		this.abstractCall ( { 
 			action:'set_claims',
@@ -97,8 +106,17 @@ function AutoList ( callback ) {
 		$('#main_table input.qcb').each ( function () {
 			var o = $(this) ;
 			if ( !o.is(':checked') ) return ;
+			var tr = $(o.parents('tr').get(0)) ;
 			var q = o.attr('q') ;
 			var remove_q ;
+			
+			if ( me.mode == 'creator' ) {
+				var cmd = { q:q , status:'waiting' , mode:'create' } ;
+				cmd.page = $($(tr.find("td").get(2)).find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'') ;
+				remove_q = me.commands_todo.length ;
+				me.commands_todo.push ( cmd ) ;
+			}
+			
 			$.each ( rows , function ( k , row ) {
 				var cmd = { q:q , status:'waiting' } ;
 				var m = row.match ( /^\s*-(P\d+)\s*$/ ) ;
@@ -116,7 +134,10 @@ function AutoList ( callback ) {
 				remove_q = me.commands_todo.length ;
 				me.commands_todo.push ( cmd ) ;
 			} ) ;
-			if ( typeof remove_q != 'undefined' ) me.commands_todo[remove_q].remove_q = true ;
+			if ( typeof remove_q != 'undefined' ) {
+				me.commands_todo[remove_q].remove_q = true ;
+				me.commands_todo[remove_q].cb_id = o.attr('id') ;
+			}
 		} ) ;
 	}
 	
@@ -126,7 +147,7 @@ function AutoList ( callback ) {
 		var cmd = me.commands_todo[id] ;
 		
 		if ( cmd.remove_q ) { // Last for this q, remove row
-			$($('#main_table input.qcb[q="'+cmd.q+'"]').parents('tr').get(0)).remove() ;
+			$($('#'+cmd.cb_id).parents('tr').get(0)).remove() ;
 		}
 		
 		var tmp = [] ;
@@ -144,7 +165,23 @@ function AutoList ( callback ) {
 		me.commands_todo[id].status = 'running' ;
 		var cmd = me.commands_todo[id] ;
 		
-		if ( cmd.mode == 'add' ) {
+		if ( cmd.mode == 'create' ) {
+		
+			me.widar.createItemForPage ( cmd.page , output_wiki , function ( d ) {
+				// TODO error check: d.error=="OK"
+				
+				// Update all subsequent commands for this item to use the new Q
+				var new_q = d.q.replace(/\D/,'') ;
+				var old_q = cmd.q ;
+				$.each ( me.commands_todo , function ( k , v ) {
+					if ( v.q == old_q ) me.commands_todo[k].q = new_q ;
+				} ) ;
+				
+				// Next
+				me.finishCommand ( id ) ;
+			} ) ;
+		
+		} else if ( cmd.mode == 'add' ) {
 			me.widar.setClaim ( 'Q'+cmd.q , cmd.prop , cmd.value , function ( d ) {
 				// TODO error log
 				me.finishCommand ( id ) ;
@@ -182,6 +219,8 @@ function AutoList ( callback ) {
 
 	this.runNextCommand = function () {
 		var me = this ;
+		
+		if ( me.emergency_stop ) return ; // Used clicked stop
 
 		if ( me.running.length >= me.max_concurrent ) {
 			setTimeout ( function () { me.runNextCommand } , 100 ) ; // Was already called, so short delay
@@ -213,7 +252,21 @@ function AutoList ( callback ) {
 			return ;
 		}
 
+		me.updateRunCounter() ;
 		me.runCommand ( run_next ) ;
+	}
+	
+	this.updateRunCounter = function () {
+		var me = this ;
+		var t = _t('al_running') ;
+		var all = me.commands_todo.length ;
+		var cnt = 0 ;
+		$.each ( me.commands_todo , function ( k , v ) {
+			if ( v.status != 'done' ) cnt++ ;
+		} ) ;
+		t = t.replace ( '$1' , cnt ) ;
+		t = t.replace ( '$2' , all ) ;
+		$('#al_status').html ( t ) ;
 	}
 
 	this.initializeAutoListBox = function () {
@@ -221,12 +274,17 @@ function AutoList ( callback ) {
 		var h = '' ;
 		var p = getUrlVars() ;
 		if ( me.widar.isLoggedIn() ) {
+			h += "<div class='autolist_subbox'>" ;
 			h += "<div>Welcome, " + me.widar.getUserName() + "!</div>" ;
+			if ( me.mode == "creator" ) {
+				h += "<div class='l_al_creator_mode'></div>" ;
+			}
 			if ( me.widar.isBot() ) {
 				h += "<div class='l_al_bot'></div>" ;
 				me.max_concurrent = 5 ;
 				me.delay = 1 ;
 			}
+			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
 			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm l_al_all'></button><br/>" ;
 			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm l_al_none'></button><br/>" ;
@@ -248,10 +306,11 @@ function AutoList ( callback ) {
 	
 		$('#al_do_process').click ( function (e) {
 			e.preventDefault() ;
+			me.emergency_stop = false ;
 			$('#al_do_process').hide() ;
 			$('#al_do_stop').show() ;
-			$('#al_status').html ( _t('al_running') ) ;
 			me.setupCommands() ;
+			me.updateRunCounter() ;
 
 			for ( var i = 0 ; i < me.max_concurrent ; i++ ) {
 				me.runNextCommand() ;
@@ -260,22 +319,31 @@ function AutoList ( callback ) {
 
 		$('#al_do_stop').click ( function (e) {
 			e.preventDefault() ;
+			me.emergency_stop = true ;
+			$('#al_do_process').show() ;
+			$('#al_do_stop').hide() ;
+			$('#al_status').html ( "<span style='color:red;'>" + _t('al_stopped') + "</span>" ) ;
+		} ) ;
+
+		$('#al_do_check_all').click ( function (e) {
+			e.preventDefault() ;
+			$('#main_table input.qcb').prop('checked',true) ;
+		} ) ;
+
+		$('#al_do_check_none').click ( function (e) {
+			e.preventDefault() ;
+			$('#main_table input.qcb').prop('checked',false) ;
+		} ) ;
+
+		$('#al_do_check_toggle').click ( function (e) {
+			e.preventDefault() ;
+			$('#main_table input.qcb').each ( function () {
+				var o = $(this) ;
+				o.prop ( 'checked' , !o.prop('checked') ) ;
+			} ) ;
 		} ) ;
 	}
 
-	this.initalizeTable = function () {
-		$('#main_table thead tr').prepend ( "<th></th>" ) ;
-		$('#main_table tbody tr').each ( function () {
-			var o = $(this) ;
-			var href = $(o.find("td a").get(0)).attr ( 'href' ) ;
-			var m = href.match ( /\/Q(\d+)$/ ) ;
-			if ( m == null ) return ;
-			var q = m[1] ;
-			var h = "<td><input type='checkbox' class='qcb' q='"+q+"' checked></td>" ;
-			o.prepend ( h ) ;
-		} ) ;
-	}
-	
 	this.setInterfaceLanguage = function ( l ) {
 		$.each ( interface_text['en'] , function ( k , v ) {
 			if ( !k.match(/^al_/) ) return ; // AutoList only
@@ -291,8 +359,8 @@ function AutoList ( callback ) {
 		return ;
 	}
 
+	me.mode = $('#autolist_box').attr('mode') ;
 	me.commands_todo = [] ;
-	me.initalizeTable() ;
 	me.widar = new WiDaR ( function () {
 		me.widar.tool_hashtag = 'petscan' ;
 		me.initializeAutoListBox() ;

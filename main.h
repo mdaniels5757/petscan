@@ -303,9 +303,11 @@ protected:
 	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) ;
 	void processWikidata ( TPageList &pl ) ;
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
+	void processCreator ( TPageList &pagelist ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;
+	map <string,bool> existing_labels ;
 } ;
 
 #endif

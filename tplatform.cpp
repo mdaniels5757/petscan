@@ -172,9 +172,31 @@ string TPlatform::process () {
 	
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 
+	processCreator ( pagelist ) ;
+
 	return renderPageList ( pagelist ) ;
 }
 
+void TPlatform::processCreator ( TPageList &pagelist ) {
+	if ( pagelist.wiki == "wikidatawiki" ) return ;
+	if ( getParam("wikidata_item","") != "without" ) return ;
+
+	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.
+	
+	vector <string> tmp ;
+	tmp.reserve ( pagelist.size() ) ;
+	for ( auto i: pagelist.pages ) tmp.push_back ( i.name ) ;
+	
+	TWikidataDB db ( "wikidatawiki" ) ;
+	string sql = "SELECT DISTINCT term_text FROM wb_terms WHERE term_entity_type='item' AND term_type IN ('label','alias') AND term_text IN (" ;
+	sql += _2space ( TSourceDatabase::listEscapedStrings ( db , tmp , false ) ) ;
+	sql += ")" ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) existing_labels[row[0]] = true ;
+	mysql_free_result(result);
+}
 
 void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_data = !getParam("ext_image_data","").empty() ;
@@ -410,7 +432,21 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	
 	string ret ;
 	ret += "<hr/>" ;
-	if ( pagelist.wiki == "wikidatawiki" ) ret += "<div id='autolist_box'></div>" ;
+	ret += "<script>var output_wiki='"+wiki+"';</script>\n" ;
+
+	struct timeval now_ish ;
+	gettimeofday(&now_ish , NULL);
+	
+	bool use_autolist = false ;
+	bool autolist_creator_mode = false ;
+	if ( pagelist.wiki != "wikidatawiki" && getParam("wikidata_item","") == "without" ) {
+		ret += "<div id='autolist_box' mode='creator'></div>" ;
+		use_autolist = true ;
+		autolist_creator_mode = true ;
+	} else if ( pagelist.wiki == "wikidatawiki" ) {
+		ret += "<div id='autolist_box' mode='autolist'></div>" ;
+		use_autolist = true ;
+	}
 	
 	char tmp[1000] ;
 	sprintf ( tmp , "<h2><a name='results'></a>%ld results</h2>" , pagelist.pages.size() ) ;
@@ -423,7 +459,9 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	}
 	
 	ret += "<div style='clear:both'><table class='table table-sm table-striped' id='main_table'>" ;
-	ret += "<thead><tr><th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
+	ret += "<thead><tr>" ;
+	if ( use_autolist ) ret += "<th></th>" ; // Checkbox column
+	ret += "<th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
 	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ; //"<th class='text-nowrap l_h_wd_label'></th>" ;
 	ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
@@ -440,6 +478,20 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		string nsname = pagelist.getNamespaceString(ns) ;
 		if ( nsname.empty() ) nsname = "<span class='l_namespace_0'>Article</span>" ;
 		ret += "<tr>" ;
+		
+		if ( use_autolist ) {
+			string q ;
+			string checked = "checked" ;
+			if ( autolist_creator_mode ) {
+				if ( existing_labels.find(_2space(i->name)) != existing_labels.end() ) checked = "" ; // No checkbox if label/alias exists
+				sprintf ( tmp , "create_item_%d_%ld" , cnt , now_ish.tv_usec ) ; // Using microtime to get unique checkbox 
+				q = tmp ;
+			} else {
+				q = i->name.substr(1) ;
+			}
+			ret += "<td><input type='checkbox' class='qcb' q='"+q+"' id='autolist_checkbox_"+q+"' "+checked+"></td>" ;
+		}
+		
 		sprintf ( tmp , "<td class='num'>%d</td>" , cnt ) ;
 		ret += tmp ;
 		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) + "</td>" ;
