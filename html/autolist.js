@@ -229,7 +229,7 @@ function AutoList ( callback ) {
 		
 		var q_running = {} ;
 		$.each ( me.running , function ( k , v ) {
-			q_running[me.commands_todo[v]] = 1 ;
+			q_running[me.commands_todo[v].q] = 1 ;
 		} ) ;
 
 		var run_next ;
