@@ -47,7 +47,7 @@ function _t ( k , alt_lang ) {
 	if ( alt_lang != '' ) l = alt_lang ;
 	var ret = "<i>" + k + "</i>" ;
 	if ( typeof interface_text['en'][k] != 'undefined' ) ret = interface_text['en'][k] ;
-	if ( typeof interface_text[l][k] != 'undefined' ) ret = interface_text[l][k] ;
+	if ( typeof interface_text[l] != 'undefined' && typeof interface_text[l][k] != 'undefined' ) ret = interface_text[l][k] ;
 	return ret ;
 }
 
@@ -178,6 +178,7 @@ function loadNamespaces () {
 	var l = $('input[name="language"]').val() ;
 	if ( l.length < 2 ) return false ;
 	var p = $('input[name="project"]').val() ;
+	if ( l == 'wikidata' ) { l = 'www' ; p = 'wikidata' ; }
 	var lp = l+'.'+p ;
 	if ( lp == last_namespace_project ) return false ;
 	
@@ -351,6 +352,11 @@ function initializeInterface () {
 	$('input[name="wikidata_item"][value="without"]').click ( function ( e ) {
 		$('input[name="show_redirects"][value="no"]').prop('checked', true);
 	} ) ;
+	
+	$('#quick_commons').click ( function ()     { $("input[name='language']").val("commons");  $("input[name='project']").val("wikimedia"); loadNamespaces() ; return false } ) ;
+	$('#quick_wikispecies').click ( function () { $("input[name='language']").val("species");  $("input[name='project']").val("wikimedia"); loadNamespaces() ; return false } ) ;
+	$('#quick_wikidata').click ( function ()    { $("input[name='language']").val("wikidata"); $("input[name='project']").val("wikimedia"); loadNamespaces() ; return false } ) ;
+
 }
 
 $(document).ready ( function () {

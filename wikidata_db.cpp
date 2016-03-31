@@ -22,6 +22,7 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 		stringReplace ( wiki , "wiki"+p+"wiki" , "wiki"+p ) ;
 	}
 	stringReplace ( wiki , "wikispecieswiki" , "specieswiki" ) ;
+	stringReplace ( wiki , "specieswikimedia" , "specieswiki" ) ;
 	stringReplace ( wiki , "wiktionarywiki" , "wiktionary" ) ;
 	
 	if ( 0 ) { // Future special cases
