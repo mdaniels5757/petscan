@@ -484,7 +484,8 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 			string q ;
 			string checked = "checked" ;
 			if ( autolist_creator_mode ) {
-				if ( existing_labels.find(_2space(i->name)) != existing_labels.end() ) checked = "" ; // No checkbox if label/alias exists
+				if ( existing_labels.find(_2space(i->name)) != existing_labels.end() ) checked = "" ; // No checkbox check if label/alias exists
+				if ( i->name.find_first_of('(') != string::npos ) checked = "" ; // Names with "(" are unchecked by default
 				sprintf ( tmp , "create_item_%d_%ld" , cnt , now_ish.tv_usec ) ; // Using microtime to get unique checkbox 
 				q = tmp ;
 			} else {
