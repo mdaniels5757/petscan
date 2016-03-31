@@ -148,7 +148,7 @@ string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> in
 bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	wiki = params.wiki ;
 	pages.clear() ;
-	TWikidataDB db ( wiki ) ;
+	TWikidataDB db ( wiki , platform ) ;
 
 	vector <vector<string> > cat_pos , cat_neg ;
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
@@ -327,6 +327,11 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	
+	if ( !result ) {
+		cerr << "On wiki " << wiki << ", SQL query failed: " << sql << endl ;
+		return error ( "Database query failes. Problem with " + wiki + "?" ) ;
+	}
+	
 	gettimeofday(&after , NULL);
 	if(DEBUG_OUTPUT) printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
 	
@@ -353,7 +358,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 	if(DEBUG_OUTPUT) cout << "Got " << pages.size() << " pages\n" ;	
 	
-
 	data_loaded = true ;
 	return true ;
 }

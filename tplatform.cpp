@@ -189,7 +189,7 @@ void TPlatform::processCreator ( TPageList &pagelist ) {
 	tmp.reserve ( pagelist.size() ) ;
 	for ( auto i: pagelist.pages ) tmp.push_back ( i.name ) ;
 	
-	TWikidataDB db ( "wikidatawiki" ) ;
+	TWikidataDB db ( "wikidatawiki" , this ) ;
 	string sql = "SELECT DISTINCT term_text FROM wb_terms WHERE term_entity_type='item' AND term_type IN ('label','alias') AND term_text IN (" ;
 	sql += _2space ( TSourceDatabase::listEscapedStrings ( db , tmp , false ) ) ;
 	sql += ")" ;
@@ -205,7 +205,7 @@ void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_usage = !getParam("file_usage_data","").empty() ;
 	if ( !file_data && !file_usage ) return ; // Nothing to do
 	
-	TWikidataDB db ( pl.wiki ) ;
+	TWikidataDB db ( pl.wiki , this ) ;
 	map <string,TPage *> name2f ;
 	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
 		if ( i->meta.ns != NS_FILE ) continue ; // Files only
@@ -274,7 +274,7 @@ void TPlatform::processWikidata ( TPageList &pl ) {
 	if ( wdi != "any" && wdi != "with" && wdi != "without" ) return ;
 
 	uint32_t with_wikidata_item = 0 ;
-	TWikidataDB db ( string("wikidatawiki") ) ;
+	TWikidataDB db ( "wikidatawiki" , this ) ;
 	map <string,TPage *> name2o ;
 	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
 		name2o[_2space(i->name)] = &(*i) ;

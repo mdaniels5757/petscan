@@ -61,7 +61,7 @@ string pad ( string s , int num , char c ) ;
 class TWikidataDB {
 public:
 	TWikidataDB () {} ;
-	TWikidataDB ( string wiki ) ;
+	TWikidataDB ( string wiki , TPlatform *_platform = NULL ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
@@ -71,7 +71,8 @@ public:
 	
 protected:
 	MYSQL mysql;
-	string _host , _config_file , _database ;
+	string _host , _config_file , _database , _wiki ;
+	TPlatform *platform = NULL ;
 	
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
