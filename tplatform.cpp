@@ -95,8 +95,6 @@ string TPlatform::process () {
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
 	
-
-	
 	TPageList pagelist ( getWiki() ) ;
 	string common_wiki = getParam("common_wiki","cats") ;
 
@@ -302,7 +300,7 @@ string TPlatform::getWiki () {
 	string l = getParam ( "language" , "en" ) ;
 	string p = getParam ( "project" , "wikipedia" ) ;
 	if ( l == "wikidata" || p == "wikidata" ) wiki = "wikidatawiki" ;
-	else if ( l == "wikispecies" || p == "wikispecies" ) wiki = "specieswiki" ;
+	else if ( l == "species" || l == "wikispecies" || p == "wikispecies" ) wiki = "specieswiki" ;
 	else if ( l == "commons" || l == "meta" ) wiki = l+"wiki" ;
 	else if ( p == "wikipedia" ) wiki = l+"wiki" ;
 	else wiki = l+p ;
