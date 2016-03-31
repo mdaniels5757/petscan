@@ -187,6 +187,7 @@ public:
 	string wiki ;
 	vector <TPage> pages ;
 	map <int16_t,string> ns_canonical , ns_local ;
+
 protected:
 	void loadNamespaces () ;
 	void convertToWikidata () ;
@@ -281,13 +282,14 @@ class TPlatform {
 public:
 	bool readConfigFile ( string filename ) ;
 	void setConfig ( TPlatform &p ) ;
-	bool error ( string s ) { cout << s << endl ; return false ; } ;
+	bool error ( string s ) { errors.push_back ( s ) ; return false ; } ;
 	string process() ;
 	string getWiki () ;
 	string getParam ( string key , string default_value = "" , bool ignore_empty = false ) ;
 	
 	map <string,string> config , params ;
 	string content_type , query ;
+	vector <string> errors ;
 
 protected:
 	string renderPageList ( TPageList &pagelist ) ;

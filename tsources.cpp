@@ -22,7 +22,10 @@ bool TSourceSPARQL::runQuery ( string query ) {
 	
 	json j ;
 	string url = "https://query.wikidata.org/sparql?format=json&query=" + escapeURLcomponent ( sparql_prefixes + query ) ;
-	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
+	if ( !loadJSONfromURL ( url , j ) ) {
+		url = "https://query.wikidata.org/#" + escapeURLcomponent ( sparql_prefixes + query ) ;
+		return error ( "Error while running SPARQL query. <a class='alert-link' href='"+url+"' target='_blank'>Check if the query works</a>." ) ;
+	}
 	
 	
 	string item_key = j["head"]["vars"][0] ;
@@ -49,7 +52,7 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
 	json j ;
-	if ( !loadJSONfromURL ( url , j ) ) return error ( "JSON read error for " + url ) ;
+	if ( !loadJSONfromURL ( url , j ) ) return error ( "PagePile retrieval error. PagePile "+ui2s(id)+" might not exists." ) ;
 
 	clear() ;
 	wiki = j["wiki"] ;

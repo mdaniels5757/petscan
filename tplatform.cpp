@@ -435,6 +435,10 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	string ret ;
 	ret += "<hr/>" ;
 	ret += "<script>var output_wiki='"+wiki+"';</script>\n" ;
+	
+	for ( auto a:errors ) {
+		ret += "<div class='alert alert-danger' role='alert'>" + a + "</div>" ;
+	}
 
 	struct timeval now_ish ;
 	gettimeofday(&now_ish , NULL);
