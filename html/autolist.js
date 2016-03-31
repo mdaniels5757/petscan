@@ -119,7 +119,7 @@ function AutoList ( callback ) {
 			
 			$.each ( rows , function ( k , row ) {
 				var cmd = { q:q , status:'waiting' } ;
-				var m = row.match ( /^\s*-(P\d+)\s*$/ ) ;
+				var m = row.match ( /^\s*-(P\d+)/i ) ;
 				if ( m == null ) {
 					m = row.match ( /^\s*(P\d+)\s*:\s*(Q\d+)\s*$/i ) ;
 					if ( m != null ) {
@@ -130,6 +130,8 @@ function AutoList ( callback ) {
 				} else { // Delete property
 					cmd.mode = 'delete' ;
 					cmd.prop = m[1] ;
+					m = row.match ( /^\s*-(P\d+)\s*:\s*Q(\d+)/i ) ;
+					if ( m != null ) cmd.value = m[2] ;
 				}
 				remove_q = me.commands_todo.length ;
 				me.commands_todo.push ( cmd ) ;
@@ -190,13 +192,16 @@ function AutoList ( callback ) {
 			$.getJSON ( 'https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q'+cmd.q+'&format=json&callback=?' , function ( d ) {
 				var done = false ;
 				$.each ( ((((d.entities||{})['Q'+cmd.q]||{}).claims||{})[cmd.prop.toUpperCase()]||{}) , function ( k , v ) {
+					if ( typeof cmd.value != 'undefined' ) { // Specific value to delete
+						if ( ((((v.mainsnak||{}).datavalue||{}).value||{})['numeric-id']||'') != cmd.value ) return ;
+					}
 					done = true ;
 					me.widar.removeClaim ( v.id , function ( d ) {
 						// TODO error log
 						console.log ( d ) ;
 						me.finishCommand ( id ) ;
 					} ) ;
-					return false ;
+					return false ; // Remove just the first one
 				} ) ;
 				if ( !done ) {
 					// TODO error log
