@@ -1,7 +1,7 @@
 #include "main.h"
 #include <fstream>
 #include <streambuf>
-
+#include <regex>
 
 // trim from start
 string ltrim(string s) {
@@ -42,7 +42,8 @@ string getWikiServer ( string wiki ) {
 			string l = wiki.substr(0,a) ;
 			string p = wiki.substr(a) ;
 			if ( p == "wiki" ) p = "wikipedia" ;
-			else p = p.substr ( 0 , p.length()-4 ) ; // remove "wiki"
+			else regex_replace ( p , regex("wiki$") , string("") ) ;
+			// p = p.substr ( 0 , p.length()-4 ) ; // remove "wiki"
 			return l+"."+p+".org" ;
 		}
 	}
