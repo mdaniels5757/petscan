@@ -346,6 +346,11 @@ function initializeInterface () {
 			$('#main_form div.former-tab-pane').addClass('tab-pane').removeClass('former-tab-pane') ;
 		}
 	} ) ;
+	
+	// Deactivate REDIRECTS when showing only pages without item. This will be a mess otherwise, few users would think to change that setting. It can always be changed back manually.
+	$('input[name="wikidata_item"][value="without"]').click ( function ( e ) {
+		$('input[name="show_redirects"][value="no"]').prop('checked', true);
+	} ) ;
 }
 
 $(document).ready ( function () {
