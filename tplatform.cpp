@@ -180,6 +180,7 @@ string TPlatform::process () {
 void TPlatform::processCreator ( TPageList &pagelist ) {
 	if ( pagelist.wiki == "wikidatawiki" ) return ;
 	if ( getParam("wikidata_item","") != "without" ) return ;
+	if ( pagelist.size() == 0 ) return ;
 
 	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.
 	
