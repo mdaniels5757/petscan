@@ -325,6 +325,8 @@ string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
 	string wdi = getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 
+	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
+
 	string ret ;
 	ret += "== " + getParam("combination") + " ==\n" ;
 
@@ -344,7 +346,13 @@ string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
 	
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		ret += "|-\n" ;
-		ret += "| [[:" + _2space(i->name) + "|]]" ;
+		if ( is_wikidata ) {
+			string label = i->meta.getMisc("label","") ;
+			if ( label.empty() ) ret += "| [[:" + _2space(i->name) + "|]]" ;
+			else ret += "| [[" + i->name + "|"+label+"]]" ;
+		} else {
+			ret += "| [[:" + _2space(i->name) + "|]]" ;
+		}
 		ret += " || " + ui2s(i->meta.id) ;
 		ret += " || " + ui2s(i->meta.ns) ;
 		ret += " || " + ui2s(i->meta.size) ;
@@ -381,8 +389,12 @@ string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
 	string wdi = getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 
+	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
+
 	string ret ;
-	ret += "Title\tPage ID\tNamespace\tSize (bytes)\tLast change" ;
+	ret += "Title" ;
+	if ( is_wikidata ) ret += "\tLabel" ;
+	ret += "\tPage ID\tNamespace\tSize (bytes)\tLast change" ;
 	if ( show_wikidata_item ) ret += "\tWikidata" ;
 
 	if ( file_data ) {
@@ -393,6 +405,7 @@ string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
 	
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		ret += _2space(i->name) ;
+		if ( is_wikidata )  ret += "\t" + i->meta.getMisc("label","") ;
 		ret += "\t" + ui2s(i->meta.id) ;
 		ret += "\t" + ui2s(i->meta.ns) ;
 		ret += "\t" + ui2s(i->meta.size) ;
