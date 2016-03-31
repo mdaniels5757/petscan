@@ -296,6 +296,11 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.larger > -1 ) sql += " AND p.page_len>=" + ui2s(params.larger) ;
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
 	
+	// Speed up "Only pages without Wikidata items" for NS0 pages
+	if ( params.page_wikidata_item == "without" ) {
+		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0)" ;
+	}
+	
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
 
 	vector <string> having ;	

@@ -73,7 +73,8 @@ void TPlatform::setDatabaseParameters ( TSourceDatabaseParams &db_params ) {
 	db_params.smaller = atoi ( getParam("smaller","-1",true).c_str() ) ;
 	db_params.minlinks = atoi ( getParam("minlinks","-1",true).c_str() ) ;
 	db_params.maxlinks = atoi ( getParam("maxlinks","-1",true).c_str() ) ;
-
+	db_params.page_wikidata_item = getParam("wikidata_item","any") ;
+	
 	// Time/date range
 	db_params.before = getParam("before","") ;
 	db_params.after = getParam("after","") ;

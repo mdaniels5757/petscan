@@ -257,7 +257,7 @@ public:
 	string last_edit_anon = "either" ;
 	string last_edit_flagged = "either" ;
 	int32_t larger , smaller , minlinks , maxlinks ;
-	string before , after , max_age ;
+	string before , after , max_age , page_wikidata_item ;
 	bool only_new_since = false ;
 } ;
 
