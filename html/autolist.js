@@ -395,6 +395,8 @@ function AutoList ( callback ) {
 	}
 	
 	this.addCheckLinks = function () {
+		var me = this ;
+		if ( me.mode != 'creator' ) return ;
 		$('#main_table tbody tr').each ( function () {
 			var tr = $(this) ;
 			var td = $(tr.find('td').get(2)) ;
