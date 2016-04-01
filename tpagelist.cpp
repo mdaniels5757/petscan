@@ -330,13 +330,17 @@ void TPageList::regexpFilter ( string regexp ) {
 	if ( trim(regexp).empty() ) return ;
 	
 	bool is_wikidata = wiki == "wikidatawiki" ;
-	std::regex re ( regexp , std::regex_constants::icase ) ; // icase doesn't work for some reason
+	std::regex re ( regexp ) ; // icase doesn't work for some reason
 	vector <TPage> pl ;
+	pl.reserve ( pages.size() ) ;
 	for ( auto i = pages.begin() ; i != pages.end() ; i++ ) {
-		bool matches = std::regex_match ( i->name , re ) ;
-		if ( !matches && is_wikidata ) {
+		bool matches ;
+		if ( i->meta.ns == 0 && is_wikidata ) {
 			string label = i->meta.getMisc ( "label" , "" ) ;
 			matches = std::regex_match ( label , re ) ;
+		} else {
+			string name = _2space ( i->name ) ;
+			matches = std::regex_match ( name , re ) ;
 		}
 		if ( matches ) pl.push_back ( *i ) ;
 	}

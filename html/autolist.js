@@ -405,7 +405,7 @@ function AutoList ( callback ) {
 	}
 
 	var me = this ;
-	if ( $('#autolist_box').length == 0 ) { // Don't bother
+	if ( $('#autolist_box').length == 0 || $('#main_table input.qcb').length == 0 ) { // Don't bother
 		if ( typeof callback != 'undefined' ) callback() ;
 		return ;
 	}

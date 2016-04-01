@@ -131,7 +131,7 @@ const std::string urlencode( const std::string& s )
 		}
 		else if ( *ci == ' ')
 		{
-			os << '+';
+			os << '%20';
 		}
 		else
 		{

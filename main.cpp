@@ -50,8 +50,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		path = mg_str2string ( hm->uri ) ;
 		if ( method == "GET" ) {
 			query = mg_str2string ( hm->query_string ) ;
+			stringReplace ( query , "+" , "%20" ) ;
 		} else if ( method == "POST" ) {
 			query = mg_str2string(hm->body) ;
+			stringReplace ( query , "+" , "%20" ) ;
 		} else {
 			if(DEBUG_OUTPUT) cout << "Unknown method " << method << endl ;
 			return ;
@@ -85,7 +87,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 //			if(DEBUG_OUTPUT) cout << "  " << tmp[0] << " = " << tmp[1] << endl ;
 			platform.params[tmp[0]] = tmp[1] ;
 		}
-
+		
 		type = "text/html" ;
 		string filename = "html/index.html" ;
 		char *buffer = loadFileFromDisk ( filename ) ;

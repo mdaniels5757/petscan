@@ -169,9 +169,9 @@ string TPlatform::process () {
 	if ( wikidata_label_language.empty() ) wikidata_label_language = getParam("interface_language","en") ;
 	pagelist.loadMissingMetadata ( wikidata_label_language ) ;
 	
-	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
-
 	processCreator ( pagelist ) ;
+
+	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 
 	return renderPageList ( pagelist ) ;
 }
