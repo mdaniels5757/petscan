@@ -225,7 +225,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 
 	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
-		sql += " FROM page WHERE 1=1" ;
+		sql += " FROM page p WHERE 1=1" ;
 	}
 	
 	// Negative categories
