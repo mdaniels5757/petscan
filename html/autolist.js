@@ -163,7 +163,7 @@ function AutoList ( callback ) {
 	
 	this.addNewQ = function ( q ) {
 		if ( $('#autolist_box_new_q').length == 0 ) {
-			$('#autolist_box').append ( "<div class='autolist_subbox col-md-1'><textarea id='autolist_box_new_q' rows='4' style='width:100%'></textarea></div>" ) ;
+			$('#autolist_box').append ( "<div class='autolist_subbox'><div class='l_created_items'>"+_t('created_items')+"</div><textarea id='autolist_box_new_q' rows='4' style='width:80px;font-size:8pt'></textarea></div>" ) ;
 		}
 		var t = $('#autolist_box_new_q').val() ;
 		if ( t != '' ) t += "\n" ;
@@ -378,7 +378,6 @@ function AutoList ( callback ) {
 			} ) ;
 		} ) ;
 		
-		me.addNewQ ( 123 ) ;
 	}
 
 	this.setInterfaceLanguage = function ( l ) {
