@@ -301,7 +301,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	
 	// Speed up "Only pages without Wikidata items" for NS0 pages
 	if ( params.page_wikidata_item == "without" ) {
-	cout << wiki << endl ;
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0)" ;
 	}
 	

@@ -357,6 +357,16 @@ function AutoList ( callback ) {
 			$('#autolist_box .ph_'+k).attr ( { placeholder:v } ) ;
 		} ) ;
 	}
+	
+	this.addCheckLinks = function () {
+		$('#main_table tbody tr').each ( function () {
+			var tr = $(this) ;
+			var td = $(tr.find('td').get(2)) ;
+			var page = $(td.find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'').replace(/_/,' ') ;
+			td.append ( " <span class='pull-xs-right smaller'>[<a class='l_check_wd' target='_blank'>"+_t('check_wd')+"</a>]</span>" ) ;
+			td.find('a.l_check_wd').attr({href:'https://tools.wmflabs.org/wikidata-todo/duplicity.php?wiki='+output_wiki+'&norand=1&page='+page}) ;
+		} ) ;
+	}
 
 	var me = this ;
 	if ( $('#autolist_box').length == 0 ) { // Don't bother
@@ -366,6 +376,7 @@ function AutoList ( callback ) {
 
 	me.mode = $('#autolist_box').attr('mode') ;
 	me.commands_todo = [] ;
+	me.addCheckLinks () ;
 	me.widar = new WiDaR ( function () {
 		me.widar.tool_hashtag = 'petscan' ;
 		me.initializeAutoListBox() ;
