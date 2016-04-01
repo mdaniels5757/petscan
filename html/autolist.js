@@ -161,6 +161,16 @@ function AutoList ( callback ) {
 		setTimeout ( function () { me.runNextCommand() } , me.delay ) ;
 	}
 	
+	this.addNewQ = function ( q ) {
+		if ( $('#autolist_box_new_q').length == 0 ) {
+			$('#autolist_box').append ( "<div class='autolist_subbox col-md-1'><textarea id='autolist_box_new_q' rows='4' style='width:100%'></textarea></div>" ) ;
+		}
+		var t = $('#autolist_box_new_q').val() ;
+		if ( t != '' ) t += "\n" ;
+		t += "Q" + q ;
+		$('#autolist_box_new_q').val(t) ;
+	}
+	
 	this.runCommand = function ( id ) {
 		var me = this ;
 		me.running.push ( id ) ;
@@ -175,6 +185,7 @@ function AutoList ( callback ) {
 				// Update all subsequent commands for this item to use the new Q
 				var new_q = d.q.replace(/\D/,'') ;
 				var old_q = cmd.q ;
+				me.addNewQ ( new_q ) ;
 				$.each ( me.commands_todo , function ( k , v ) {
 					if ( v.q == old_q ) me.commands_todo[k].q = new_q ;
 				} ) ;
@@ -366,6 +377,8 @@ function AutoList ( callback ) {
 				a.attr ( { href : href } ) ;
 			} ) ;
 		} ) ;
+		
+		me.addNewQ ( 123 ) ;
 	}
 
 	this.setInterfaceLanguage = function ( l ) {
