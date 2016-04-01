@@ -319,6 +319,7 @@ function AutoList ( callback ) {
 		
 		if ( typeof p.al_commands != 'undefined' ) {
 			$('#al_commands').val ( p.al_commands ) ;
+			me.commandsHaveChanged() ;
 		}
 		
 		me.setInterfaceLanguage ( interface_language ) ;
@@ -364,20 +365,24 @@ function AutoList ( callback ) {
 		} ) ;
 
 		$('#al_commands').keyup ( function () {
-			$('#main_form input[name="al_commands"]').remove() ;
-			$('#main_form').append ( "<input type='hidden' name='al_commands' />" ) ;
-			var v = $('#al_commands').val() ;
-			$('#main_form input[name="al_commands"]').val ( v ) ;
-			$('#permalink a').each ( function () {
-				var a = $(this) ;
-				var href = a.attr('href') ;
-				href = href.replace ( /&al_commands=[^&]+/ , '' ) ;
-				href += '&al_commands=' + encodeURIComponent ( v ) ;
-				href = href.replace ( /&{2,}/ , '&' ) ;
-				a.attr ( { href : href } ) ;
-			} ) ;
+			me.commandsHaveChanged() ;
 		} ) ;
 		
+	}
+	
+	this.commandsHaveChanged = function () {
+		$('#main_form input[name="al_commands"]').remove() ;
+		$('#main_form').append ( "<input type='hidden' name='al_commands' />" ) ;
+		var v = $('#al_commands').val() ;
+		$('#main_form input[name="al_commands"]').val ( v ) ;
+		$('#permalink a').each ( function () {
+			var a = $(this) ;
+			var href = a.attr('href') ;
+			href = href.replace ( /&al_commands=[^&]+/ , '' ) ;
+			href += '&al_commands=' + encodeURIComponent ( v ) ;
+			href = href.replace ( /&{2,}/ , '&' ) ;
+			a.attr ( { href : href } ) ;
+		} ) ;
 	}
 
 	this.setInterfaceLanguage = function ( l ) {
