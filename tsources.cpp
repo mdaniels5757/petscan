@@ -301,7 +301,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	
 	// Speed up "Only pages without Wikidata items" for NS0 pages
 	if ( params.page_wikidata_item == "without" ) {
-		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0)" ;
+		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 	
 	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
@@ -319,8 +319,8 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	}
 	
 	
-//	if(DEBUG_OUTPUT) cout << sql << endl ;
-	
+//	cout << sql << endl ;
+
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 
