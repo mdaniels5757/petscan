@@ -300,7 +300,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
 	
 	// Speed up "Only pages without Wikidata items" for NS0 pages
-	if ( params.page_wikidata_item == "without" ) {
+	if ( params.page_wikidata_item == "without" && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0 ) {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 	
