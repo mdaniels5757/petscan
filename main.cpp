@@ -188,7 +188,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 				if ( platform.psid ) {
 					char tmp[200] ;
-					sprintf ( tmp , "<span name='psid'>%d</span>" , platform.psid ) ;
+					sprintf ( tmp , "<span name='psid' style='display:none'>%d</span>" , platform.psid ) ;
 					key = "<!--psid-->" ;
 					pos = out.find(key) ;
 					out = out.substr(0,pos) + tmp + out.substr(pos+key.length()) ;
