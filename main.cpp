@@ -6,12 +6,14 @@
 #include <ctime>
 
 #define CONFIG_FILE "config.json"
+#define MAX_QUERY_LENGTH 4096
 
 TWikidataDB mysql_logging ;
 std::mutex g_log_mutex , g_log_db_mutex ;
 
 uint32_t logQuery ( string query ) {
 	if ( query.empty() ) return 0 ;
+	if ( query.length() > MAX_QUERY_LENGTH ) return 0 ;
 	std::lock_guard<std::mutex> lock(g_log_db_mutex);
 	
 	uint32_t ret = 0 ;
