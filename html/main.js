@@ -52,6 +52,9 @@ function _t ( k , alt_lang ) {
 }
 
 function setPermalink ( q ) {
+	var psid = 0 ;
+	$('span[name="psid"]').each ( function () { psid = $(this).text() ; } ) ;
+
 	q = q.replace ( /&{0,1}doit=[^&]*&{0,1}/ , '&' ) ; // Removing auto-run
 	
 	// Removing empty parameters
@@ -72,6 +75,9 @@ function setPermalink ( q ) {
 	var h = _t("query_url") ;
 	h = h.replace ( /\$1/ , url+"&doit=" ) ;
 	h = h.replace ( /\$2/ , url ) ;
+	
+	if ( psid != 0 ) h += ' ' + (_t("psid_note")).replace ( /\$1/ , psid ) ;
+	
 	$('#permalink').html ( h ) ;
 }
 

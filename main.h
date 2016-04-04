@@ -293,6 +293,7 @@ public:
 	map <string,string> config , params ;
 	string content_type , query ;
 	vector <string> errors ;
+	uint32_t psid = 0 ;
 
 protected:
 	string renderPageList ( TPageList &pagelist ) ;

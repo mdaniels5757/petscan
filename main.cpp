@@ -8,16 +8,13 @@
 #define CONFIG_FILE "config.json"
 
 TWikidataDB mysql_logging ;
-std::mutex g_log_mutex;
+std::mutex g_log_mutex , g_log_db_mutex ;
 
 uint32_t logQuery ( string query ) {
-	std::lock_guard<std::mutex> lock(g_log_mutex);
+	std::lock_guard<std::mutex> lock(g_log_db_mutex);
 	
 	uint32_t ret = 0 ;
-
 	string sql ;
-	
-	mysql_logging.doConnect() ;
 	
 	// Get existing
 	sql = "SELECT id FROM query WHERE querystring='" + mysql_logging.escape(query) + "' LIMIT 1" ;
@@ -38,6 +35,21 @@ uint32_t logQuery ( string query ) {
 
 	return ret ;
 }
+
+string getQueryFromPSID ( uint32_t psid ) {
+	std::lock_guard<std::mutex> lock(g_log_db_mutex);
+	string ret  ;
+	if ( psid == 0 ) return ret ;
+	char sql[1000] ;
+	sprintf ( sql , "SELECT querystring FROM query WHERE id=%d" , psid ) ;
+	MYSQL_RES *result = mysql_logging.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) ret = row[0] ;
+	mysql_free_result(result);
+	return ret ;
+}
+
+
 
 void add2log ( string s ) {
 	std::lock_guard<std::mutex> lock(g_log_mutex);
@@ -64,6 +76,23 @@ string mg_str2string ( const mg_str &s ) {
 	for ( size_t pos = 0 ; pos < s.len ; pos++ , p++ ) ret += (char) *p ;
 	return ret ;
 }
+
+void parseQueryParameters ( string &query , map <string,string> &params ) {
+	params.clear() ;
+	vector <string> parts ;
+	split ( query , parts , '&' ) ;
+	for ( auto i = parts.begin() ; i != parts.end() ; i++ ) {
+		if ( i->empty() ) continue ;
+		vector <string> tmp ;
+		split ( *i , tmp , '=' , 2 ) ;
+		if ( tmp.size() == 1 ) tmp.push_back ( "" ) ;
+		tmp[0] = urldecode ( tmp[0] ) ;
+		tmp[1] = urldecode ( tmp[1] ) ;
+//			if(DEBUG_OUTPUT) cout << "  " << tmp[0] << " = " << tmp[1] << endl ;
+		params[tmp[0]] = tmp[1] ;
+	}
+}
+
 
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	if (ev != MG_EV_HTTP_REQUEST)  return ;
@@ -97,7 +126,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 	if ( path == "/" && !query.empty() ) {
 	
-		logQuery ( query ) ;
 
 //		if(DEBUG_OUTPUT) cout << "Running query!\n" ;
 	
@@ -106,19 +134,31 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		platform.query = query ;
 	
 		// Parse query into map
-		map <string,string> params ;
-		vector <string> parts ;
-		split ( query , parts , '&' ) ;
-		for ( auto i = parts.begin() ; i != parts.end() ; i++ ) {
-			if ( i->empty() ) continue ;
-			vector <string> tmp ;
-			split ( *i , tmp , '=' , 2 ) ;
-			if ( tmp.size() == 1 ) tmp.push_back ( "" ) ;
-			tmp[0] = urldecode ( tmp[0] ) ;
-			tmp[1] = urldecode ( tmp[1] ) ;
-//			if(DEBUG_OUTPUT) cout << "  " << tmp[0] << " = " << tmp[1] << endl ;
-			platform.params[tmp[0]] = tmp[1] ;
+		parseQueryParameters ( query , platform.params ) ;
+		
+		// Based on existing PSID?
+		if ( platform.params.find("psid") != platform.params.end() ) {
+			map <string,string> p2 ;
+			platform.psid = atol(platform.params["psid"].c_str()) ;
+			string q2 = getQueryFromPSID ( platform.psid ) ;
+			if ( !q2.empty() ) {
+				parseQueryParameters ( q2 , p2 ) ;
+				for ( auto i = platform.params.begin() ; i != platform.params.end() ; i++ ) {
+					if ( i->first != "psid" ) p2[i->first] = i->second ;
+				}
+				platform.params.swap ( p2 ) ;
+				
+				// Replace current query with merged one
+				query.clear() ;
+				for ( auto i = platform.params.begin() ; i != platform.params.end() ; i++ ) {
+					if ( i->first == "psid" ) continue ; // PARANOIA: Avoid recursive queries, as these could DDOS the tool
+					if ( !query.empty() ) query += "&" ;
+					query += urlencode(i->first) + "=" + urlencode(i->second) ;
+				}
+			}
 		}
+
+		platform.psid = logQuery ( query ) ;
 		
 		type = "text/html" ;
 		string filename = "html/index.html" ;
@@ -145,6 +185,14 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 				key = "<!--output-->" ;
 				pos = out.find(key) ;
 				out = out.substr(0,pos) + results + out.substr(pos+key.length()) ;
+
+				if ( platform.psid ) {
+					char tmp[200] ;
+					sprintf ( tmp , "<span name='psid'>%d</span>" , platform.psid ) ;
+					key = "<!--psid-->" ;
+					pos = out.find(key) ;
+					out = out.substr(0,pos) + tmp + out.substr(pos+key.length()) ;
+				}
 
 			} else {
 
