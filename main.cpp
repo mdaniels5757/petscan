@@ -11,6 +11,7 @@ TWikidataDB mysql_logging ;
 std::mutex g_log_mutex , g_log_db_mutex ;
 
 uint32_t logQuery ( string query ) {
+	if ( query.empty() ) return 0 ;
 	std::lock_guard<std::mutex> lock(g_log_db_mutex);
 	
 	uint32_t ret = 0 ;
@@ -37,9 +38,10 @@ uint32_t logQuery ( string query ) {
 }
 
 string getQueryFromPSID ( uint32_t psid ) {
-	std::lock_guard<std::mutex> lock(g_log_db_mutex);
 	string ret  ;
 	if ( psid == 0 ) return ret ;
+
+	std::lock_guard<std::mutex> lock(g_log_db_mutex);
 	char sql[1000] ;
 	sprintf ( sql , "SELECT querystring FROM query WHERE id=%d" , psid ) ;
 	MYSQL_RES *result = mysql_logging.getQueryResults ( sql ) ;
