@@ -62,11 +62,13 @@ class TWikidataDB {
 public:
 	TWikidataDB () {} ;
 	TWikidataDB ( string wiki , TPlatform *_platform = NULL ) ;
+	void setHostDB ( string host , string db ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
 	string escape ( string s ) ;
 	string space2_ ( string s ) ;
+	uint32_t lastInsertID () ;
 	~TWikidataDB () ;
 	
 protected:

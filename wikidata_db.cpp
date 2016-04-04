@@ -95,3 +95,12 @@ void TWikidataDB::finishWithError ( string msg ) {
 	else fprintf(stderr, "%s\n", msg.c_str());
 	mysql_close(&mysql);
 }
+
+void TWikidataDB::setHostDB ( string host , string db ) {
+	_host = host ;
+	_database = db ;
+}
+
+uint32_t TWikidataDB::lastInsertID () {
+	return mysql_insert_id ( &mysql ) ;
+}

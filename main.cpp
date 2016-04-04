@@ -7,7 +7,37 @@
 
 #define CONFIG_FILE "config.json"
 
+TWikidataDB mysql_logging ;
 std::mutex g_log_mutex;
+
+uint32_t logQuery ( string query ) {
+	std::lock_guard<std::mutex> lock(g_log_mutex);
+	
+	uint32_t ret = 0 ;
+
+	string sql ;
+	
+	mysql_logging.doConnect() ;
+	
+	// Get existing
+	sql = "SELECT id FROM query WHERE querystring='" + mysql_logging.escape(query) + "' LIMIT 1" ;
+	MYSQL_RES *result = mysql_logging.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) ret = atol ( row[0] ) ;
+	mysql_free_result(result);
+	if ( ret != 0 ) return ret ; // Found existing query
+	
+	// Create new
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    char timestamp[200] ;
+    strftime ( timestamp , sizeof(timestamp) , "%d-%m-%Y %H:%M:%S" , &tm ) ;
+	sql = "INSERT IGNORE INTO query ( querystring , created ) VALUES ( '" + mysql_logging.escape(query) + "','" + string ( timestamp ) + "')" ;
+	mysql_logging.runQuery ( sql ) ;
+	ret = mysql_logging.lastInsertID() ; // Stored as new query
+
+	return ret ;
+}
 
 void add2log ( string s ) {
 	std::lock_guard<std::mutex> lock(g_log_mutex);
@@ -17,7 +47,7 @@ void add2log ( string s ) {
     
     char file[200] , timestamp[200] ;
     strftime ( file , sizeof(file) , "./%Y-%m.log" , &tm ) ;
-    strftime ( timestamp , sizeof(timestamp) , "%d-%m-%Y %H-%M-%S" , &tm ) ;
+    strftime ( timestamp , sizeof(timestamp) , "%d-%m-%Y %H:%M:%S" , &tm ) ;
     
     ofstream outfile;
     outfile.open(file, std::ios_base::app);
@@ -66,6 +96,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	}
 
 	if ( path == "/" && !query.empty() ) {
+	
+		logQuery ( query ) ;
 
 //		if(DEBUG_OUTPUT) cout << "Running query!\n" ;
 	
@@ -163,6 +195,11 @@ int main(void) {
 	root_platform = new TPlatform ;
 	if ( !root_platform->readConfigFile ( CONFIG_FILE ) ) exit ( 1 ) ;
 	int timeout = atoi(root_platform->config["timeout"].c_str()) ;
+
+	// Set up query-logging DB
+	mysql_logging.setHostDB ( "tools.labsdb" , "s51434__petscan" ) ;
+	mysql_logging.doConnect ( true ) ;
+
 
 	mg_mgr_init(&mgr, NULL);
 	nc = mg_bind(&mgr, root_platform->config["port"].c_str() , ev_handler); // s_http_port
