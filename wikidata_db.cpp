@@ -5,7 +5,7 @@ std::mutex g_root_platform_mutex;
 
 //________________________________________________________________________________________________
 
-#define DB_ESCAPE_BUFFER_SIZE 10000
+#define DB_ESCAPE_BUFFER_SIZE 1000000
 
 
 TWikidataDB::TWikidataDB ( string wiki , TPlatform *_platform ) {
