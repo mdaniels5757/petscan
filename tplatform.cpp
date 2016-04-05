@@ -713,11 +713,11 @@ string TPlatform::getLink ( TPage &page ) {
 	string ret = label ;
 	if ( wiki == "wikidatawiki" && page.meta.misc.find("label") != page.meta.misc.end() ) {
 		url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
-		ret = "<a target='_blank' href='" + url + "'>" + page.meta.misc["label"] + "</a>" ;
+		ret = "<a class='pagelink' target='_blank' href='" + url + "'>" + page.meta.misc["label"] + "</a>" ;
 		ret += " <small><tt>[" + label + "]</tt></small>" ;
 	} else {
 		url = "https://" + getWikiServer ( getWiki() ) + "/wiki/" + url ;
-		ret = "<a target='_blank' href='" + url + "'>" + label + "</a>" ;
+		ret = "<a class='pagelink' target='_blank' href='" + url + "'>" + label + "</a>" ;
 	}
 	return ret ;
 }
