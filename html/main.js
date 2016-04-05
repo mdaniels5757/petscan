@@ -344,11 +344,11 @@ function initializeInterface () {
 	
 	$('#tab-list').click ( function () {
 		if ( $('#main_form div.tab-pane').length > 0 ) {
-			$('#tab-list').text ( "Tabs" ) ;
+			$('#tab-list').text ( _t('toggle_tabs') ) ;
 			$('#main_form ul.nav-tabs').hide() ;
 			$('#main_form div.tab-pane').addClass('former-tab-pane').removeClass('tab-pane') ;
 		} else {
-			$('#tab-list').text ( "List" ) ;
+			$('#tab-list').text ( _t('toggle_list') ) ;
 			$('#main_form ul.nav-tabs').show() ;
 			$('#main_form div.former-tab-pane').addClass('tab-pane').removeClass('former-tab-pane') ;
 		}
