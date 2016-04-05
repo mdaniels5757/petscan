@@ -42,8 +42,8 @@ string getWikiServer ( string wiki ) {
 			string l = wiki.substr(0,a) ;
 			string p = wiki.substr(a) ;
 			if ( p == "wiki" ) p = "wikipedia" ;
-			else regex_replace ( p , regex("wiki$") , string("") ) ;
-			// p = p.substr ( 0 , p.length()-4 ) ; // remove "wiki"
+			else if ( p.length()>4 && p.substr(p.length()-4,4) == "wiki" ) p = p.substr(0,p.length()-4) ;
+//			else regex_replace ( p , regex("wiki$") , string("") ) ;
 			return l+"."+p+".org" ;
 		}
 	}
