@@ -16,5 +16,5 @@ code=`jq -r '.["restart-code"]' config.json`
 url="https://petscan.wmflabs.org/restart?$code"
 
 # Restart server
-curl -s -o /dev/null url
+curl -s -o /dev/null $url
 echo "Server restarted!"
