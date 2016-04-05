@@ -4,10 +4,14 @@
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+#include <unistd.h>
 
 #define CONFIG_FILE "config.json"
 #define MAX_QUERY_LENGTH 4096
 
+bool site_is_locked = false ;
+int32_t running = 0 ;
+std::mutex g_main_mutex;
 TWikidataDB mysql_logging ;
 std::mutex g_log_mutex , g_log_db_mutex ;
 
@@ -71,8 +75,6 @@ void add2log ( string s ) {
     outfile.close() ;
 }
 
-std::mutex g_main_mutex;
-
 string mg_str2string ( const mg_str &s ) {
 	string ret ;
 	const char *p = s.p ;
@@ -99,8 +101,10 @@ void parseQueryParameters ( string &query , map <string,string> &params ) {
 
 
 static void ev_handler(struct mg_connection *c, int ev, void *p) {
+	if ( site_is_locked ) return ;
 	if (ev != MG_EV_HTTP_REQUEST)  return ;
 
+	running++ ;
 	c->flags |= MG_F_SEND_AND_CLOSE;
 	struct http_message *hm = (struct http_message *) p;
 
@@ -119,8 +123,15 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			stringReplace ( query , "+" , "%20" ) ;
 		} else {
 			if(DEBUG_OUTPUT) cout << "Unknown method " << method << endl ;
+			running-- ;
 			return ;
 		}
+	}
+	
+	if ( path == "/restart" && query == root_platform->config["restart-code"] ) {
+		site_is_locked = true ;
+		while ( running > 1 ) { usleep ( 500000 ) ; cout << "X\n" ; }
+		exit ( 0 ) ;
 	}
 
 	if ( path == "/" ) {
@@ -238,6 +249,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			  type.c_str() ,
 			  (int) out.length(), out.c_str());
 
+	running-- ;
 }
 
 int main(void) {
