@@ -137,6 +137,11 @@ function setInterfaceLanguage ( l ) {
 	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
 //	if ( typeof autolist != 'undefined' ) autolist.setInterfaceLanguage ( l ) ;
 	$('#doit').attr ( { value : _t('doit') } ) ;
+	
+	$('#query_length').text ( _t('query_length').replace('$1',$('#query_length').attr('sec')) ) ;
+	$('#num_results').text ( _t('num_results').replace('$1',$('#num_results').attr('num')) ) ;
+	
+	
 	return false ;
 }
 

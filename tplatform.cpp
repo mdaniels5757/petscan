@@ -466,7 +466,7 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	}
 	
 	char tmp[1000] ;
-	sprintf ( tmp , "<h2><a name='results'></a>%ld results</h2>" , pagelist.pages.size() ) ;
+	sprintf ( tmp , "<h2><a name='results'></a><span id='num_results' num='%ld'></span></h2>" , pagelist.pages.size() ) ;
 	ret += tmp ;
 	if ( pagelist.pages.size() == 0 ) return ret ; // No need for empty table
 	
@@ -551,7 +551,7 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	ret += "</tbody>" ;
 	ret += "</table></div>" ;
 	
-	sprintf ( tmp , "<div style='font-size:8pt'>Query took %2.2f seconds.</div>" , querytime ) ;
+	sprintf ( tmp , "<div style='font-size:8pt' id='query_length' sec='%2.2f'></div>" , querytime ) ;
 	ret += tmp ;
 	
 	return ret ;
