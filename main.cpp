@@ -130,7 +130,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	
 	if ( path == "/restart" && query == root_platform->config["restart-code"] ) {
 		site_is_locked = true ;
-		while ( running > 1 ) { usleep ( 500000 ) ; cout << "X\n" ; }
+		while ( running > 1 ) usleep ( 500000 ) ;
 		exit ( 0 ) ;
 	}
 
