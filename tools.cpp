@@ -129,14 +129,9 @@ const std::string urlencode( const std::string& s )
 		{ // allowed
 			os << *ci;
 		}
-		else if ( *ci == ' ')
-		{
-			os << "%20";
-		}
-		else
-		{
-			os << '%' << to_hex(*ci >> 4) << to_hex(*ci % 16);
-		}
+		else if ( *ci == ' ') os << "%20";
+		else if ( *ci == '\'') os << "%27";
+		else os << '%' << to_hex(*ci >> 4) << to_hex(*ci % 16);
 	}
 
 	return os.str();

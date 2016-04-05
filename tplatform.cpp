@@ -708,7 +708,7 @@ string TPlatform::getLink ( TPage &page ) {
 	std::replace ( label.begin(), label.end(), '_', ' ') ;
 	std::replace ( url.begin(), url.end(), ' ', '_') ;
 	// TODO escape '
-//	url = urlencode ( url ) ;
+	url = urlencode ( url ) ;
 
 	string ret = label ;
 	if ( wiki == "wikidatawiki" && page.meta.misc.find("label") != page.meta.misc.end() ) {
