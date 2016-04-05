@@ -94,6 +94,7 @@ string TPlatform::process () {
 
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
+	only_files = db_params.page_namespace_ids.size() == 1 && db_params.page_namespace_ids[0] == 6 ;
 	
 	TPageList pagelist ( getWiki() ) ;
 	string common_wiki = getParam("common_wiki","cats") ;
@@ -463,6 +464,13 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	} else if ( pagelist.wiki == "wikidatawiki" ) {
 		ret += "<div id='autolist_box' mode='autolist'></div>" ;
 		use_autolist = true ;
+	}
+	
+	if ( only_files && !use_autolist ) {
+		ret += "<div id='file_results' style='float:right' class='btn-group' data-toggle='buttons'>" ;
+		ret += "<label class='btn btn-secondary active'><input type='radio' checked name='results_mode' value='titles' autocomplete='off' /><span class='l_show_titles'></span></label>" ;
+		ret += "<label class='btn btn-secondary'><input type='radio' name='results_mode' value='thumbnails' checked autocomplete='off' /><span class='l_show_thumbnails'></span></label>" ;
+		ret += "</div>" ;
 	}
 	
 	char tmp[1000] ;

@@ -314,6 +314,7 @@ protected:
 	float querytime = 0 ; // seconds
 	string wiki ;
 	map <string,bool> existing_labels ;
+	bool only_files = false ;
 } ;
 
 #endif

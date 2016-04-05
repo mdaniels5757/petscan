@@ -117,6 +117,8 @@ inline unsigned char to_hex( unsigned char x )
 	return x + (x > 9 ? ('A'-10) : '0');
 }
 
+
+/*
 const std::string urlencode( const std::string& s )  
 {
 	std::ostringstream os;
@@ -136,6 +138,7 @@ const std::string urlencode( const std::string& s )
 
 	return os.str();
 }
+*/
 
 inline unsigned char from_hex (
 	unsigned char ch
@@ -261,7 +264,8 @@ string ui2s ( uint32_t i ) {
 //________________________________________________________________________________________________________________________
 
 
-string escapeURLcomponent ( string s ) {
+//string escapeURLcomponent ( string s ) {
+const std::string urlencode( const std::string& s ) {
 	CURL *curl;
 	curl = curl_easy_init();
 	if ( !curl ) return "" ;
@@ -272,6 +276,9 @@ string escapeURLcomponent ( string s ) {
 	return ret ;
 }
 
+string escapeURLcomponent ( string s ) {
+	return urlencode ( s ) ;
+}
 //________________________________________________________________________________________________________________________
 
 double time_diff(struct timeval x , struct timeval y) {

@@ -338,6 +338,46 @@ function initializeInterface () {
 		return false ;
 	} ) ;
 	
+	$('#file_results label').change ( function () {
+		var o = $('#file_results input[name="results_mode"]:checked') ;
+		var mode = o.val() ;
+		
+		if ( mode == 'titles' ) {
+			$('#thumbnails').hide() ;
+			$('#main_table').show() ;
+			return ;
+		}
+		
+		// mode == 'thumbnails'
+
+		if ( $('#thumbnails').length == 0 ) {
+			var h = "<div id='thumbnails' class='card-columns'></div>" ;
+			$('#main_table').after ( h ) ;
+			
+			$('#main_table tbody tr').each ( function () {
+				var tr = $(this) ;
+				var td = $(tr.find('td').get(1)) ;
+				var a = $(td.find('a.pagelink').get(0)) ;
+				var url = a.attr('href').replace(/\/wiki\/File%3A/,'/wiki/Special:Redirect/file/') + '?width=200px' ;
+				var h = '' ;
+				h += '<div class="card">' ;
+				h += '<div style="text-align:center"><a class="thumblink"><img class="card-img-top" src="'+url+'" alt="'+'??'+'" border=0 /></a></div>' ;
+				h += '<div class="card-block">' ;
+				h += '<p class="card-text">' ;
+				h += $('<div>').append(a.clone()).html();
+				h += '</p>' ;
+				h += '</div>' ;
+				h += '</div>' ;
+				var card = $(h) ;
+				card.find('a.thumblink').attr({href:a.attr('href'),target:'_blank'}) ;
+				$('#thumbnails').append ( card ) ;
+			} ) ;
+		}
+
+		$('#main_table').hide() ;
+		$('#thumbnails').show() ;
+	} ) ;
+	
 	function highlightMissingWiki () {
 		var o = $('textarea[name="manual_list"]') ;
 		var wo = $('input[name="manual_list_wiki"]') ;
