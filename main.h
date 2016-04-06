@@ -306,7 +306,7 @@ protected:
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 	void splitParamIntoVector ( string input , vector <string> &output ) ;
 	void processFiles ( TPageList &pl ) ;
-	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) ;
+	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage , bool file_usage_data_ns0 ) ;
 	void processWikidata ( TPageList &pl ) ;
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	void processCreator ( TPageList &pagelist ) ;

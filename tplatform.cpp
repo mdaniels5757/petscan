@@ -202,6 +202,7 @@ void TPlatform::processCreator ( TPageList &pagelist ) {
 void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = !getParam("file_usage_data","").empty() ;
+	bool file_usage_data_ns0 = !getParam("file_usage_data_ns0","").empty() ;
 	if ( !file_data && !file_usage ) return ; // Nothing to do
 	
 	TWikidataDB db ( pl.wiki , this ) ;
@@ -210,13 +211,13 @@ void TPlatform::processFiles ( TPageList &pl ) {
 		if ( i->meta.ns != NS_FILE ) continue ; // Files only
 		name2f[space2_(i->getNameWithoutNamespace())] = &(*i) ;
 		if ( name2f.size() < DB_PAGE_BATCH_SIZE ) continue ;
-		annotateFile ( db , name2f , file_data , file_usage ) ;
+		annotateFile ( db , name2f , file_data , file_usage , file_usage_data_ns0 ) ;
 	}
-	annotateFile ( db , name2f , file_data , file_usage ) ;
+	annotateFile ( db , name2f , file_data , file_usage , file_usage_data_ns0 ) ;
 	
 }
 
-void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage ) {
+void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage , bool file_usage_data_ns0 ) {
 	if ( name2f.empty() ) return ;
 	
 	vector <string> tmp ;
@@ -226,7 +227,9 @@ void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , 
 	if ( file_usage ) {
 		string sql = "SELECT gil_to,GROUP_CONCAT(gil_wiki,':',gil_page_namespace_id,':',gil_page_namespace,':',gil_page_title SEPARATOR '|') AS x FROM globalimagelinks WHERE gil_to IN (" ;
 		sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
-		sql += ") GROUP BY gil_to" ;
+		sql += ")" ;
+		if ( file_usage_data_ns0 ) sql += " AND gil_page_namespace_id=0" ;
+		sql += " GROUP BY gil_to" ;
 
 		MYSQL_RES *result = db.getQueryResults ( sql ) ;
 		MYSQL_ROW row;
@@ -483,7 +486,7 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		pagelist.pages.resize ( MAX_HTML_RESULTS ) ;
 	}
 	
-	ret += "<div style='clear:both'><table class='table table-sm table-striped' id='main_table'>" ;
+	ret += "<div style='clear:both;overflow:auto'><table class='table table-sm table-striped' id='main_table'>" ;
 	ret += "<thead><tr>" ;
 	if ( use_autolist ) ret += "<th></th>" ; // Checkbox column
 	ret += "<th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
@@ -552,7 +555,27 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 				ret += "</td>" ;
 			}
 		}
-		if ( file_usage ) ret += "<td>" + i->meta.getMisc("gil","") + "</td>" ;
+		if ( file_usage ) {
+			string gil = i->meta.getMisc("gil","") ;
+			vector <string> pages ;
+			split ( gil , pages , '|' ) ;
+			ret += "<td>" ;
+			for ( auto page: pages ) {
+				vector <string> parts ;
+				split ( page , parts , ':' , 4 ) ;
+				if ( parts.size() != 4 ) {
+					ret += "<div>" + page + "</div>" ;
+					continue ;
+				}
+				string title = parts[3] ;
+				if ( !parts[2].empty() ) title = parts[2] + ":" + title ;
+				string server = getWikiServer ( parts[0] ) ;
+				ret += "<div class='fileusage'>" + parts[0] + ":<a href='https://"+server+"/wiki/"+urlencode(title)+"' target='_blank'>" + _2space(title) + "</a></div>" ;
+			}
+			ret += "</td>" ;
+			
+//			ret += "<td>" + gil + "</td>" ;
+		}
 		
 		ret += "</tr>" ;
 	}
