@@ -157,14 +157,19 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		parseQueryParameters ( query , platform.params ) ;
 		
 		// Based on existing PSID?
+		bool based_on_psid = false ;
+		bool has_psid_additional_parameters = false ;
 		if ( platform.params.find("psid") != platform.params.end() ) {
 			map <string,string> p2 ;
 			platform.psid = atol(platform.params["psid"].c_str()) ;
 			string q2 = getQueryFromPSID ( platform.psid ) ;
 			if ( !q2.empty() ) {
+				based_on_psid = true ;
 				parseQueryParameters ( q2 , p2 ) ;
 				for ( auto i = platform.params.begin() ; i != platform.params.end() ; i++ ) {
-					if ( i->first != "psid" ) p2[i->first] = i->second ;
+					if ( i->first == "psid" ) continue ;
+					p2[i->first] = i->second ;
+					has_psid_additional_parameters = true ;
 				}
 				platform.params.swap ( p2 ) ;
 				
@@ -178,7 +183,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			}
 		}
 
-		platform.psid = logQuery ( query ) ;
+		if ( !based_on_psid || has_psid_additional_parameters ) {
+			platform.psid = logQuery ( query ) ;
+		}
 		
 		type = "text/html" ;
 		string filename = "html/index.html" ;
