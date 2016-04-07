@@ -112,7 +112,7 @@ function AutoList ( callback ) {
 			
 			if ( me.mode == 'creator' ) {
 				var cmd = { q:q , status:'waiting' , mode:'create' } ;
-				cmd.page = $($(tr.find("td").get(2)).find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'') ;
+				cmd.page = decodeURIComponent ( $($(tr.find("td").get(2)).find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'') ) ;
 				remove_q = me.commands_todo.length ;
 				me.commands_todo.push ( cmd ) ;
 			}
@@ -181,6 +181,9 @@ function AutoList ( callback ) {
 		
 			me.widar.createItemForPage ( cmd.page , output_wiki , function ( d ) {
 				// TODO error check: d.error=="OK"
+				if ( d.error != 'OK' ) {
+					console.log ( d ) ;
+				}
 				
 				// Update all subsequent commands for this item to use the new Q
 				var new_q = d.q.replace(/\D/,'') ;
