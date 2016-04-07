@@ -23,6 +23,24 @@ var last_namespace_project = '' ;
 var interface_language = '' ;
 var interface_text = {} ;
 
+var load_thumbnails_ahead = 2 ; // 1 to not load ahead
+$.fn.is_on_screen = function(){
+    var win = $(window);
+    var viewport = {
+        top : win.scrollTop(),
+        left : win.scrollLeft()
+    };
+    viewport.right = viewport.left + win.width();
+    viewport.bottom = viewport.top + win.height();
+ 
+    var bounds = this.offset();
+    bounds.right = bounds.left + this.outerWidth();
+    bounds.bottom = bounds.top + this.outerHeight()*load_thumbnails_ahead;
+ 
+    return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
+};
+
+
 function deXSS ( s ) {
 	return s.replace ( /<script/ , '' ) ; // TODO this should be better...
 }
@@ -292,6 +310,44 @@ function wdq2sparql ( wdq , sparql_selector ) {
 	return false ;
 }
 
+function loadThumbnail ( img ) {
+//	if ( img.css('display') === 'none' ) return ; // Hacking around Chrome bug; should be: if ( !img.is(':visible') ) return ;
+	if ( !img.is_on_screen() ) return ;
+	img.removeClass ( 'pre_thumb' ) ;
+	img.attr ( { src : img.attr('src2load') } ) ;
+}
+
+function generateThumbnailView() {
+	var h = "<div id='thumbnails' class='card-columns'></div>" ;
+	$('#main_table').after ( h ) ;
+	
+	$('#main_table tbody tr').each ( function () {
+		var tr = $(this) ;
+		var td = $(tr.find('td').get(1)) ;
+		var a = $(td.find('a.pagelink').get(0)) ;
+		var url = a.attr('href').replace(/\/wiki\/File%3A/,'/wiki/Special:Redirect/file/') + '?width=200px' ;
+		var h = '' ;
+		h += '<div class="card">' ;
+		h += '<div style="text-align:center"><a class="thumblink"><img class="card-img-top pre_thumb" src2load="'+url+'" alt="'+'??'+'" border=0 /></a></div>' ;
+		h += '<div class="card-block">' ;
+		h += '<p class="card-text">' ;
+		h += $('<div>').append(a.clone()).html();
+		h += '</p>' ;
+		h += '</div>' ;
+		h += '</div>' ;
+		var card = $(h) ;
+		card.find('a.thumblink').attr({href:a.attr('href'),target:'_blank'}) ;
+		$('#thumbnails').append ( card ) ;
+	} ) ;
+
+	// Load thumbnails on demand
+	$(window).scroll(function(){
+		$('#thumbnails img.pre_thumb').each ( function () {
+			loadThumbnail ( $(this) ) ;
+		} ) ;
+	} ) ;
+}
+
 function initializeInterface () {
 	var p = getUrlVars() ;
 	
@@ -351,31 +407,12 @@ function initializeInterface () {
 		// mode == 'thumbnails'
 
 		if ( $('#thumbnails').length == 0 ) {
-			var h = "<div id='thumbnails' class='card-columns'></div>" ;
-			$('#main_table').after ( h ) ;
-			
-			$('#main_table tbody tr').each ( function () {
-				var tr = $(this) ;
-				var td = $(tr.find('td').get(1)) ;
-				var a = $(td.find('a.pagelink').get(0)) ;
-				var url = a.attr('href').replace(/\/wiki\/File%3A/,'/wiki/Special:Redirect/file/') + '?width=200px' ;
-				var h = '' ;
-				h += '<div class="card">' ;
-				h += '<div style="text-align:center"><a class="thumblink"><img class="card-img-top" src="'+url+'" alt="'+'??'+'" border=0 /></a></div>' ;
-				h += '<div class="card-block">' ;
-				h += '<p class="card-text">' ;
-				h += $('<div>').append(a.clone()).html();
-				h += '</p>' ;
-				h += '</div>' ;
-				h += '</div>' ;
-				var card = $(h) ;
-				card.find('a.thumblink').attr({href:a.attr('href'),target:'_blank'}) ;
-				$('#thumbnails').append ( card ) ;
-			} ) ;
+			generateThumbnailView() ;
 		}
 
 		$('#main_table').hide() ;
 		$('#thumbnails').show() ;
+		$(window).scroll() ;
 	} ) ;
 	
 	function highlightMissingWiki () {
