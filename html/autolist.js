@@ -294,7 +294,7 @@ function AutoList ( callback ) {
 		var p = getUrlVars() ;
 		if ( me.widar.isLoggedIn() ) {
 			h += "<div class='autolist_subbox'>" ;
-			h += "<div class='l_al_welcome'></div>" ;
+			h += "<div>" + _t('al_welcome').replace( '$1', me.widar.getUserName() ) + "</div>" ;
 			if ( me.mode == "creator" ) {
 				h += "<div class='l_al_creator_mode'></div>" ;
 			}
@@ -326,7 +326,6 @@ function AutoList ( callback ) {
 		}
 		
 		me.setInterfaceLanguage ( interface_language ) ;
-		_t('l_al_welcome').replace( '$1', me.widar.getUserName() ) ;
 	
 		$('#al_do_process').click ( function (e) {
 			e.preventDefault() ;
