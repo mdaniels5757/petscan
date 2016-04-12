@@ -218,7 +218,7 @@ public:
 	TSourceSPARQL ( TPlatform *p = NULL ) { platform = p ; } ;
 	bool runQuery ( string query ) ;
 protected:
-	string sparql_prefixes = "PREFIX v: <http://www.wikidata.org/prop/statement/>\nPREFIX q: <http://www.wikidata.org/prop/qualifier/>\n" ;
+	string sparql_prefixes = "PREFIX v: <http://www.wikidata.org/prop/statement/>\nPREFIX q: <http://www.wikidata.org/prop/qualifier/>\nPREFIX ps: <http://www.wikidata.org/prop/statement/>\nPREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" ;
 
 
 } ;
