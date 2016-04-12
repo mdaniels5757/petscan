@@ -111,7 +111,7 @@ function applyParameters () {
 			return ;
 		}
 		
-		$('input:radio[name="'+name+'"][value="'+value+'"]').prop('checked', true);
+		$('input:radio[name="'+name+'"][value="'+value.replace(/"/g,'&quot;')+'"]').prop('checked', true);
 		
 		$('input[type="text"][name="'+name+'"]').val ( deXSS(value) ) ;
 		$('input[type="number"][name="'+name+'"]').val ( parseInt(value) ) ;
