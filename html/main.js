@@ -159,6 +159,10 @@ function setInterfaceLanguage ( l ) {
 	// Misc special updates
 	$('#query_length').text ( _t('query_length').replace('$1',$('#query_length').attr('sec')) ) ;
 	$('#num_results').text ( _t('num_results').replace('$1',$('#num_results').attr('num')) ) ;
+
+	// Permalink
+	var query = decodeURIComponent ( $('#querystring').text() ) ;
+	if ( query != '' ) setPermalink ( query ) ;
 	
 	$('#permalink a').each ( function () {
 		var a = $(this) ;
@@ -167,7 +171,6 @@ function setInterfaceLanguage ( l ) {
 		if ( h == h2 ) h2 = h + "&interface_language=" + l ;
 		a.attr ( { href : h2 } ) ;
 	} ) ;
-	
 	
 	return false ;
 }
