@@ -93,6 +93,7 @@ void TPageList::sort () {
 	std::sort ( pages.begin() , pages.end() ) ;
 }
 
+// Keep only pages in both lists
 void TPageList::intersect ( TPageList &pl ) {
 	if ( wiki != pl.wiki ) {
 		error ( "Intersecting " + wiki + " and " + pl.wiki + " not possible" ) ;
@@ -118,8 +119,7 @@ void TPageList::intersect ( TPageList &pl ) {
 	pages = nl ;
 }
 
-
-
+// Keep pages from either page list
 void TPageList::merge ( TPageList &pl ) {
 	if ( wiki != pl.wiki ) {
 		error ( "Merging of " + wiki + " and " + pl.wiki + " not possible" ) ;
@@ -148,6 +148,38 @@ void TPageList::merge ( TPageList &pl ) {
 	while ( first2!=last2 ) nl.push_back ( *first2++ ) ;
 	pages = nl ;
 }
+
+// Keep only the pages that are NOT in pl
+void TPageList::negate ( TPageList &pl ) {
+	if ( wiki != pl.wiki ) {
+		error ( "Negating " + wiki + " and " + pl.wiki + " not possible" ) ;
+		return ;
+	}
+	if(DEBUG_OUTPUT) cout << "Negating " << size() << " and " << pl.size() << " entries on " << wiki << endl ;
+	
+	sort() ;
+	pl.sort() ;
+	vector <TPage> nl ;
+	auto first1 = pages.begin() ;
+	auto last1 = pages.end() ;
+	auto first2 = pl.pages.begin() ;
+	auto last2 = pl.pages.end() ;
+	while (first1!=last1 && first2!=last2) {
+		if (*first1<*first2) {
+			nl.push_back ( *first1 ) ;
+			++first1;
+		} else if (*first2<*first1) ++first2;
+		else {
+			++first1; ++first2;
+		}
+	}
+	while ( first1 != last1 ) {
+		nl.push_back ( *first1 ) ;
+		++first1;
+	}
+	pages = nl ;
+}
+
 
 void TPageList::convertToWiki ( string new_wiki ) {
 	if ( wiki == new_wiki ) return ; // No conversion required
@@ -246,6 +278,7 @@ void TPageList::join ( string cmd , TPageList &pl ) {
 	if(DEBUG_OUTPUT) cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
 	if ( cmd == "intersect" ) intersect ( pl ) ;
 	else if ( cmd == "merge" ) merge ( pl ) ;
+	else if ( cmd == "negate" ) negate ( pl ) ;
 	if(DEBUG_OUTPUT) cout << " resulting in " << size() << " pages.\n" ;
 }
 

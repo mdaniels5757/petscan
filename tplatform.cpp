@@ -1,5 +1,6 @@
 #include "main.h"
 #include <fstream>
+#include <regex>
 
 vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
@@ -88,6 +89,104 @@ void TPlatform::setDatabaseParameters ( TSourceDatabaseParams &db_params ) {
 	splitParamIntoVector ( getParam("outlinks_no" ,"") , db_params.linked_from_none  ) ;
 }
 
+
+//____________________________________________________________________________________________________________
+
+class TCombineSources ;
+
+class TCombineSourcesPart {
+public:
+	string render () ;
+	string join_mode = "intersect" ;
+	string source ;
+	TCombineSources *sub = NULL ;
+} ;
+
+class TCombineSources {
+public:
+	TCombineSources() {} ;
+	uint32_t parse ( const vector <string> &v , uint32_t start = 0 ) ;
+	bool run ( TPageList &pagelist , map <string,TSource *> &sources , TPlatform &platform ) ;
+	string render () ;
+	vector <TCombineSourcesPart> parts ;
+	bool is_valid = true ;
+} ;
+
+uint32_t TCombineSources::parse ( const vector <string> &v , uint32_t start ) {
+	uint32_t pos = start ;
+	while ( pos < v.size() ) {
+		if ( v[pos].empty() ) { pos++ ; continue ; }
+		if ( v[pos] == ")" ) return pos ; // Sub-query done
+		TCombineSourcesPart part ;
+		if ( v[pos] == "and" ) { pos++; }
+		else if ( v[pos] == "(" ) {
+			part.sub = new TCombineSources ;
+			pos = part.sub->parse ( v , pos+1 ) ;
+			if ( !part.sub->is_valid ) { is_valid = false ; return pos ; }
+			pos++ ;
+			parts.push_back ( part ) ;
+			continue ;
+		}
+		else if ( v[pos] == "or" ) { part.join_mode = "merge" ; pos++ ; }
+		else if ( v[pos] == "not" ) { part.join_mode = "negate" ; pos++ ; }
+		if ( pos >= v.size() ) { is_valid = false ; return pos ; }
+		
+		if ( v[pos] == "(" ) {
+			part.sub = new TCombineSources ;
+			pos = part.sub->parse ( v , pos+1 ) ;
+			if ( !part.sub->is_valid ) { is_valid = false ; return pos ; }
+		} else {
+			part.source = v[pos] ;
+		}
+		pos++ ;
+		
+		parts.push_back ( part ) ;
+	}
+	return pos ;
+}
+
+string TCombineSources::render () {
+	string ret ;
+	for ( auto part:parts ) {
+		ret += part.render() ;
+	}
+	return ret ;
+}
+
+bool TCombineSources::run ( TPageList &pagelist , map <string,TSource *> &sources , TPlatform &platform ) {
+	for ( auto part:parts ) {
+		if ( part.sub ) {
+			TPageList tmp ( pagelist.wiki ) ;
+			if ( !part.sub->run ( tmp , sources , platform ) ) {
+				return false ;
+			}
+			pagelist.join ( part.join_mode , tmp ) ;
+		} else {
+			if ( sources.find(part.source) == sources.end() ) {
+				platform.error ( "Source " + part.source + " not given" ) ;
+				return false ;
+			}
+			pagelist.join ( part.join_mode , *sources[part.source] ) ;
+		}
+	}
+	return true ;
+}
+
+string TCombineSourcesPart::render () {
+	string ret = "" ;
+	ret += join_mode + " " ;
+	if ( sub ) {
+		ret += "(" ;
+		ret += sub->render() ;
+		ret += ")" ;
+	} else {
+		ret += source ;
+	}
+	ret += " " ;
+	return ret ;
+}
+
+
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
@@ -110,19 +209,19 @@ string TPlatform::process () {
 	wikis["wikidata"] = "wikidatawiki" ;
 	
 	if ( wikis.find(common_wiki) == wikis.end() ) common_wiki = "cats" ; // Fallback
+	
+	map <string,TSource *> sources ;
 
 	// TODO run these in separate threads
 	if ( 1 ) {
 		if ( db.getPages ( db_params ) ) {
-			db.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.join ( "intersect" , db ) ;
+			sources["categories"] = &db ;
 		}
 	}
 
 	if ( !getParam("sparql","" ).empty() ) {
 		if ( sparql.runQuery ( getParam("sparql","") ) ) {
-			sparql.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.join ( "intersect" , sparql ) ;
+			sources["sparql"] = &sparql ;
 		}
 	}
 
@@ -131,19 +230,60 @@ string TPlatform::process () {
 		vector <string> v ;
 		split ( getParam("manual_list","") , v , '\n' ) ;
 		if ( manual.parseList ( v ) ) {
-			manual.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.join ( "intersect" , manual ) ;
+			sources["manual"] = &manual ;
 		}
 	}
 	
 	if ( !getParam("pagepile","").empty() ) {
 		if ( pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) {
-			pagepile.convertToWiki ( wikis[common_wiki] ) ;
-			pagelist.join ( "intersect" , pagepile ) ;
+			sources["pagepile"] = &pagepile ;
 		}
 	}
 	
 	// TODO join threads here
+	
+	
+	// Convert to common wiki, if more than one source
+	if ( sources.size() > 1 ) {
+		for ( auto source:sources ) {
+			source.second->convertToWiki ( wikis[common_wiki] ) ;
+		}
+	}
+	
+
+	// Get or create combination commands
+	string source_combination ;
+	for ( auto source:sources ) {
+		if ( !source_combination.empty() ) source_combination += " AND " ;
+		source_combination += source.first ;
+	}
+	source_combination = getParam ( "source_combination" , source_combination ) ;
+	
+//cout << "Combining as '" << source_combination << "'\n" ;
+
+	// Lexing
+	std::transform(source_combination.begin(), source_combination.end(), source_combination.begin(), ::tolower);
+	std::regex bopen("\\s*([\\(\\)])\\s*") ;
+	string target ( " $1 " ) ;
+	source_combination = std::regex_replace ( source_combination , bopen , target ) ;
+	vector <string> parts ;
+	split ( source_combination , parts , ' ' ) ;
+//cout << "Lexing as '" << source_combination << "'\n" ;
+
+	// Parsing
+	TCombineSources cmb ;
+	uint32_t last = cmb.parse ( parts ) ;
+	if ( last != parts.size() ) cmb.is_valid = false ;
+	
+	if ( !cmb.is_valid ) {
+		error ( "Could not parse '" + source_combination + "' properly" ) ;
+	}
+	
+//cout << cmb.render() << endl ;
+
+	// Run combination
+	cmb.run ( pagelist , sources , *this ) ;
+
 	
 	
 	wiki = pagelist.wiki ;

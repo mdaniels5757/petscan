@@ -351,6 +351,21 @@ function generateThumbnailView() {
 	} ) ;
 }
 
+function validateSourceCombination () {
+	var o = $('input[name="source_combination"]') ;
+	var text = $.trim ( o.val() ) ;
+	var reg = /^( and | or | not |categories|sparql|pagepile|manual|\(|\)| )*$/gi ;
+	var op = $(o.parents("div.input-group").get(0)) ;
+	if ( reg.test ( text ) ) {
+		op.removeClass ( 'has-danger' ) ;
+		$('#doit').prop('disabled', false)
+	} else {
+		op.addClass ( 'has-danger' ) ;
+		$('#doit').prop('disabled', true)
+	}
+	return false ;
+}
+
 function initializeInterface () {
 	var p = getUrlVars() ;
 	
@@ -396,6 +411,8 @@ function initializeInterface () {
 		wdq2sparql ( wdq , 'input[name="sparql"]' ) ;
 		return false ;
 	} ) ;
+	
+	$('input[name="source_combination"]').keyup ( validateSourceCombination ) ;
 	
 	$('#file_results label').change ( function () {
 		var o = $('#file_results input[name="results_mode"]:checked') ;

@@ -173,6 +173,7 @@ public:
 	void clear () { pages.clear() ; }
 	void intersect ( TPageList &pl ) ;
 	void merge ( TPageList &pl ) ;
+	void negate ( TPageList &pl ) ;
 	inline int32_t size () { return pages.size() ; }
 	string getNamespaceString ( const int16_t ns ) ;
 	int16_t getNamespaceNumber ( const string &ns ) ;
