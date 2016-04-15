@@ -257,7 +257,7 @@ string TPlatform::process () {
 		if ( !source_combination.empty() ) source_combination += " AND " ;
 		source_combination += source.first ;
 	}
-	source_combination = getParam ( "source_combination" , source_combination ) ;
+	source_combination = getParam ( "source_combination" , source_combination , true ) ;
 	
 //cout << "Combining as '" << source_combination << "'\n" ;
 
