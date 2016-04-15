@@ -177,7 +177,6 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		if ( params.combine == "subset" ) {
 			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 			sql += lc ;
-	//		sql += ",group_concat(DISTINCT cl0.cl_to SEPARATOR '|') AS cats" ;
 			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
 			sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
 			sql += ")) cl0" ;
@@ -304,7 +303,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 	
-	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general
+//	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general // NOR SUPERSEDED BY MAP
 
 	vector <string> having ;	
 	if ( params.minlinks > -1 ) having.push_back ( "link_count>=" + ui2s(params.minlinks) ) ;
@@ -329,7 +328,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	
 	if ( !result ) {
 		cerr << "On wiki " << wiki << ", SQL query failed: " << sql << endl ;
-		return error ( "Database query failes. Problem with " + wiki + "?" ) ;
+		return error ( "Database query failed. Problem with " + wiki + "?" ) ;
 	}
 	
 	gettimeofday(&after , NULL);
@@ -338,6 +337,8 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 //	int num_fields = mysql_num_fields(result);
 	MYSQL_ROW row;
 	uint32_t cnt = 0 ;
+	map <uint32_t,bool> hadthat ;
+	pl1.pages.reserve ( mysql_num_rows(result) ) ;
 	while ((row = mysql_fetch_row(result))) {
 		int16_t nsnum = atoi(row[2]) ;
 		string nsname = pl1.getNamespaceString ( nsnum ) ;
@@ -349,6 +350,9 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		p.meta.size = atol(row[4]) ;
 		p.meta.timestamp = row[3] ;
 //		strcpy ( p.meta.timestamp , row[3] ) ;
+		
+		if ( hadthat.find(p.meta.id) != hadthat.end() ) continue ;
+		hadthat[p.meta.id] = true ;
 		
 		pl1.pages.push_back ( p ) ;
 	}
