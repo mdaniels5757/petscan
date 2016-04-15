@@ -5,6 +5,7 @@ var default_params = {
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
 	'combination':'subset',
+	'wpiu':'any',
 	'format':'html',
 	'sortby':'none',
 	'depth':'0',

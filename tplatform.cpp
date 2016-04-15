@@ -244,11 +244,11 @@ string TPlatform::process () {
 	
 	
 	// Convert to common wiki, if more than one source
-	if ( sources.size() > 1 ) {
+//	if ( sources.size() > 1 ) {
 		for ( auto source:sources ) {
 			source.second->convertToWiki ( wikis[common_wiki] ) ;
 		}
-	}
+//	}
 	
 
 	// Get or create combination commands
@@ -257,8 +257,8 @@ string TPlatform::process () {
 		if ( !source_combination.empty() ) source_combination += " AND " ;
 		source_combination += source.first ;
 	}
-	source_combination = getParam ( "source_combination" , source_combination ) ;
-	
+//cout << "Default as '" << source_combination << "'\n" ;
+	source_combination = getParam ( "source_combination" , source_combination , true ) ;
 //cout << "Combining as '" << source_combination << "'\n" ;
 
 	// Lexing
@@ -290,6 +290,7 @@ string TPlatform::process () {
 
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
+	filterWikidata ( pagelist ) ;
 
 
 	// Sort pagelist
@@ -315,6 +316,42 @@ string TPlatform::process () {
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 
 	return renderPageList ( pagelist ) ;
+}
+
+void TPlatform::filterWikidata ( TPageList &pagelist ) {
+cout << "0\n" ;
+	if ( pagelist.size() == 0 ) return ;
+cout << "1\n" ;
+	string list = trim ( getParam ( "wikidata_prop_item_use" , "" ) ) ;
+	if ( list.empty() ) return ;
+cout << "2\n" ;
+	string wpiu = getParam ( "wpiu" , "any" ) ;
+	pagelist.convertToWiki ( "wikidatawiki" ) ;
+cout << "3\n" ;
+	if ( pagelist.size() == 0 ) return ;
+return;
+	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.
+
+
+	vector <string> tmp ;
+	tmp.reserve ( pagelist.size() ) ;
+	for ( auto i: pagelist.pages ) {
+		if ( i.meta.ns != 0 ) continue ;
+		tmp.push_back ( i.name ) ;
+	}
+	
+	TWikidataDB db ( "wikidatawiki" , this ) ;
+	string sql = "SELECT * FROM page WHERE page_namespace=0 AND page_title IN (" ;
+	sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
+	sql += ")" ;
+	
+cout << sql << endl ;
+	
+	TPageList nl ( pagelist.wiki ) ;
+
+	
+	
+	pagelist.swap ( nl ) ;
 }
 
 void TPlatform::processCreator ( TPageList &pagelist ) {
@@ -878,7 +915,6 @@ string TPlatform::getLink ( TPage &page ) {
 	string url = page.name ;
 	std::replace ( label.begin(), label.end(), '_', ' ') ;
 	std::replace ( url.begin(), url.end(), ' ', '_') ;
-	// TODO escape '
 	url = urlencode ( url ) ;
 
 	string ret = label ;

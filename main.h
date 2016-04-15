@@ -311,6 +311,7 @@ protected:
 	void processWikidata ( TPageList &pl ) ;
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	void processCreator ( TPageList &pagelist ) ;
+	void filterWikidata ( TPageList &pagelist ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;
