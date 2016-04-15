@@ -319,18 +319,33 @@ string TPlatform::process () {
 }
 
 void TPlatform::filterWikidata ( TPageList &pagelist ) {
+	bool no_statements = !getParam("wpiu_no_statements","").empty() ;
+	bool no_sitelinks = !getParam("wpiu_no_sitelinks","").empty() ;
 	string wpiu = getParam ( "wpiu" , "any" ) ;
 	if ( pagelist.size() == 0 ) return ;
 	string list = trim ( getParam ( "wikidata_prop_item_use" , "" ) ) ;
-	if ( list.empty() && wpiu != "no-statements" && wpiu != "no-sitelinks" ) return ;
+	if ( list.empty() && !no_statements && !no_sitelinks ) return ;
 	pagelist.convertToWiki ( "wikidatawiki" ) ;
 	wiki = pagelist.wiki ;
 	if ( pagelist.size() == 0 ) return ;
+	
+	
+	vector <string> items , props , tmp ;
+	std::transform(list.begin(), list.end(), list.begin(), ::toupper);
+	split ( list , tmp , ',' ) ;
+	for ( auto s:tmp ) {
+		s = trim ( s ) ;
+		if ( s.empty() ) continue ;
+		if ( s[0] == 'P' ) props.push_back ( s ) ;
+		if ( s[0] == 'Q' ) items.push_back ( s ) ;
+	}
+
+
 
 	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.
 
 	map <string,TPage> title2page ;
-	vector <string> tmp ;
+	tmp.clear() ;
 	tmp.reserve ( pagelist.size() ) ;
 	for ( auto i: pagelist.pages ) {
 		if ( i.meta.ns != 0 ) continue ;
@@ -340,19 +355,52 @@ void TPlatform::filterWikidata ( TPageList &pagelist ) {
 	
 	TWikidataDB db ( "wikidatawiki" , this ) ;
 	string sql = "SELECT DISTINCT page_title FROM page" ;
-	if ( wpiu == "no-statements" || wpiu == "no-sitelinks" ) sql += ",page_props" ;
+	if ( no_statements || no_sitelinks ) sql += ",page_props" ;
 	sql += " WHERE page_namespace=0 AND page_title IN (" ;
 	sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
 	sql += ")" ;
 	
-	if ( wpiu == "no-statements" ) {
+	
+	// All/any/none
+	if ( items.size()+props.size() > 0 ) {
+	
+		if ( wpiu == "any" ) sql += " AND (0 " ;
+	
+		if ( items.size() > 0 ) {
+			if ( wpiu == "any" ) {
+				sql += " OR EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=0 AND pl_title IN (" + TSourceDatabase::listEscapedStrings ( db , items , false ) + "))" ;
+			} else if ( wpiu == "none" ) {
+				sql += " AND NOT EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=0 AND pl_title IN (" + TSourceDatabase::listEscapedStrings ( db , items , false ) + "))" ;
+			} else if ( wpiu == "all" ) {
+				for ( auto s:items ) {
+					sql += " AND EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=0 AND pl_title IN ('" + db.escape(s) + "'))" ;
+				}
+			}
+		}
+
+		if ( props.size() > 0 ) {
+			if ( wpiu == "any" ) {
+				sql += " OR EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=120 AND pl_title IN (" + TSourceDatabase::listEscapedStrings ( db , props , false ) + "))" ;
+			} else if ( wpiu == "none" ) {
+				sql += " AND NOT EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=120 AND pl_title IN (" + TSourceDatabase::listEscapedStrings ( db , props , false ) + "))" ;
+			} else if ( wpiu == "all" ) {
+				for ( auto s:props ) {
+					sql += " AND EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=120 AND pl_title IN ('" + db.escape(s) + "'))" ;
+				}
+			}
+		}
+
+		if ( wpiu == "any" ) sql += ")" ;
+	}
+	
+	
+	if ( no_statements ) {
 		sql += " AND page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
-	} else if ( wpiu == "no-sitelinks" ) {
+	}
+	if ( no_sitelinks ) {
 		sql += " AND page_id=pp_page AND pp_propname='wb-sitelinks' AND pp_sortkey=0" ;
 	}
 	
-cout << sql << endl ;
-
 	pagelist.pages.clear() ;
 	
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
