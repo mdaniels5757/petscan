@@ -244,11 +244,11 @@ string TPlatform::process () {
 	
 	
 	// Convert to common wiki, if more than one source
-	if ( sources.size() > 1 ) {
+//	if ( sources.size() > 1 ) {
 		for ( auto source:sources ) {
 			source.second->convertToWiki ( wikis[common_wiki] ) ;
 		}
-	}
+//	}
 	
 
 	// Get or create combination commands
