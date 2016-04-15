@@ -244,11 +244,11 @@ string TPlatform::process () {
 	
 	
 	// Convert to common wiki, if more than one source
-//	if ( sources.size() > 1 ) {
+	if ( sources.size() > 1 ) {
 		for ( auto source:sources ) {
 			source.second->convertToWiki ( wikis[common_wiki] ) ;
 		}
-//	}
+	}
 	
 
 	// Get or create combination commands
@@ -288,9 +288,9 @@ string TPlatform::process () {
 	
 	wiki = pagelist.wiki ;
 
+	filterWikidata ( pagelist ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
-	filterWikidata ( pagelist ) ;
 
 
 	// Sort pagelist
@@ -319,39 +319,50 @@ string TPlatform::process () {
 }
 
 void TPlatform::filterWikidata ( TPageList &pagelist ) {
-cout << "0\n" ;
-	if ( pagelist.size() == 0 ) return ;
-cout << "1\n" ;
-	string list = trim ( getParam ( "wikidata_prop_item_use" , "" ) ) ;
-	if ( list.empty() ) return ;
-cout << "2\n" ;
 	string wpiu = getParam ( "wpiu" , "any" ) ;
-	pagelist.convertToWiki ( "wikidatawiki" ) ;
-cout << "3\n" ;
 	if ( pagelist.size() == 0 ) return ;
-return;
+	string list = trim ( getParam ( "wikidata_prop_item_use" , "" ) ) ;
+	if ( list.empty() && wpiu != "no-statements" && wpiu != "no-sitelinks" ) return ;
+	pagelist.convertToWiki ( "wikidatawiki" ) ;
+	wiki = pagelist.wiki ;
+	if ( pagelist.size() == 0 ) return ;
+
 	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.
 
-
+	map <string,TPage> title2page ;
 	vector <string> tmp ;
 	tmp.reserve ( pagelist.size() ) ;
 	for ( auto i: pagelist.pages ) {
 		if ( i.meta.ns != 0 ) continue ;
 		tmp.push_back ( i.name ) ;
+		title2page[i.name] = i ;
 	}
 	
 	TWikidataDB db ( "wikidatawiki" , this ) ;
-	string sql = "SELECT * FROM page WHERE page_namespace=0 AND page_title IN (" ;
+	string sql = "SELECT DISTINCT page_title FROM page" ;
+	if ( wpiu == "no-statements" || wpiu == "no-sitelinks" ) sql += ",page_props" ;
+	sql += " WHERE page_namespace=0 AND page_title IN (" ;
 	sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
 	sql += ")" ;
 	
+	if ( wpiu == "no-statements" ) {
+		sql += " AND page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
+	} else if ( wpiu == "no-sitelinks" ) {
+		sql += " AND page_id=pp_page AND pp_propname='wb-sitelinks' AND pp_sortkey=0" ;
+	}
+	
 cout << sql << endl ;
-	
-	TPageList nl ( pagelist.wiki ) ;
 
+	pagelist.pages.clear() ;
 	
-	
-	pagelist.swap ( nl ) ;
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		string q ( row[0] ) ;
+		if ( title2page.find(q) == title2page.end() ) continue ;
+		pagelist.pages.push_back ( title2page[q] ) ;
+	}
+	mysql_free_result(result);
 }
 
 void TPlatform::processCreator ( TPageList &pagelist ) {
