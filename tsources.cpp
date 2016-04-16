@@ -68,6 +68,46 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 }
 
 
+
+//________________________________________________________________________________________________________________________
+
+bool TSourceWikidata::getData ( string sites ) {
+	clear() ;
+	sites = trim ( sites ) ;
+	if ( sites.empty() ) return false ;
+	
+	wiki = "wikidatawiki" ;
+	TWikidataDB db ( wiki , platform ) ;
+
+	bool no_statements = !platform->getParam("wpiu_no_statements","").empty() ;
+	
+	vector <string> v ;
+	split ( sites , v , ',' ) ;
+	if ( v.empty() ) return false ;
+	string sql = "SELECT ips_item_id FROM wb_items_per_site" ;
+	if ( no_statements ) sql += ",page_props,wb_entity_per_page" ;
+	sql += " WHERE ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , v ) + ")" ;
+	
+	if ( no_statements ) {
+		sql += " AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND epp_page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
+	}
+	
+cout << sql << endl ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	pages.reserve ( mysql_num_rows(result) ) ;
+	MYSQL_ROW row;
+	uint32_t cnt = 0 ;
+	while ((row = mysql_fetch_row(result))) {
+		pages.push_back ( TPage ( "Q"+string(row[0]) , 0 ) ) ;
+	}
+	mysql_free_result(result);
+
+	
+	return true ;
+}
+
+
 //________________________________________________________________________________________________________________________
 
 bool TSourceManual::parseList ( string text , string new_wiki ) {

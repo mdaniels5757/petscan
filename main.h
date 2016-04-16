@@ -236,6 +236,12 @@ public:
 	bool parseList ( string text , string new_wiki ) ;
 } ;
 
+class TSourceWikidata : public TSource {
+public:
+	TSourceWikidata ( TPlatform *p = NULL ) { platform = p ; } ;
+	bool getData ( string sites ) ;
+} ;
+
 
 class TSourceDatabaseCatDepth {
 public:
@@ -313,6 +319,7 @@ protected:
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
+	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;

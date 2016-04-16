@@ -215,34 +215,7 @@ void TPlatform::getCommonWikiAuto ( map <string,TSource *> &sources ) {
 	}
 }
 
-string TPlatform::process () {
-	struct timeval before , after;
-	gettimeofday(&before , NULL);
-
-	TSourceDatabaseParams db_params ;
-	setDatabaseParameters ( db_params ) ;
-	only_files = db_params.page_namespace_ids.size() == 1 && db_params.page_namespace_ids[0] == 6 ;
-	
-	TPageList pagelist ( getWiki() ) ;
-
-	TSourceDatabase db ( this ) ;
-	TSourceSPARQL sparql ( this ) ;
-	TSourcePagePile pagepile ( this ) ;
-	TSourceManual manual ( this ) ;
-	
-
-	map <string,TSource *> sources ;
-
-	// TODO run these in separate threads
-
-	if ( db.getPages ( db_params ) ) sources["categories"] = &db ;
-	if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ;
-	if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ;
-	if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ;
-	
-	// TODO join threads here
-
-
+void TPlatform::combine ( TPageList &pagelist , map <string,TSource *> &sources ) {
 	getCommonWikiAuto ( sources ) ;	
 
 	// Get or create combination commands
@@ -277,10 +250,39 @@ string TPlatform::process () {
 
 	// Run combination
 	cmb.run ( pagelist , sources , *this ) ;
-
-	
-	
 	wiki = pagelist.wiki ;
+}
+
+string TPlatform::process () {
+	struct timeval before , after;
+	gettimeofday(&before , NULL);
+
+	TSourceDatabaseParams db_params ;
+	setDatabaseParameters ( db_params ) ;
+	only_files = db_params.page_namespace_ids.size() == 1 && db_params.page_namespace_ids[0] == 6 ;
+	
+	TPageList pagelist ( getWiki() ) ;
+
+	TSourceDatabase db ( this ) ;
+	TSourceSPARQL sparql ( this ) ;
+	TSourcePagePile pagepile ( this ) ;
+	TSourceManual manual ( this ) ;
+	TSourceWikidata wikidata ( this ) ;
+	
+
+	map <string,TSource *> sources ;
+
+	// TODO run these in separate threads
+
+	if ( db.getPages ( db_params ) ) sources["categories"] = &db ;
+	if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ;
+	if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ;
+	if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ;
+	if ( wikidata.getData ( getParam("wikidata_source_sites","") ) ) sources["wikidata"] = &wikidata ;
+	
+	// TODO join threads here
+
+	combine ( pagelist , sources ) ;
 
 	filterWikidata ( pagelist ) ;
 	processWikidata ( pagelist ) ;
