@@ -233,7 +233,7 @@ public:
 class TSourceManual : public TSource {
 public:
 	TSourceManual ( TPlatform *p = NULL ) { platform = p ; } ;
-	bool parseList ( vector <string> &v ) ;
+	bool parseList ( string text , string new_wiki ) ;
 } ;
 
 
@@ -312,6 +312,7 @@ protected:
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
+	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;

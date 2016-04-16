@@ -276,6 +276,7 @@ void TPageList::join ( string cmd , TPageList &pl ) {
 	}
 	
 	if(DEBUG_OUTPUT) cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
+	cout << cmd << " with " << pl.size() << " pages (having " << size() << "), " ;
 	if ( cmd == "intersect" ) intersect ( pl ) ;
 	else if ( cmd == "merge" ) merge ( pl ) ;
 	else if ( cmd == "negate" ) negate ( pl ) ;

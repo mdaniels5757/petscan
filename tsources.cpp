@@ -70,7 +70,10 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 
 //________________________________________________________________________________________________________________________
 
-bool TSourceManual::parseList ( vector <string> &v ) {
+bool TSourceManual::parseList ( string text , string new_wiki ) {
+	wiki = new_wiki ;
+	vector <string> v ;
+	split ( text , v , '\n' ) ;
 	for ( auto row: v ) {
 		if ( trim(row).empty() ) continue ;
 		TPage np ( row ) ;

@@ -186,6 +186,34 @@ string TCombineSourcesPart::render () {
 	return ret ;
 }
 
+void TPlatform::getCommonWikiAuto ( map <string,TSource *> &sources ) {
+	map <string,string> wikis ;
+	wikis["cats"] = getWiki() ;
+	wikis["manual"] = getParam("manual_list_wiki","") ;
+	wikis["wikidata"] = "wikidatawiki" ;
+	
+	string param = getParam("common_wiki","auto") ;
+
+	string common_wiki ;
+	if ( param.empty() || param == "auto" || wikis.find(param)==wikis.end() || wikis[param].empty() ) {
+		map <string,bool> distinct_wikis ;
+		for ( auto source:sources ) distinct_wikis[source.second->wiki] = true ;
+		if ( distinct_wikis.size() == 1 ) {
+			for ( auto dwi:distinct_wikis ) common_wiki = dwi.first ;
+		} else {
+			common_wiki = "wikidatawiki" ; // Multiple wikis, common denominator
+		}
+	} else {
+		common_wiki = wikis[param] ;
+	}
+	
+	if ( common_wiki.empty() ) return ; // Paranoia
+	
+	// Convert to common wiki
+	for ( auto source:sources ) {
+		source.second->convertToWiki ( common_wiki ) ;
+	}
+}
 
 string TPlatform::process () {
 	struct timeval before , after;
@@ -196,60 +224,26 @@ string TPlatform::process () {
 	only_files = db_params.page_namespace_ids.size() == 1 && db_params.page_namespace_ids[0] == 6 ;
 	
 	TPageList pagelist ( getWiki() ) ;
-	string common_wiki = getParam("common_wiki","cats") ;
 
 	TSourceDatabase db ( this ) ;
 	TSourceSPARQL sparql ( this ) ;
 	TSourcePagePile pagepile ( this ) ;
 	TSourceManual manual ( this ) ;
 	
-	map <string,string> wikis ;
-	wikis["cats"] = getWiki() ;
-	wikis["manual"] = getParam("manual_list_wiki","") ;
-	wikis["wikidata"] = "wikidatawiki" ;
-	
-	if ( wikis.find(common_wiki) == wikis.end() ) common_wiki = "cats" ; // Fallback
-	
+
 	map <string,TSource *> sources ;
 
 	// TODO run these in separate threads
-	if ( 1 ) {
-		if ( db.getPages ( db_params ) ) {
-			sources["categories"] = &db ;
-		}
-	}
 
-	if ( !getParam("sparql","" ).empty() ) {
-		if ( sparql.runQuery ( getParam("sparql","") ) ) {
-			sources["sparql"] = &sparql ;
-		}
-	}
-
-	if ( !getParam("manual_list","").empty() ) {
-		manual.wiki = wikis["manual"] ;
-		vector <string> v ;
-		split ( getParam("manual_list","") , v , '\n' ) ;
-		if ( manual.parseList ( v ) ) {
-			sources["manual"] = &manual ;
-		}
-	}
-	
-	if ( !getParam("pagepile","").empty() ) {
-		if ( pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) {
-			sources["pagepile"] = &pagepile ;
-		}
-	}
+	if ( db.getPages ( db_params ) ) sources["categories"] = &db ;
+	if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ;
+	if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ;
+	if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ;
 	
 	// TODO join threads here
-	
-	
-	// Convert to common wiki, if more than one source
-//	if ( sources.size() > 1 ) {
-		for ( auto source:sources ) {
-			source.second->convertToWiki ( wikis[common_wiki] ) ;
-		}
-//	}
-	
+
+
+	getCommonWikiAuto ( sources ) ;	
 
 	// Get or create combination commands
 	string source_combination ;
