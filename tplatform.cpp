@@ -301,8 +301,6 @@ string TPlatform::process () {
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
 
-	sortResults ( pagelist ) ;
-	
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
 
@@ -313,6 +311,8 @@ string TPlatform::process () {
 	processCreator ( pagelist ) ;
 
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
+
+	sortResults ( pagelist ) ;
 
 	return renderPageList ( pagelist ) ;
 }
