@@ -172,17 +172,33 @@ string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> inp
 }
 
 string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
-	string ret ;
-	ret += "( SELECT p_to.page_id FROM page p_to,page p_from,pagelinks WHERE p_from.page_namespace=0 AND p_from.page_id=pl_from AND pl_namespace=p_to.page_namespace AND pl_title=p_to.page_title AND p_from.page_title" ;
-//	ret += "(SELECT * FROM pagelinks,page pfrom WHERE pfrom.page_id=pl_from AND pl_title=p.page_title AND pl_from_namespace=p.page_namespace AND pl_namespace=0 AND pfrom.page_title" ;
-	
-	if ( input.size() > 1 ) {
-		ret += " IN (" + listEscapedStrings ( db , input ) + ")" ;
-	} else {
-		ret += "=" + listEscapedStrings ( db , input ) ;
-	}
 
-	ret += ")" ;
+	map <int32_t,vector <string> > nslist ;
+	for ( auto title:input ) {
+		vector <string> v ;
+		split ( trim(title) , v , ':' , 2 ) ;
+		int32_t ns = 0 ;
+		if ( v.size() == 2 ) {
+			ns = getNamespaceNumber ( trim(v[0]) ) ;
+			title = trim(v[1]) ;
+		}
+		nslist[ns].push_back ( title ) ;
+	}
+	
+	string ret ;
+	for ( auto nsgroup:nslist ) {
+		if ( !ret.empty() ) ret += " ) OR ( " ;
+		ret += "( SELECT p_to.page_id FROM page p_to,page p_from,pagelinks WHERE p_from.page_namespace=" + ui2s(nsgroup.first) + " AND p_from.page_id=pl_from AND pl_namespace=p_to.page_namespace AND pl_title=p_to.page_title AND p_from.page_title" ;
+	
+		if ( input.size() > 1 ) {
+			ret += " IN (" + listEscapedStrings ( db , nsgroup.second ) + ")" ;
+		} else {
+			ret += "=" + listEscapedStrings ( db , nsgroup.second ) ;
+		}
+
+		ret += ")" ;
+	}
+	ret = "(" + ret + ")" ;
 	return ret ;
 }
 
@@ -250,23 +266,23 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 		sql += " INNER JOIN (page p" ;
 		sql += ") on p.page_id=cl0.cl_from" ;
 	
-		if ( params.page_namespace_ids.size() > 0 ) {
-			sql += " AND p.page_namespace IN(" ;
-			for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
-				if ( i != params.page_namespace_ids.begin() ) sql += "," ;
-				char tmp[200] ;
-				sprintf ( tmp , "%d" , *i ) ;
-				sql += tmp ;
-			}
-			sql += ")" ;
-		}
-	
-
-
 	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 		sql += " FROM page p WHERE 1=1" ;
 	}
+
+	// Namespaces
+	if ( params.page_namespace_ids.size() > 0 ) {
+		sql += " AND p.page_namespace IN(" ;
+		for ( auto i = params.page_namespace_ids.begin() ; i != params.page_namespace_ids.end() ; i++ ) {
+			if ( i != params.page_namespace_ids.begin() ) sql += "," ;
+			char tmp[200] ;
+			sprintf ( tmp , "%d" , *i ) ;
+			sql += tmp ;
+		}
+		sql += ")" ;
+	}
+
 	
 	// Negative categories
 	if ( has_neg_cats ) {
@@ -359,7 +375,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	}
 	
 	
-//	cout << sql << endl ;
+	cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
