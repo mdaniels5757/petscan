@@ -141,6 +141,7 @@ public:
 	uint32_t q = 0 ;
 	string timestamp ;
 	map <string,string> misc ;
+	int random = 0 ;
 } ;
 
 class TPage {
@@ -165,6 +166,7 @@ inline bool operator == ( const TPage &t1 , const TPage &t2 ) { return !((t1<t2)
 #define PAGE_SORT_FILE_SIZE 5
 #define PAGE_SORT_UPLOAD_DATE 6
 #define PAGE_SORT_INCOMING_LINKS 7
+#define PAGE_SORT_RANDOM 8
 
 
 class TPageList {
@@ -320,6 +322,7 @@ protected:
 	void filterWikidata ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
 	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
+	void sortResults ( TPageList &pagelist ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;

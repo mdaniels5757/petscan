@@ -83,6 +83,11 @@ void TPageList::customSort ( uint8_t mode , bool ascending ) {
 		case PAGE_SORT_NS_TITLE : std::sort ( pages.begin() , pages.end() , [](TPage a,TPage b){return a.meta.ns!=b.meta.ns?(a.meta.ns<b.meta.ns):(a.getNameWithoutNamespace()<b.getNameWithoutNamespace());} ) ; break ; // FIXME const
 		case PAGE_SORT_SIZE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.size<b.meta.size;} ) ; break ;
 		case PAGE_SORT_DATE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.timestamp<b.meta.timestamp;} ) ; break ;
+		case PAGE_SORT_RANDOM : {
+			for ( auto page:pages ) page.meta.random = rand() ;
+			std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.random<b.meta.random;} ) ;
+			break ;
+		}
 	}
 	
 	if ( !ascending ) reverse ( pages.begin() , pages.end() ) ;

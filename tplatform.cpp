@@ -253,6 +253,19 @@ void TPlatform::combine ( TPageList &pagelist , map <string,TSource *> &sources 
 	wiki = pagelist.wiki ;
 }
 
+void TPlatform::sortResults ( TPageList &pagelist ) {
+	// Sort pagelist
+	bool asc = !(getParam("sortorder") == "descending") ;
+	if ( getParam("sortby") == "title" ) pagelist.customSort ( PAGE_SORT_TITLE , asc ) ;
+	else if ( getParam("sortby") == "ns_title" ) pagelist.customSort ( PAGE_SORT_NS_TITLE , asc ) ;
+	else if ( getParam("sortby") == "size" ) pagelist.customSort ( PAGE_SORT_SIZE , asc ) ;
+	else if ( getParam("sortby") == "date" ) pagelist.customSort ( PAGE_SORT_DATE , asc ) ;
+	else if ( getParam("sortby") == "filesize" ) pagelist.customSort ( PAGE_SORT_FILE_SIZE , asc ) ;
+	else if ( getParam("sortby") == "uploaddate" ) pagelist.customSort ( PAGE_SORT_UPLOAD_DATE , asc ) ;
+	else if ( getParam("sortby") == "incoming_links" ) pagelist.customSort ( PAGE_SORT_INCOMING_LINKS , asc ) ;
+	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
+}
+
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
@@ -288,17 +301,7 @@ string TPlatform::process () {
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
 
-
-	// Sort pagelist
-	bool asc = !(getParam("sortorder") == "descending") ;
-	if ( getParam("sortby") == "title" ) pagelist.customSort ( PAGE_SORT_TITLE , asc ) ;
-	else if ( getParam("sortby") == "ns_title" ) pagelist.customSort ( PAGE_SORT_NS_TITLE , asc ) ;
-	else if ( getParam("sortby") == "size" ) pagelist.customSort ( PAGE_SORT_SIZE , asc ) ;
-	else if ( getParam("sortby") == "date" ) pagelist.customSort ( PAGE_SORT_DATE , asc ) ;
-	else if ( getParam("sortby") == "filesize" ) pagelist.customSort ( PAGE_SORT_FILE_SIZE , asc ) ;
-	else if ( getParam("sortby") == "uploaddate" ) pagelist.customSort ( PAGE_SORT_UPLOAD_DATE , asc ) ;
-	else if ( getParam("sortby") == "incoming_links" ) pagelist.customSort ( PAGE_SORT_INCOMING_LINKS , asc ) ;
-	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
+	sortResults ( pagelist ) ;
 	
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;

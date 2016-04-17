@@ -92,8 +92,6 @@ bool TSourceWikidata::getData ( string sites ) {
 		sql += " AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND epp_page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
 	}
 	
-cout << sql << endl ;
-
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	pages.reserve ( mysql_num_rows(result) ) ;
 	MYSQL_ROW row;

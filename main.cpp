@@ -267,6 +267,8 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 int main(void) {
 	struct mg_mgr mgr;
 	struct mg_connection *nc;
+	
+	srand (time(NULL));
 
 	root_platform = new TPlatform ;
 	if ( !root_platform->readConfigFile ( CONFIG_FILE ) ) exit ( 1 ) ;
