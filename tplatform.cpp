@@ -316,10 +316,68 @@ string TPlatform::process () {
 	processCreator ( pagelist ) ;
 
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
-
+	
 	sortResults ( pagelist ) ;
 
+	processRedlinks ( pagelist ) ; // Supersedes sort
+
 	return renderPageList ( pagelist ) ;
+}
+
+void TPlatform::processRedlinks ( TPageList &pagelist ) {
+	if ( getParam("show_redlinks","").empty() ) return ;
+	if ( wiki == "wikidiatawiki" ) {
+		error ( "Redlinks are rather pointless on Wikidata" ) ;
+		return ;
+	}
+	
+	output_redliks = true ;
+	bool ns0_only = !(getParam("article_redlinks_only","").empty()) ;
+	bool remove_template_redlinks = !(getParam("remove_template_redlinks","").empty()) ;
+
+	map <pair<uint32_t,string>,uint32_t> redlinks ;
+	TWikidataDB db ( pagelist.wiki , this ) ;
+	uint32_t cnt = 0 ;
+	map <int32_t,vector <string> > nslist ;
+	auto p = pagelist.pages.begin() ;
+	do {
+		nslist[p->meta.ns].push_back ( p->name ) ;
+		cnt++ ;
+		p++ ;
+		if ( cnt >= DB_PAGE_BATCH_SIZE || ( cnt > 0 && p == pagelist.pages.end() ) ) {
+			for ( auto nsgroup:nslist ) {
+				string sql = "SELECT pl_namespace,pl_title from page p0,pagelinks pl0 WHERE p0.page_namespace=" + ui2s(nsgroup.first) + " AND p0.page_title IN (" + TSourceDatabase::listEscapedStrings ( db , nsgroup.second ) + ")" ;
+				sql += " AND pl_from=p0.page_id AND NOT EXISTS (SELECT * FROM page p1 WHERE p1.page_namespace=pl_namespace AND p1.page_title=pl_title LIMIT 1)" ;
+				if ( ns0_only ) sql += " AND pl_namespace=0" ;
+				else sql += " AND pl_namespace>=0" ;
+				
+				if ( remove_template_redlinks ) {
+					sql += " AND NOT EXISTS (SELECT * FROM pagelinks pl1 WHERE pl1.pl_from_namespace=10 AND pl0.pl_namespace=pl1.pl_namespace AND pl0.pl_title=pl1.pl_title LIMIT 1)" ;
+				}
+
+				MYSQL_RES *result = db.getQueryResults ( sql ) ;
+				MYSQL_ROW row;
+				while ((row = mysql_fetch_row(result))) {
+					pair<int,string> ns_title ( atoi(row[0]) , string(row[1]) ) ;
+					redlinks[ns_title]++ ;
+				}
+				mysql_free_result(result);
+			}
+			
+			cnt = 0 ;
+			nslist.clear() ;
+		}
+	} while ( p != pagelist.pages.end() ) ;
+	
+	uint32_t min_redlinks = atoi(getParam("min_redlink_count","1").c_str()) ;
+	pagelist.pages.clear() ;
+	for ( auto rl:redlinks ) {
+		if ( rl.second < min_redlinks ) continue ;
+		TPage redpage ( rl.first.second , rl.first.first ) ;
+		redpage.meta.misc["count"] = ui2s(rl.second) ;
+		pagelist.pages.push_back ( redpage ) ;
+	}
+	pagelist.customSort ( PAGE_SORT_REDLINKS_COUNT , false ) ;
 }
 
 void TPlatform::filterWikidata ( TPageList &pagelist ) {
@@ -731,7 +789,8 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 	if ( use_autolist ) ret += "<th></th>" ; // Checkbox column
 	ret += "<th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
 	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ; //"<th class='text-nowrap l_h_wd_label'></th>" ;
-	ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
+	if ( output_redliks ) ret += "<th class='text-nowrap l_h_namespace'></th><th class='l_link_number'></th>" ;
+	else ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
 	if ( file_data ) {
 		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "<th class='l_h_"+(*k)+"'></th>" ;
@@ -765,12 +824,18 @@ string TPlatform::renderPageListHTML ( TPageList &pagelist ) {
 		ret += tmp ;
 		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) + "</td>" ;
 		if ( is_wikidata ) ret += "<td>" + i->meta.getMisc("description","") + "</td>" ;
-		sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.id ) ; // ID
-		ret += tmp ;
-		ret += "<td>"+nsname+"</td>" ; // Namespace name
-		sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.size ) ; // Size
-		ret += tmp ;
-		ret += "<td class='num'>" + string(i->meta.timestamp) + "</td>" ; // TS
+
+		if ( output_redliks ) {
+			ret += "<td>"+nsname+"</td>" ; // Namespace name
+			ret += "<td class='num'>" + string(i->meta.getMisc("count","?")) + "</td>" ; // Count
+		} else {
+			sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.id ) ; // ID
+			ret += tmp ;
+			ret += "<td>"+nsname+"</td>" ; // Namespace name
+			sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.size ) ; // Size
+			ret += tmp ;
+			ret += "<td class='num'>" + string(i->meta.timestamp) + "</td>" ; // TS
+		}
 		if ( show_wikidata_item ) {
 			ret += "<td>" ;
 			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) {

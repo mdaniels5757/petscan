@@ -9,6 +9,7 @@ var default_params = {
 	'format':'html',
 	'sortby':'none',
 	'depth':'0',
+	'min_redlink_count':'1',
 	'wikidata_item':'no',
 	'output_compatability':'catscan',
 	'active_tab':'tab_categories',
