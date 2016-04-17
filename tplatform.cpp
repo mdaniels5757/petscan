@@ -87,6 +87,11 @@ void TPlatform::setDatabaseParameters ( TSourceDatabaseParams &db_params ) {
 	splitParamIntoVector ( getParam("outlinks_yes","") , db_params.linked_from_all ) ;
 	splitParamIntoVector ( getParam("outlinks_any","") , db_params.linked_from_any ) ;
 	splitParamIntoVector ( getParam("outlinks_no" ,"") , db_params.linked_from_none  ) ;
+
+	// Add links to
+	splitParamIntoVector ( getParam("links_to_all","") , db_params.links_to_all ) ;
+	splitParamIntoVector ( getParam("links_to_any","") , db_params.links_to_any ) ;
+	splitParamIntoVector ( getParam("links_to_no" ,"") , db_params.links_to_none  ) ;
 }
 
 

@@ -171,9 +171,7 @@ string TSourceDatabase::templateSubquery ( TWikidataDB &db , vector <string> inp
 	return ret ;
 }
 
-string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
-
-	map <int32_t,vector <string> > nslist ;
+void TSourceDatabase::groupLinkListByNamespace ( vector <string> &input , map <int32_t,vector <string> > &nslist ) {
 	for ( auto title:input ) {
 		vector <string> v ;
 		split ( trim(title) , v , ':' , 2 ) ;
@@ -184,13 +182,39 @@ string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> in
 		}
 		nslist[ns].push_back ( title ) ;
 	}
+}
+
+string TSourceDatabase::linksFromSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
+	map <int32_t,vector <string> > nslist ;
+	groupLinkListByNamespace ( input , nslist ) ;
 	
 	string ret ;
 	for ( auto nsgroup:nslist ) {
 		if ( !ret.empty() ) ret += " ) OR ( " ;
 		ret += "( SELECT p_to.page_id FROM page p_to,page p_from,pagelinks WHERE p_from.page_namespace=" + ui2s(nsgroup.first) + " AND p_from.page_id=pl_from AND pl_namespace=p_to.page_namespace AND pl_title=p_to.page_title AND p_from.page_title" ;
 	
-		if ( input.size() > 1 ) {
+		if ( nsgroup.second.size() > 1 ) {
+			ret += " IN (" + listEscapedStrings ( db , nsgroup.second ) + ")" ;
+		} else {
+			ret += "=" + listEscapedStrings ( db , nsgroup.second ) ;
+		}
+
+		ret += ")" ;
+	}
+	ret = "(" + ret + ")" ;
+	return ret ;
+}
+
+string TSourceDatabase::linksToSubquery ( TWikidataDB &db , vector <string> input ) { // TODO speed up (e.g. IN ()); pages from all namespaces?
+	map <int32_t,vector <string> > nslist ;
+	groupLinkListByNamespace ( input , nslist ) ;
+	
+	string ret ;
+	for ( auto nsgroup:nslist ) {
+		if ( !ret.empty() ) ret += " ) OR ( " ;
+		ret += "( SELECT DISTINCT pl_from FROM pagelinks WHERE pl_namespace=" + ui2s(nsgroup.first) + " AND pl_title" ;
+	
+		if ( nsgroup.second.size() > 1 ) {
 			ret += " IN (" + listEscapedStrings ( db , nsgroup.second ) + ")" ;
 		} else {
 			ret += "=" + listEscapedStrings ( db , nsgroup.second ) ;
@@ -211,7 +235,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
 	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
 	bool has_pos_templates = params.templates_yes.size()+params.templates_any.size() > 0 ;
-	bool has_pos_linked_from = params.linked_from_all.size()+params.linked_from_any.size() > 0 ;
+	bool has_pos_linked_from = params.linked_from_all.size()+params.linked_from_any.size()+params.links_to_all.size()+params.links_to_any.size() > 0 ;
 
 	string primary ;
 	if ( has_pos_cats ) primary = "categories" ;
@@ -318,6 +342,14 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	}
 	if ( !params.linked_from_any.empty() ) sql += " AND page_id IN " + linksFromSubquery ( db , params.linked_from_any ) ; // " AND EXISTS "
 	if ( !params.linked_from_none.empty() ) sql += " AND page_id NOT IN " + linksFromSubquery ( db , params.linked_from_none ) ; // " AND NOT EXISTS "
+	
+	
+	// Links to
+	for ( auto i = params.links_to_all.begin() ; i != params.links_to_all.end() ; i++ ) {
+		sql += " AND page_id IN " + linksToSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
+	}
+	if ( !params.links_to_any.empty() ) sql += " AND page_id IN " + linksToSubquery ( db , params.links_to_any ) ; // " AND EXISTS "
+	if ( !params.links_to_none.empty() ) sql += " AND page_id NOT IN " + linksToSubquery ( db , params.links_to_none ) ; // " AND NOT EXISTS "
 
 
 	// Last edit
@@ -375,7 +407,7 @@ bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
 	}
 	
 	
-	cout << sql << endl ;
+//cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);

@@ -261,6 +261,7 @@ public:
 	bool templates_any_talk_page = false ;
 	bool templates_no_talk_page = false ;
 	vector <string> linked_from_all , linked_from_any , linked_from_none ;
+	vector <string> links_to_all , links_to_any , links_to_none ;
 	
 	string wiki = "enwiki" ;
 	int16_t default_depth = 0 ;
@@ -287,6 +288,8 @@ protected:
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
 	string templateSubquery ( TWikidataDB &db , vector <string> input , bool use_talk_page , bool find_not ) ;
 	string linksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
+	string linksToSubquery ( TWikidataDB &db , vector <string> input ) ;
+	void groupLinkListByNamespace ( vector <string> &input , map <int32_t,vector <string> > &nslist ) ;
 } ;
 
 
