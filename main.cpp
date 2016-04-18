@@ -228,7 +228,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		}
 
 	
-	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" ) {
+	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" || path.substr(path.length()-4,4)==".txt" ) {
 
 		string filename = "html" + path ;
 		if ( path == "/" ) filename = "html/index.html" ;
@@ -238,6 +238,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			if ( path.substr(path.length()-3,3)==".js" ) type = "application/javascript" ;
 			if ( path.substr(path.length()-4,4)==".css" ) type = "text/css" ;
 			if ( path.substr(path.length()-4,4)==".map" ) type = "text/plain" ;
+			if ( path.substr(path.length()-4,4)==".txt" ) type = "text/plain" ;
 		}
 
 		// There is some issue here that causes the server to die. Caching seems to prevent this.
