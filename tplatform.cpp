@@ -682,6 +682,32 @@ string TPlatform::renderPageListWiki ( TPageList &pagelist ) {
 	return ret ;
 }
 
+string TPlatform::renderPageListPagePile ( TPageList &pagelist ) {
+	content_type = "text/html; charset=utf-8" ;
+	string ret ;
+
+	string url = "https://tools.wmflabs.org/pagepile/api.php" ;
+	string params = "action=create_pile_with_data&wiki="+pagelist.wiki+"&data=" ;
+	for ( auto page:pagelist.pages ) {
+		params += urlencode(page.name) + "%09" + ui2s(page.meta.ns) + "%0A" ;
+	}
+	
+
+	json j ;
+	bool b = loadJSONfromPOST ( url , params , j ) ;
+	
+	if ( !b ) {
+		error ( "PagePile failure" ) ;
+		return ret ;
+	}
+	
+	int pid = j["pile"]["id"] ;
+	string new_url = "https://tools.wmflabs.org/pagepile/api.php?action=get_data&id=" + ui2s(pid) ;
+	ret = "<html><head><<meta http-equiv=\"refresh\" content=\"0; url="+new_url+"\" /></head></html>" ;
+	return ret ;
+}
+
+
 string TPlatform::renderPageListTSV ( TPageList &pagelist ) {
 	content_type = "text/tab-separated-values; charset=utf-8" ;
 
@@ -1033,6 +1059,7 @@ string TPlatform::renderPageList ( TPageList &pagelist ) {
 	if ( format == "json" ) return renderPageListJSON ( pagelist ) ;
 	else if ( format == "wiki" ) return renderPageListWiki ( pagelist ) ;
 	else if ( format == "tsv" ) return renderPageListTSV ( pagelist ) ;
+	else if ( format == "pagepile" ) return renderPageListPagePile ( pagelist ) ;
 	else return renderPageListHTML ( pagelist ) ;
 	
 	return "" ;

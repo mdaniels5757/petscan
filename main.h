@@ -49,6 +49,7 @@ const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
 bool loadJSONfromURL ( string url , json &j , bool use_cache = false ) ;
+bool loadJSONfromPOST ( string url , const string &post , json &j ) ;
 void stringReplace(std::string& str, string oldStr, string newStr) ;
 string space2_ ( string s ) ;
 string _2space ( string s ) ;
@@ -314,6 +315,7 @@ protected:
 	string renderPageListJSON ( TPageList &pagelist ) ;
 	string renderPageListWiki ( TPageList &pagelist ) ;
 	string renderPageListTSV ( TPageList &pagelist ) ;
+	string renderPageListPagePile ( TPageList &pagelist ) ;
 	
 	string getLink ( TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
