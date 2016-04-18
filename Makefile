@@ -4,7 +4,7 @@ CFLAGS=-DMG_ENABLE_THREADS -pthread
 CPPFLAGS=-std=c++11  -g `mysql_config --include` -pthread
 
 SRCS_C=mongoose.c
-SRCS_CXX=tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp tpagelist.cpp
+SRCS_CXX=tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp tpagelist.cpp trenderer.cpp
 
 OBJS=$(subst .c,.o,$(SRCS_C)) $(subst .cpp,.o,$(SRCS_CXX))
 

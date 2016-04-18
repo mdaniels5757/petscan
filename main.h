@@ -303,6 +303,9 @@ public:
 	string process() ;
 	string getWiki () ;
 	string getParam ( string key , string default_value = "" , bool ignore_empty = false ) ;
+	float getQueryTime() { return querytime ; }
+	string getExistingLabel ( string name ) ;
+	bool doOutputRedlinks() { return output_redlinks ; }
 	
 	map <string,string> config , params ;
 	string content_type , query ;
@@ -310,14 +313,7 @@ public:
 	uint32_t psid = 0 ;
 
 protected:
-	string renderPageList ( TPageList &pagelist ) ;
-	string renderPageListHTML ( TPageList &pagelist ) ;
-	string renderPageListJSON ( TPageList &pagelist ) ;
-	string renderPageListWiki ( TPageList &pagelist ) ;
-	string renderPageListTSV ( TPageList &pagelist ) ;
-	string renderPageListPagePile ( TPageList &pagelist ) ;
 	
-	string getLink ( TPage &page ) ;
 	void parseCats ( string input , vector <TSourceDatabaseCatDepth> &output ) ;
 	void splitParamIntoVector ( string input , vector <string> &output ) ;
 	void processFiles ( TPageList &pl ) ;
@@ -334,8 +330,25 @@ protected:
 	float querytime = 0 ; // seconds
 	string wiki ;
 	map <string,bool> existing_labels ;
+	bool output_redlinks = false ;
+} ;
+
+class TRenderer {
+public:
+	TRenderer ( TPlatform *p = NULL ) { platform = p ; }
+	string renderPageList ( TPageList &pagelist ) ;
 	bool only_files = false ;
-	bool output_redliks = false ;
+
+private:
+	string renderPageListHTML ( TPageList &pagelist ) ;
+	string renderPageListJSON ( TPageList &pagelist ) ;
+	string renderPageListWiki ( TPageList &pagelist ) ;
+	string renderPageListTSV ( TPageList &pagelist ) ;
+	string renderPageListPagePile ( TPageList &pagelist ) ;
+	string getLink ( TPage &page ) ;
+
+	TPlatform *platform = NULL ;
+	string wiki ;
 } ;
 
 #endif
