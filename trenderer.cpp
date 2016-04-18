@@ -197,7 +197,7 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	ret += "<thead><tr>" ;
 	if ( use_autolist ) ret += "<th></th>" ; // Checkbox column
 	ret += "<th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
-	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ; //"<th class='text-nowrap l_h_wd_label'></th>" ;
+//	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ;
 	if ( platform->doOutputRedlinks() ) ret += "<th class='text-nowrap l_h_namespace'></th><th class='l_link_number'></th>" ;
 	else ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
 	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
@@ -232,8 +232,14 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 		
 		sprintf ( tmp , "<td class='num'>%d</td>" , cnt ) ;
 		ret += tmp ;
-		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) + "</td>" ;
-		if ( is_wikidata ) ret += "<td>" + i->meta.getMisc("description","") + "</td>" ;
+//		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) ;
+		ret += "<td style='width:100%'>" + getLink ( *i ) ;
+		if ( is_wikidata ) {
+			string desc = i->meta.getMisc("description","") ;
+			if ( !desc.empty() ) ret += "<div class='smaller'>" + desc + "</div>" ;
+		}
+		ret += "</td>" ;
+//		if ( is_wikidata ) ret += "<td>" + i->meta.getMisc("description","") + "</td>" ;
 
 		if ( platform->doOutputRedlinks() ) {
 			ret += "<td>"+nsname+"</td>" ; // Namespace name
