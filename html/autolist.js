@@ -305,9 +305,9 @@ function AutoList ( callback ) {
 			}
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
-			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm l_al_all'></button><br/>" ;
-			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm l_al_none'></button><br/>" ;
-			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm l_al_toggle'></button><br/>" ;
+			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm l_al_all' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm l_al_none' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm l_al_toggle' style='width:100%'></button><br/>" ;
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
 			h += "<textarea id='al_commands' class='ph_al_commands_ph' rows=3 style='width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
