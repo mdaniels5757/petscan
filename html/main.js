@@ -45,7 +45,7 @@ $.fn.is_on_screen = function(){
 
 
 function deXSS ( s ) {
-	return s.replace ( /<script/ , '' ) ; // TODO this should be better...
+	return s.replace ( /<\s*script/ , '' ) ; // TODO this should be better...
 }
 
 function getUrlVars () {
@@ -179,6 +179,18 @@ function setInterfaceLanguage ( l ) {
 }
 
 function loadInterface ( init_lang , callback ) {
+
+	var running = 2 ;
+	function isDone () {
+		running-- ;
+		if ( running > 0 ) return ;
+		applyParameters() ;
+		if ( typeof callback != 'undefined' ) callback() ;
+	}
+
+	loadNamespaces ( isDone ) ;
+
+
 	$.getJSON ( 'https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=?' , function ( d ) {
 		var wt = d.parse.wikitext['*'] ;
 		var rows = wt.split("\n") ;
@@ -208,16 +220,15 @@ function loadInterface ( init_lang , callback ) {
 		
 		setInterfaceLanguage ( init_lang ) ;
 
-		loadNamespaces() ;
+//		loadNamespaces() ;
 		$('input[name="language"]').keyup ( loadNamespaces ) ;
 		$('input[name="project"]').keyup ( loadNamespaces ) ;
 		
-		applyParameters() ;
-		if ( typeof callback != 'undefined' ) callback() ;
+		isDone() ;
 	} ) ;
 }
 
-function loadNamespaces () {
+function loadNamespaces ( callback ) {
 	if ( namespaces_loading ) return false ;
 	var l = $('input[name="language"]').val() ;
 	if ( l.length < 2 ) return false ;
@@ -239,7 +250,7 @@ function loadNamespaces () {
 			id *= 1 ;
 			if ( id < 0 ) return ;
 			var title = v['*'] ;
-			if ( title == '' ) title = _t('namespace_0',l) ;
+			if ( title == '' ) title = "<span class='l_namespace_0'></span>" ; //_t('namespace_0',l) ;
 			last_namespaces[id] = [ title , (v.canonical||title) ] ;
 			if ( id > max_namespace_id ) max_namespace_id = id ;
 		} ) ;
@@ -288,6 +299,7 @@ function loadNamespaces () {
 		
 	} ) . always ( function () {
 		namespaces_loading = false ;
+		if ( typeof callback != 'undefined' ) callback() ;
 	} ) ;
 	return false ;
 }
