@@ -151,7 +151,6 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 	
 		TPlatform platform ;
 		platform.setConfig ( *root_platform ) ;
-		platform.query = query ;
 	
 		// Parse query into map
 		parseQueryParameters ( query , platform.params ) ;
@@ -182,6 +181,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 				}
 			}
 		}
+		platform.query = query ;
 
 		std::thread *thread_psid = NULL ;
 		if ( !based_on_psid || has_psid_additional_parameters ) {
