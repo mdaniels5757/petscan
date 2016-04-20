@@ -1,6 +1,7 @@
 #include "main.h"
 #include <fstream>
 #include <regex>
+#include <thread>
 
 vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
@@ -325,6 +326,8 @@ string TPlatform::process () {
 
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
+
+	map <string,TSource *> sources ;
 	
 	TPageList pagelist ( getWiki() ) ;
 
@@ -334,18 +337,17 @@ string TPlatform::process () {
 	TSourceManual manual ( this ) ;
 	TSourceWikidata wikidata ( this ) ;
 	
+	std::thread t1 ( [&] { if ( db.getPages(db_params) ) sources["categories"] = &db ; } ) ;
+	std::thread t2 ( [&] { if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ; } ) ;
+	std::thread t3 ( [&] { if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ; } ) ;
+	std::thread t4 ( [&] { if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ; } ) ;
+	std::thread t5 ( [&] { if ( wikidata.getData ( getParam("wikidata_source_sites","") ) ) sources["wikidata"] = &wikidata ; } ) ;
 
-	map <string,TSource *> sources ;
-
-	// TODO run these in separate threads
-
-	if ( db.getPages ( db_params ) ) sources["categories"] = &db ;
-	if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ;
-	if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ;
-	if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ;
-	if ( wikidata.getData ( getParam("wikidata_source_sites","") ) ) sources["wikidata"] = &wikidata ;
-
-	// TODO join threads here
+	t1.join() ;
+	t2.join() ;
+	t3.join() ;
+	t4.join() ;
+	t5.join() ;
 
 	combine ( pagelist , sources ) ;
 
