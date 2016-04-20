@@ -17,6 +17,7 @@ var default_params = {
 	'sortorder':'ascending'
 } ;
 
+var thumbnail_size = '300px' ;
 var max_namespace_id = 0 ;
 var namespaces_selected = [] ;
 var namespaces_loading = false ;
@@ -328,9 +329,9 @@ function generateThumbnailView() {
 	
 	$('#main_table tbody tr').each ( function () {
 		var tr = $(this) ;
-		var td = $(tr.find('td').get(1)) ;
+		var td = $(tr.find('td.link_container').get(0)) ;
 		var a = $(td.find('a.pagelink').get(0)) ;
-		var url = a.attr('href').replace(/\/wiki\/File%3A/,'/wiki/Special:Redirect/file/') + '?width=200px' ;
+		var url = a.attr('href').replace(/\/wiki\/File%3A/,'/wiki/Special:Redirect/file/') + '?width=' + thumbnail_size ;
 		var h = '' ;
 		h += '<div class="card">' ;
 		h += '<div style="text-align:center"><a class="thumblink"><img class="card-img-top pre_thumb" src2load="'+url+'" alt="'+'??'+'" border=0 /></a></div>' ;

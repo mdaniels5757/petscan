@@ -10,7 +10,7 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 	string wdi = platform->getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 
-	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
+	is_wikidata = pagelist.wiki == "wikidatawiki" ;
 
 	string ret ;
 	ret += "== " + platform->getParam("combination") + " ==\n" ;
@@ -100,7 +100,7 @@ string TRenderer::renderPageListTSV ( TPageList &pagelist ) {
 	string wdi = platform->getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
 
-	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
+	is_wikidata = pagelist.wiki == "wikidatawiki" ;
 
 	string ret ;
 	ret += "Title" ;
@@ -146,14 +146,8 @@ string TRenderer::renderPageListTSV ( TPageList &pagelist ) {
 
 string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	platform->content_type = "text/html; charset=utf-8" ;
+	gettimeofday(&now_ish , NULL);
 
-	bool is_wikidata = pagelist.wiki == "wikidatawiki" ;
-	bool file_data = !platform->getParam("ext_image_data","").empty() ;
-	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
-
-	string wdi = platform->getParam("wikidata_item","no") ;
-	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
-	
 	string ret ;
 	ret += "<hr/>" ;
 	ret += "<script>var output_wiki='"+pagelist.wiki+"';</script>\n" ;
@@ -162,11 +156,9 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 		ret += "<div class='alert alert-danger' role='alert'>" + a + "</div>" ;
 	}
 
-	struct timeval now_ish ;
-	gettimeofday(&now_ish , NULL);
-	
-	bool use_autolist = false ;
-	bool autolist_creator_mode = false ;
+	// Wikidata edit box?
+	use_autolist = false ;
+	autolist_creator_mode = false ;
 	if ( pagelist.wiki != "wikidatawiki" && platform->getParam("wikidata_item","") == "without" ) {
 		ret += "<div id='autolist_box' mode='creator'></div>" ;
 		use_autolist = true ;
@@ -176,6 +168,8 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 		use_autolist = true ;
 	}
 	
+	// Gallery?
+	// Todo: meta.misc["image"]
 	if ( only_files && !use_autolist ) {
 		ret += "<div id='file_results' style='float:right' class='btn-group' data-toggle='buttons'>" ;
 		ret += "<label class='btn btn-secondary active'><input type='radio' checked name='results_mode' value='titles' autocomplete='off' /><span class='l_show_titles'></span></label>" ;
@@ -183,6 +177,9 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 		ret += "</div>" ;
 	}
 	
+	// Todo: Coordinates?
+
+	// Header
 	char tmp[1000] ;
 	sprintf ( tmp , "<h2><a name='results'></a><span id='num_results' num='%ld'></span></h2>" , pagelist.pages.size() ) ;
 	ret += tmp ;
@@ -193,69 +190,118 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 		pagelist.pages.resize ( MAX_HTML_RESULTS ) ;
 	}
 	
-	ret += "<div style='clear:both;overflow:auto'><table class='table table-sm table-striped' id='main_table'>" ;
-	ret += "<thead><tr>" ;
-	if ( use_autolist ) ret += "<th></th>" ; // Checkbox column
-	ret += "<th class='num'>#</th><th class='text-nowrap l_h_title'></th>" ;
-//	if ( is_wikidata ) ret += "<th class='text-nowrap l_h_wd_desc'></th>" ;
-	if ( platform->doOutputRedlinks() ) ret += "<th class='text-nowrap l_h_namespace'></th><th class='l_link_number'></th>" ;
-	else ret += "<th class='text-nowrap l_h_id'></th><th class='text-nowrap l_h_namespace'></th><th class='text-nowrap l_h_len'></th><th class='text-nowrap l_h_touched'></th>" ;
-	if ( show_wikidata_item ) ret += "<th class='l_h_wikidata'></th>" ;
-	if ( file_data ) {
-		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "<th class='l_h_"+(*k)+"'></th>" ;
-	}
-	if ( file_usage ) ret += "<th class='l_file_usage_data'></th>" ;
-	ret += "</tr></thead>" ;
+	
+	initializeColumns() ;
+
+	// Results table
+	ret += "<div style='clear:both;overflow:auto'>" ;
+	ret += getTableHeaderHTML() ;
 	ret += "<tbody>" ;
 	uint32_t cnt = 0 ;
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		cnt++ ;
-		int16_t ns = i->meta.ns ;
-		string nsname = pagelist.getNamespaceString(ns) ;
-		if ( nsname.empty() ) nsname = "<span class='l_namespace_0'>Article</span>" ;
-		ret += "<tr>" ;
-		
-		if ( use_autolist ) {
+		ret += getTableRowHTML ( cnt , *i , pagelist ) ;
+	}
+	ret += "</tbody></table></div>" ;
+	
+	// Footer
+	sprintf ( tmp , "<div style='font-size:8pt' id='query_length' sec='%2.2f'></div>" , platform->getQueryTime() ) ;
+	ret += tmp ;
+	
+	return ret ;
+}
+
+void TRenderer::initializeColumns() {
+	is_wikidata = wiki == "wikidatawiki" ;
+	bool file_data = !platform->getParam("ext_image_data","").empty() ;
+	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
+	bool add_coordinates = !platform->getParam("add_coordinates","").empty() ;
+	bool add_image = !platform->getParam("add_image","").empty() ;
+
+	string wdi = platform->getParam("wikidata_item","no") ;
+	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
+
+	columns.clear() ;
+	if ( use_autolist ) columns.push_back ( "checkbox" ) ;
+	columns.push_back ( "number" ) ;
+	if ( add_image ) columns.push_back ( "image" ) ;
+	columns.push_back ( "title" ) ;
+	if ( platform->doOutputRedlinks() ) {
+		columns.push_back ( "namespace" ) ;
+		columns.push_back ( "linknumber" ) ;
+	} else {
+		columns.push_back ( "pageid" ) ;
+		columns.push_back ( "namespace" ) ;
+		columns.push_back ( "length" ) ;
+		columns.push_back ( "touched" ) ;
+	}
+	if ( show_wikidata_item ) columns.push_back ( "wikidata" ) ;
+	if ( add_coordinates ) columns.push_back ( "coordinates" ) ;
+	if ( file_data ) {
+		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) columns.push_back ( *k ) ;
+	}
+	if ( file_usage ) columns.push_back ( "fileusage" ) ;
+}
+
+string TRenderer::getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &pagelist ) {
+	char tmp[1000] ;
+	string ret ;
+	ret += "<tr>" ;
+
+	for ( auto col:columns ) {
+
+		if ( col == "checkbox" ) {
 			string q ;
 			string checked = "checked" ;
 			if ( autolist_creator_mode ) {
-				string el = platform->getExistingLabel ( i->name ) ;
+				string el = platform->getExistingLabel ( page.name ) ;
 				if ( !el.empty() ) checked = "" ; // No checkbox check if label/alias exists
-				if ( i->name.find_first_of('(') != string::npos ) checked = "" ; // Names with "(" are unchecked by default
+				if ( page.name.find_first_of('(') != string::npos ) checked = "" ; // Names with "(" are unchecked by default
 				sprintf ( tmp , "create_item_%d_%ld" , cnt , now_ish.tv_usec ) ; // Using microtime to get unique checkbox 
 				q = tmp ;
 			} else {
-				q = i->name.substr(1) ;
+				q = page.name.substr(1) ;
 			}
 			ret += "<td><input type='checkbox' class='qcb' q='"+q+"' id='autolist_checkbox_"+q+"' "+checked+"></td>" ;
-		}
-		
-		sprintf ( tmp , "<td class='num'>%d</td>" , cnt ) ;
-		ret += tmp ;
-//		ret += "<td style='width:" + string(is_wikidata?"25":"100") + "%'>" + getLink ( *i ) ;
-		ret += "<td style='width:100%'>" + getLink ( *i ) ;
-		if ( is_wikidata ) {
-			string desc = i->meta.getMisc("description","") ;
-			if ( !desc.empty() ) ret += "<div class='smaller'>" + desc + "</div>" ;
-		}
-		ret += "</td>" ;
-//		if ( is_wikidata ) ret += "<td>" + i->meta.getMisc("description","") + "</td>" ;
-
-		if ( platform->doOutputRedlinks() ) {
-			ret += "<td>"+nsname+"</td>" ; // Namespace name
-			ret += "<td class='num'>" + string(i->meta.getMisc("count","?")) + "</td>" ; // Count
-		} else {
-			sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.id ) ; // ID
+		} else if ( col == "number" ) {
+			sprintf ( tmp , "<td class='num'>%d</td>" , cnt ) ;
 			ret += tmp ;
-			ret += "<td>"+nsname+"</td>" ; // Namespace name
-			sprintf ( tmp , "<td class='num'>%d</td>" , i->meta.size ) ; // Size
-			ret += tmp ;
-			ret += "<td class='num'>" + string(i->meta.timestamp) + "</td>" ; // TS
-		}
-		if ( show_wikidata_item ) {
+		} else if ( col == "image" ) {
 			ret += "<td>" ;
-			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) {
-				sprintf ( tmp , "Q%d" , i->meta.q ) ;
+			string file = page.meta.ns == 6 ? page.getNameWithoutNamespace() : page.meta.getMisc("image","") ;
+			if ( !file.empty() ) {
+				string url = "https://" + getWikiServer ( wiki ) + "/wiki/File:" + urlencode(file) ;
+				string src = "https://" + getWikiServer ( wiki ) + "/wiki/Special:Redirect/file/" + urlencode(file) + "?width="+thumnail_size ;
+				ret += "<div class='card' style='max-height:"+thumnail_size+";text-align:center'>" ; // style='width:60px;height:60px'
+				ret += "<a target='_blank' href='" + url + "'><img class='card-img' style='max-height:"+thumnail_size+"' border=0 src='" + src + "'/></a>" ;
+				ret += "</div>" ;
+			}
+			ret += "</td>" ;
+		} else if ( col == "title" ) {
+			ret += "<td class='link_container'>" + getLink ( page ) ;
+			if ( is_wikidata ) {
+				string desc = page.meta.getMisc("description","") ;
+				if ( !desc.empty() ) ret += "<div class='smaller'>" + desc + "</div>" ;
+			}
+			ret += "</td>" ;
+		} else if ( col == "pageid" ) {
+			sprintf ( tmp , "<td class='num'>%d</td>" , page.meta.id ) ;
+			ret += tmp ;
+		}else if ( col == "namespace" ) {
+			string nsname = pagelist.getNamespaceString(page.meta.ns) ;
+			if ( nsname.empty() ) nsname = "<span class='l_namespace_0'>Article</span>" ;
+			ret += "<td>" + nsname + "</td>" ;
+		} else if ( col == "linknumber" ) {
+			ret += "<td class='num'>" + string(page.meta.getMisc("count","?")) + "</td>" ;
+		} else if ( col == "length" ) {
+			sprintf ( tmp , "<td class='num'>%d</td>" , page.meta.size ) ;
+			ret += tmp ;
+		} else if ( col == "touched" ) {
+			ret += "<td class='num'>" + string(page.meta.timestamp) + "</td>" ;
+		} else if ( col == "wikidata" ) {
+			ret += "<td>" ;
+			if ( page.meta.q != UNKNOWN_WIKIDATA_ITEM ) {
+				sprintf ( tmp , "Q%d" , page.meta.q ) ;
 				ret += "<a target='_blank' href='https://www.wikidata.org/wiki/" ;
 				ret += tmp ;
 				ret += "'>" ;
@@ -263,21 +309,21 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 				ret += "</a>" ;
 			}
 			ret += "</td>" ;
-		}
-		
-		// File metadata
-		if ( file_data ) {
-			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
-				ret += "<td>" ;
-				string t = i->meta.getMisc(*k,"") ;
-				if ( !t.empty() && *k == "img_user_text" ) {
-					ret += "<a target='_blank' href='https://commons.wikimedia.org/wiki/User:"+urlencode(space2_(t))+"'>" + t + "</a>" ;
-				} else ret += t ;
-				ret += "</td>" ;
+		} else if ( col == "coordinates" ) {
+			ret += "<td>" ;
+			string lat = page.meta.getMisc("latitude","") ;
+			string lon = page.meta.getMisc("longitude","") ;
+			if ( !lat.empty() && !lon.empty() ) {
+				string lang = platform->getParam("interface_language","en") ;
+				string url = "https://tools.wmflabs.org/geohack/geohack.php?language="+lang+"&params=" ;
+				url += lat[0]=='-'?lat.substr(1)+"_S_":lat+"_N_" ;
+				url += lon[0]=='-'?lon.substr(1)+"_W_":lon+"_E_" ;
+				url += "globe:earth" ;
+				ret += "<a class='smaller' target='_blank' href='" + url + "'>" + lat + "/" + lon + "</a>" ;
 			}
-		}
-		if ( file_usage ) {
-			string gil = i->meta.getMisc("gil","") ;
+			ret += "</td>" ;
+		} else if ( col == "fileusage" ) {
+			string gil = page.meta.getMisc("gil","") ;
 			vector <string> pages ;
 			split ( gil , pages , '|' ) ;
 			ret += "<td>" ;
@@ -294,18 +340,43 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 				ret += "<div class='fileusage'>" + parts[0] + ":<a href='https://"+server+"/wiki/"+urlencode(title)+"' target='_blank'>" + _2space(title) + "</a></div>" ;
 			}
 			ret += "</td>" ;
-			
-//			ret += "<td>" + gil + "</td>" ;
+		} else { // File data etc.
+			ret += "<td>" ;
+			string t = page.meta.getMisc(col,"") ;
+			if ( !t.empty() && col == "img_user_text" ) {
+				ret += "<a target='_blank' href='https://commons.wikimedia.org/wiki/User:"+urlencode(space2_(t))+"'>" + t + "</a>" ;
+			} else ret += t ;
+			ret += "</td>" ;
 		}
-		
-		ret += "</tr>" ;
 	}
-	ret += "</tbody>" ;
-	ret += "</table></div>" ;
-	
-	sprintf ( tmp , "<div style='font-size:8pt' id='query_length' sec='%2.2f'></div>" , platform->getQueryTime() ) ;
-	ret += tmp ;
-	
+
+	ret += "</tr>" ;
+	return ret ;
+}
+
+string TRenderer::getTableHeaderHTML() {
+	string ret = "<table class='table table-sm table-striped' id='main_table'>" ;
+	ret += "<thead><tr>" ;
+	for ( auto col:columns ) {
+		if ( col == "checkbox" ) ret += "<th></th>" ;
+		else if ( col == "number" ) ret += "<th class='num'>#</th>" ;
+		else if ( col == "image" ) ret += "<th class='l_h_image'></th>" ;
+		else if ( col == "title" ) ret += "<th class='text-nowrap l_h_title'></th>" ;
+		else if ( col == "pageid" ) ret += "<th class='text-nowrap l_h_id'></th>" ;
+		else if ( col == "namespace" ) ret += "<th class='text-nowrap l_h_namespace'></th>" ;
+		else if ( col == "linknumber" ) ret += "<th class='l_link_number'></th>" ;
+		else if ( col == "length" ) ret += "<th class='text-nowrap l_h_len'></th>" ;
+		else if ( col == "touched" ) ret += "<th class='text-nowrap l_h_touched'></th>" ;
+		else if ( col == "wikidata" ) ret += "<th class='l_h_wikidata'></th>" ;
+		else if ( col == "coordinates" ) ret += "<th class='l_h_coordinates'></th>" ;
+		else if ( col == "fileusage" ) ret += "<th class='l_file_usage_data'></th>" ;
+		else { // File data etc.
+			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
+				if ( *k == col ) ret += "<th class='l_h_"+col+"'></th>" ;
+			}
+		}
+	}
+	ret += "</tr></thead>" ;
 	return ret ;
 }
 
@@ -441,6 +512,12 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 
 string TRenderer::renderPageList ( TPageList &pagelist ) {
 	wiki = pagelist.wiki ;
+	
+	only_files = true ;
+	for ( auto page:pagelist.pages ) {
+		if ( page.meta.ns == 6 ) continue ;
+		only_files = false ;
+	}
 	
 	string format = platform->getParam ( "format" , "html" , true ) ;
 	string ret ;

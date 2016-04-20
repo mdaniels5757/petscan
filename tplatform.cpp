@@ -304,6 +304,7 @@ string TPlatform::process () {
 	filterWikidata ( pagelist ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
+	processPages ( pagelist ) ;
 
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
@@ -322,9 +323,8 @@ string TPlatform::process () {
 
 	string format = getParam ( "format" , "html" , true ) ;
 	params["format"] = format ;
-	TRenderer renderer ( this ) ;
-	renderer.only_files = db_params.page_namespace_ids.size() == 1 && db_params.page_namespace_ids[0] == 6 ;
 
+	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
 }
 
@@ -500,6 +500,78 @@ void TPlatform::processCreator ( TPageList &pagelist ) {
 	while ((row = mysql_fetch_row(result))) existing_labels[row[0]] = true ;
 	mysql_free_result(result);
 }
+
+
+void TPlatform::processPages ( TPageList &pl ) {
+	bool add_coordinates = !getParam("add_coordinates","").empty() ;
+	bool add_image = !getParam("add_image","").empty() ;
+	if ( !add_coordinates && !add_image ) return ; // Nothing to do
+	
+	uint32_t cnt = 0 ;
+	TWikidataDB db ( pl.wiki , this ) ;
+	map <uint32_t,vector <TPage *> > ns_pages ;
+	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
+		ns_pages[i->meta.ns].push_back ( &(*i) )  ;
+		cnt++ ;
+		if ( cnt < DB_PAGE_BATCH_SIZE ) continue ;
+		annotatePage ( db , ns_pages , add_image , add_coordinates ) ;
+		cnt = 0 ;
+		ns_pages.clear() ;
+	}
+	annotatePage ( db , ns_pages , add_image , add_coordinates ) ;
+	
+}
+
+void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates ) {
+	for ( auto ns_group:ns_pages ) {
+		vector <string> titles ;
+		map <string,TPage *> title2page ;
+		titles.reserve ( ns_group.second.size() ) ;
+		for ( auto page:ns_group.second ) {
+			titles.push_back ( page->name ) ;
+			title2page[page->name] = page ;
+		}
+		string sql = "SELECT page_title" ;
+		if ( add_image ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='page_image' LIMIT 1) AS image" ;
+		if ( add_coordinates ) sql += ",(SELECT concat(gt_lat,',',gt_lon) FROM geo_tags WHERE gt_primary=1 AND gt_globe='earth' AND gt_page_id=page_id LIMIT 1) AS coord" ;
+		sql += " FROM page" ;
+		sql += " WHERE page_namespace=" + ui2s(ns_group.first) ;
+		sql += " AND page_title IN (" + TSourceDatabase::listEscapedStrings ( db , titles , false ) + ")" ;
+
+		MYSQL_RES *result = db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			string title = row[0] ;
+			if ( title2page.find(title) == title2page.end() ) continue ; // Paranoia
+			string image , coordinates ;
+			uint32_t pos = 0 ;
+
+			if ( add_image ) {
+				char *s = row[++pos] ;
+				if ( s ) image = trim(s) ;
+			}
+			if ( add_coordinates ) {
+				char *s = row[++pos] ;
+				if ( s ) coordinates = trim(s) ;
+			}
+
+			if ( !image.empty() ) title2page[title]->meta.misc["image"] = image ;
+			if ( !coordinates.empty() ) {
+				vector <string> v ;
+				split ( coordinates , v , ',' ) ;
+				if ( v.size() == 2 ) {
+					title2page[title]->meta.misc["latitude"] = v[0] ;
+					title2page[title]->meta.misc["longitude"] = v[1] ;
+				}
+			}
+
+		}
+		mysql_free_result(result);
+
+	}
+}
+
+
 
 void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_data = !getParam("ext_image_data","").empty() ;

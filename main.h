@@ -318,6 +318,8 @@ protected:
 	void splitParamIntoVector ( string input , vector <string> &output ) ;
 	void processFiles ( TPageList &pl ) ;
 	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage , bool file_usage_data_ns0 ) ;
+	void processPages ( TPageList &pl ) ;
+	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates ) ;
 	void processWikidata ( TPageList &pl ) ;
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	void processCreator ( TPageList &pagelist ) ;
@@ -346,9 +348,16 @@ private:
 	string renderPageListTSV ( TPageList &pagelist ) ;
 	string renderPageListPagePile ( TPageList &pagelist ) ;
 	string getLink ( TPage &page ) ;
+	void initializeColumns() ;
+	string getTableHeaderHTML() ;
+	string getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &pagelist ) ;
 
+	vector <string> columns ;
 	TPlatform *platform = NULL ;
 	string wiki ;
+	bool use_autolist , autolist_creator_mode , is_wikidata ;
+	string thumnail_size = "120px" ;
+	struct timeval now_ish ;
 } ;
 
 #endif
