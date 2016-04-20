@@ -391,6 +391,9 @@ function initializeInterface () {
 	if ( cnt == 0 ) p['ns[0]'] = 1 ;
 	
 	// Legacy parameters
+	if ( typeof p.category != 'undefined' ) p.categories = p.category ;
+	if ( typeof p.wdqs != 'undefined' ) p.sparql = p.wdqs ;
+	if ( typeof p.statementlist != 'undefined' ) p.al_commands = p.statementlist ;
 	if ( typeof p.comb_subset != 'undefined' ) p.combination = 'subset' ;
 	if ( typeof p.comb_union != 'undefined' ) p.combination = 'union' ;
 	if ( typeof p.get_q != 'undefined' ) p.wikidata_item = 'any' ;

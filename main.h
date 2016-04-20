@@ -328,6 +328,7 @@ protected:
 	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
 	void sortResults ( TPageList &pagelist ) ;
 	void processRedlinks ( TPageList &pagelist ) ;
+	string legacyCombinationParameters ( map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds
 	string wiki ;

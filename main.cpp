@@ -194,7 +194,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		free ( buffer ) ;
 	
 	
-		if ( platform.params.find("doit") != platform.params.end() ) {
+		if ( platform.params.find("doit") != platform.params.end() || platform.params.find("run") != platform.params.end() ) {
 			string results = platform.process() ;
 
 			type = platform.content_type ;

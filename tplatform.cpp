@@ -224,15 +224,15 @@ void TPlatform::combine ( TPageList &pagelist , map <string,TSource *> &sources 
 	getCommonWikiAuto ( sources ) ;	
 
 	// Get or create combination commands
-	string source_combination ;
-	for ( auto source:sources ) {
-		if ( !source_combination.empty() ) source_combination += " AND " ;
-		source_combination += source.first ;
+	string source_combination = legacyCombinationParameters ( sources ) ;
+	if ( source_combination.empty() ) {
+		for ( auto source:sources ) {
+			if ( !source_combination.empty() ) source_combination += " AND " ;
+			source_combination += source.first ;
+		}
+		source_combination = getParam ( "source_combination" , source_combination , true ) ;
 	}
-//cout << "Default as '" << source_combination << "'\n" ;
-	source_combination = getParam ( "source_combination" , source_combination , true ) ;
-//cout << "Combining as '" << source_combination << "'\n" ;
-
+	
 	// Lexing
 	std::transform(source_combination.begin(), source_combination.end(), source_combination.begin(), ::tolower);
 	std::regex bopen("\\s*([\\(\\)])\\s*") ;
@@ -271,9 +271,36 @@ void TPlatform::sortResults ( TPageList &pagelist ) {
 	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
 }
 
+string TPlatform::legacyCombinationParameters ( map <string,TSource *> &sources ) {
+	string ret = getParam("source_combination","") ;
+	if ( !ret.empty() ) return ret ;
+	if ( params.find("mode_manual") == params.end() ) return ret ; // No autolist legacy parameters
+	
+	// Try to use old autolist parameters
+	map <string,vector<string> > mode_sources ;
+	if ( sources.find("manual") != sources.end() ) mode_sources[getParam("mode_manual","or",true)].push_back ( "manual" ) ;
+	if ( sources.find("categories") != sources.end() ) mode_sources[getParam("mode_cat","or",true)].push_back ( "categories" ) ;
+	// WDQ not supported
+	if ( sources.find("sparql") != sources.end() ) mode_sources[getParam("mode_wdqs","or",true)].push_back ( "sparql" ) ;
+	// Find not supported
+	if ( sources.find("pagepile") != sources.end() ) mode_sources[getParam("c","or",true)].push_back ( "pagepile" ) ;
+	if ( mode_sources.empty() ) return ret ; // Nope
+	
+	for ( auto source:mode_sources["or"] ) ret += ret.empty() ? source : " OR " + source ;
+	if ( !ret.empty() ) ret = "(" + ret + ")" ;
+	for ( auto source:mode_sources["and"] ) ret += ret.empty() ? source : " AND " + source ;
+	if ( !ret.empty() ) ret = "(" + ret + ")" ;
+	for ( auto source:mode_sources["not"] ) ret += ret.empty() ? source : " NOT " + source ;
+	return ret ;
+}
+
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
+	
+	// Autolist legacy parameters
+	if ( getParam("categories","").empty() && !getParam("category","").empty() ) params["categories"] = getParam("category","") ;
+	if ( getParam("sparql","").empty() && !getParam("wdqs","").empty() ) params["sparql"] = getParam("wdqs","") ;
 
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
@@ -296,7 +323,7 @@ string TPlatform::process () {
 	if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ;
 	if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ;
 	if ( wikidata.getData ( getParam("wikidata_source_sites","") ) ) sources["wikidata"] = &wikidata ;
-	
+
 	// TODO join threads here
 
 	combine ( pagelist , sources ) ;
