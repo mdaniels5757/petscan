@@ -183,8 +183,9 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			}
 		}
 
+		std::thread *thread_psid = NULL ;
 		if ( !based_on_psid || has_psid_additional_parameters ) {
-			platform.psid = logQuery ( query ) ;
+			thread_psid = new std::thread ( [&] { platform.psid = logQuery ( query ) ; } ) ;
 		}
 		
 		type = "text/html" ;
@@ -212,6 +213,11 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 				key = "<!--output-->" ;
 				pos = out.find(key) ;
 				out = out.substr(0,pos) + results + out.substr(pos+key.length()) ;
+
+				if ( thread_psid ) {
+					thread_psid->join() ;
+					delete thread_psid ;
+				}
 
 				if ( platform.psid ) {
 					char tmp[200] ;
