@@ -175,6 +175,35 @@ void stringReplace(std::string& str, string oldStr, string newStr){
 
 map <string,string> url_json_cache ;
 
+string loadTextfromURL ( string url ) {
+	string ret ;
+	CURL *curl;
+	curl = curl_easy_init();
+	if ( !curl ) return ret ;
+
+	struct CURLMemoryStruct chunk;
+	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
+	chunk.size = 0;    /* no data at this point */ 
+
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "petscan-agent/1.0"); // fake agent
+	
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) return ret ;
+	if ( chunk.size == 0 || !chunk.memory ) return ret ;
+	
+	char *text = chunk.memory ;
+	curl_easy_cleanup(curl);
+	
+	ret = string ( text ) ;
+	free ( text ) ;
+	return ret ;
+}
+
+
 bool loadJSONfromURL ( string url , json &j , bool use_cache ) {
 	if ( use_cache && url_json_cache.find(url) != url_json_cache.end() ) {
 		string text = url_json_cache[url] ;

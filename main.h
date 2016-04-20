@@ -48,6 +48,7 @@ void split ( const string &input , vector <string> &v , char delim , uint32_t ma
 const std::string urlencode( const std::string& s ) ;
 const std::string urldecode ( const std::string& str ) ;
 string getWikiServer ( string wiki ) ;
+string loadTextfromURL ( string url ) ;
 bool loadJSONfromURL ( string url , json &j , bool use_cache = false ) ;
 bool loadJSONfromPOST ( string url , const string &post , json &j ) ;
 void stringReplace(std::string& str, string oldStr, string newStr) ;
@@ -328,6 +329,7 @@ protected:
 	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
 	void sortResults ( TPageList &pagelist ) ;
 	void processRedlinks ( TPageList &pagelist ) ;
+	void legacyAutoListParameters () ;
 	string legacyCombinationParameters ( map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds

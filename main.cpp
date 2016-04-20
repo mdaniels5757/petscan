@@ -206,7 +206,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 				key = "<!--querystring-->" ;
 				pos = out.find(key) ;
-				out = out.substr(0,pos) + urlencode(query) + out.substr(pos+key.length()) ;
+				out = out.substr(0,pos) + urlencode(platform.query) + out.substr(pos+key.length()) ;
 
 			
 				key = "<!--output-->" ;

@@ -294,13 +294,34 @@ string TPlatform::legacyCombinationParameters ( map <string,TSource *> &sources 
 	return ret ;
 }
 
+void TPlatform::legacyAutoListParameters () {
+	if ( getParam("categories","").empty() && !getParam("category","").empty() ) {
+		params["categories"] = getParam("category","") ;
+		query += "&categories=" + urlencode ( getParam("category","") ) ;
+	}
+	if ( getParam("sparql","").empty() && !getParam("wdqs","").empty() ) {
+		params["sparql"] = getParam("wdqs","") ;
+		query += "&sparql=" + urlencode ( getParam("wdqs","") ) ;
+	}
+	if ( getParam("sparql","").empty() && !getParam("wdq","").empty() ) {
+		string wdq = getParam("wdq","") ;
+		string url = "https://tools.wmflabs.org/wdq2sparql/w2s.php?wdq=" + urlencode(wdq) ;
+		string text = loadTextfromURL ( url ) ;
+		if ( !text.empty() && text.substr(0,9) != "<!DOCTYPE" ) {
+			// TODO trim
+			params["sparql"] = text ;
+			query += "&sparql=" + urlencode ( text ) ;
+		} else {
+			errors.push_back ( "Could not automatically convert from WDQ to SPARQL. Your results will be different than in AutoList 2." ) ;
+		}
+	}
+}
+
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 	
-	// Autolist legacy parameters
-	if ( getParam("categories","").empty() && !getParam("category","").empty() ) params["categories"] = getParam("category","") ;
-	if ( getParam("sparql","").empty() && !getParam("wdqs","").empty() ) params["sparql"] = getParam("wdqs","") ;
+	legacyAutoListParameters() ;
 
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
