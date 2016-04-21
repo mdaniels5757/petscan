@@ -349,7 +349,7 @@ protected:
 	string legacyCombinationParameters ( map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds
-	string wiki ;
+	string wiki , common_wiki ;
 	map <string,bool> existing_labels ;
 	bool output_redlinks = false ;
 } ;

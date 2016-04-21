@@ -200,7 +200,6 @@ void TPlatform::getCommonWikiAuto ( map <string,TSource *> &sources ) {
 	
 	string param = getParam("common_wiki","auto") ;
 
-	string common_wiki ;
 	if ( param.empty() || param == "auto" || wikis.find(param)==wikis.end() || wikis[param].empty() ) {
 		map <string,bool> distinct_wikis ;
 		for ( auto source:sources ) distinct_wikis[source.second->wiki] = true ;
@@ -369,6 +368,7 @@ string TPlatform::process () {
 
 	// Filter and post-process
 	filterWikidata ( pagelist ) ;
+	if ( !common_wiki.empty() && pagelist.wiki != common_wiki ) pagelist.convertToWiki ( common_wiki ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
 	processPages ( pagelist ) ;
@@ -381,7 +381,9 @@ string TPlatform::process () {
 	pagelist.loadMissingMetadata ( wikidata_label_language ) ;
 	
 	processCreator ( pagelist ) ;
+
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
+	
 	sortResults ( pagelist ) ;
 	processRedlinks ( pagelist ) ; // Supersedes sort
 	params["format"] = getParam ( "format" , "html" , true ) ;
