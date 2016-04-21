@@ -212,8 +212,8 @@ protected:
 
 class TSource : public TPageList {
 public:
-	TSource ( TPlatform *p = NULL ) { platform = p ; } ;
-	string getSourceName() ;
+	TSource ( TPlatform *p = NULL ) { platform = p ; }
+	string getSourceName() { return source_name ; }
 	virtual bool error ( string s ) ;
 	virtual bool run () {} ;
 
@@ -294,11 +294,9 @@ public:
 
 class TSourceDatabase : public TSource {
 public:
-	TSourceDatabase ( TPlatform *p = NULL , TSourceDatabaseParams *_db_params = NULL ) { platform = p ; db_params = _db_params ; source_name = "categories" ; } ;
-	
-	virtual bool run () ;
+	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; source_name = "categories" ; } ;
 	static string listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces = true ) ;
-	TSourceDatabaseParams *db_params = NULL ;
+	virtual bool run () ;
 
 protected:
 	bool getPages () ;
@@ -309,6 +307,8 @@ protected:
 	string linksFromSubquery ( TWikidataDB &db , vector <string> input ) ;
 	string linksToSubquery ( TWikidataDB &db , vector <string> input ) ;
 	void groupLinkListByNamespace ( vector <string> &input , map <int32_t,vector <string> > &nslist ) ;
+
+	TSourceDatabaseParams params ;
 } ;
 
 
@@ -323,6 +323,7 @@ public:
 	float getQueryTime() { return querytime ; }
 	string getExistingLabel ( string name ) ;
 	bool doOutputRedlinks() { return output_redlinks ; }
+	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	
 	map <string,string> config , params ;
 	string content_type , query ;
@@ -338,7 +339,6 @@ protected:
 	void processPages ( TPageList &pl ) ;
 	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates ) ;
 	void processWikidata ( TPageList &pl ) ;
-	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;

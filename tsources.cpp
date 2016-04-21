@@ -248,11 +248,11 @@ string TSourceDatabase::linksToSubquery ( TWikidataDB &db , vector <string> inpu
 }
 
 bool TSourceDatabase::run () {
+	platform->setDatabaseParameters ( params ) ;
 	return getPages() ;
 }
 
 bool TSourceDatabase::getPages () {
-	TSourceDatabaseParams params = *db_params ;
 	wiki = params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( wiki , platform ) ;

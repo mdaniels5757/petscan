@@ -318,54 +318,42 @@ void TPlatform::legacyAutoListParameters () {
 	}
 }
 
+std::mutex source_mutex ;
+void runSource ( TSource *source , map <string,TSource *> *sources ) {
+	if ( source->run() ) {
+		std::lock_guard<std::mutex> lock(source_mutex);
+		(*sources)[source->getSourceName()] = source ;
+	} else {
+	}
+}
+
 string TPlatform::process () {
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 	
 	legacyAutoListParameters() ;
 
-	TSourceDatabaseParams db_params ;
-	setDatabaseParameters ( db_params ) ;
-
-	// Potential data sources to combine
+	// Potential sources
 	vector <TSource *> candidate_sources ;
-	candidate_sources.push_back ( new TSourceDatabase ( this , &db_params ) ) ;
+	candidate_sources.push_back ( new TSourceDatabase ( this ) ) ;
 	candidate_sources.push_back ( new TSourceSPARQL ( this ) ) ;
 	candidate_sources.push_back ( new TSourcePagePile ( this ) ) ;
 	candidate_sources.push_back ( new TSourceManual ( this ) ) ;
 	candidate_sources.push_back ( new TSourceWikidata ( this ) ) ;
 	
+	// Check and run sources
 	map <string,TSource *> sources ;
-	std::mutex source_mutex ;
 	vector <std::thread*> threads ;
 	for ( auto source:candidate_sources ) {
-		threads.push_back ( new std::thread ( [&] {
-			if ( source->run() ) {
-				std::lock_guard<std::mutex> lock(source_mutex);
-				sources[source->getSourceName()] = source ;
-			}
-		}
+		threads.push_back ( new std::thread ( &runSource , source , &sources ) ) ;
 	}
-
-/*	
-	std::thread t1 ( [&] { if ( db.run() ) sources["categories"] = &db ; } ) ;
-	std::thread t2 ( [&] { if ( sparql.run() ) sources["sparql"] = &sparql ; } ) ;
-	std::thread t3 ( [&] { if ( pagepile.run() ) sources["pagepile"] = &pagepile ; } ) ;
-	std::thread t4 ( [&] { if ( manual.run() ) sources["manual"] = &manual ; } ) ;
-	std::thread t5 ( [&] { if ( wikidata.run() ) sources["wikidata"] = &wikidata ; } ) ;
-
-	t1.join() ;
-	t2.join() ;
-	t3.join() ;
-	t4.join() ;
-	t5.join() ;
-*/
-	
 	for ( auto t:threads ) t->join() ;
 
+	// Combine sources
 	TPageList pagelist ( getWiki() ) ;
 	combine ( pagelist , sources ) ;
 
+	// Filter and post-process
 	filterWikidata ( pagelist ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
@@ -379,15 +367,10 @@ string TPlatform::process () {
 	pagelist.loadMissingMetadata ( wikidata_label_language ) ;
 	
 	processCreator ( pagelist ) ;
-
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
-	
 	sortResults ( pagelist ) ;
-
 	processRedlinks ( pagelist ) ; // Supersedes sort
-
-	string format = getParam ( "format" , "html" , true ) ;
-	params["format"] = format ;
+	params["format"] = getParam ( "format" , "html" , true ) ;
 
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
