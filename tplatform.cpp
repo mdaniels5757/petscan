@@ -327,18 +327,27 @@ string TPlatform::process () {
 	TSourceDatabaseParams db_params ;
 	setDatabaseParameters ( db_params ) ;
 
+	// Potential data sources to combine
+	vector <TSource *> candidate_sources ;
+	candidate_sources.push_back ( new TSourceDatabase ( this , &db_params ) ) ;
+	candidate_sources.push_back ( new TSourceSPARQL ( this ) ) ;
+	candidate_sources.push_back ( new TSourcePagePile ( this ) ) ;
+	candidate_sources.push_back ( new TSourceManual ( this ) ) ;
+	candidate_sources.push_back ( new TSourceWikidata ( this ) ) ;
+	
 	map <string,TSource *> sources ;
-	
-	TPageList pagelist ( getWiki() ) ;
-
-	TSourceDatabase db ( this , &db_params ) ;
-	TSourceSPARQL sparql ( this ) ;
-	TSourcePagePile pagepile ( this ) ;
-	TSourceManual manual ( this ) ;
-	TSourceWikidata wikidata ( this ) ;
-	
+	std::mutex source_mutex ;
 	vector <std::thread*> threads ;
-	
+	for ( auto source:candidate_sources ) {
+		threads.push_back ( new std::thread ( [&] {
+			if ( source->run() ) {
+				std::lock_guard<std::mutex> lock(source_mutex);
+				sources[source->getSourceName()] = source ;
+			}
+		}
+	}
+
+/*	
 	std::thread t1 ( [&] { if ( db.run() ) sources["categories"] = &db ; } ) ;
 	std::thread t2 ( [&] { if ( sparql.run() ) sources["sparql"] = &sparql ; } ) ;
 	std::thread t3 ( [&] { if ( pagepile.run() ) sources["pagepile"] = &pagepile ; } ) ;
@@ -350,9 +359,11 @@ string TPlatform::process () {
 	t3.join() ;
 	t4.join() ;
 	t5.join() ;
+*/
 	
 	for ( auto t:threads ) t->join() ;
 
+	TPageList pagelist ( getWiki() ) ;
 	combine ( pagelist , sources ) ;
 
 	filterWikidata ( pagelist ) ;

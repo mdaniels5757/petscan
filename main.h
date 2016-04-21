@@ -213,9 +213,11 @@ protected:
 class TSource : public TPageList {
 public:
 	TSource ( TPlatform *p = NULL ) { platform = p ; } ;
+	string getSourceName() ;
 	virtual bool error ( string s ) ;
 	virtual bool run () {} ;
 
+protected:
 	TPlatform *platform ;
 	string source_name ;
 } ;
