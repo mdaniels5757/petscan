@@ -331,23 +331,27 @@ string TPlatform::process () {
 	
 	TPageList pagelist ( getWiki() ) ;
 
-	TSourceDatabase db ( this ) ;
+	TSourceDatabase db ( this , &db_params ) ;
 	TSourceSPARQL sparql ( this ) ;
 	TSourcePagePile pagepile ( this ) ;
 	TSourceManual manual ( this ) ;
 	TSourceWikidata wikidata ( this ) ;
 	
-	std::thread t1 ( [&] { if ( db.getPages(db_params) ) sources["categories"] = &db ; } ) ;
-	std::thread t2 ( [&] { if ( !getParam("sparql","" ).empty() && sparql.runQuery ( getParam("sparql","") ) ) sources["sparql"] = &sparql ; } ) ;
-	std::thread t3 ( [&] { if ( !getParam("pagepile","").empty() && pagepile.getPile ( atoi(getParam("pagepile","" ).c_str()) ) ) sources["pagepile"] = &pagepile ; } ) ;
-	std::thread t4 ( [&] { if ( !getParam("manual_list","").empty() && manual.parseList ( getParam("manual_list","") , getParam("manual_list_wiki","") ) ) sources["manual"] = &manual ; } ) ;
-	std::thread t5 ( [&] { if ( wikidata.getData ( getParam("wikidata_source_sites","") ) ) sources["wikidata"] = &wikidata ; } ) ;
+	vector <std::thread*> threads ;
+	
+	std::thread t1 ( [&] { if ( db.run() ) sources["categories"] = &db ; } ) ;
+	std::thread t2 ( [&] { if ( sparql.run() ) sources["sparql"] = &sparql ; } ) ;
+	std::thread t3 ( [&] { if ( pagepile.run() ) sources["pagepile"] = &pagepile ; } ) ;
+	std::thread t4 ( [&] { if ( manual.run() ) sources["manual"] = &manual ; } ) ;
+	std::thread t5 ( [&] { if ( wikidata.run() ) sources["wikidata"] = &wikidata ; } ) ;
 
 	t1.join() ;
 	t2.join() ;
 	t3.join() ;
 	t4.join() ;
 	t5.join() ;
+	
+	for ( auto t:threads ) t->join() ;
 
 	combine ( pagelist , sources ) ;
 

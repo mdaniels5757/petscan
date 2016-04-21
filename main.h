@@ -214,36 +214,48 @@ class TSource : public TPageList {
 public:
 	TSource ( TPlatform *p = NULL ) { platform = p ; } ;
 	virtual bool error ( string s ) ;
+	virtual bool run () {} ;
 
 	TPlatform *platform ;
+	string source_name ;
 } ;
 
 
 class TSourceSPARQL : public TSource {
 public:
-	TSourceSPARQL ( TPlatform *p = NULL ) { platform = p ; } ;
-	bool runQuery ( string query ) ;
+	TSourceSPARQL ( TPlatform *p = NULL ) { platform = p ; source_name = "sparql" ; } ;
+	virtual bool run () ;
+
 protected:
+	bool runQuery ( string query ) ;
+
 	string sparql_prefixes = "PREFIX v: <http://www.wikidata.org/prop/statement/>\nPREFIX q: <http://www.wikidata.org/prop/qualifier/>\nPREFIX ps: <http://www.wikidata.org/prop/statement/>\nPREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" ;
-
-
 } ;
 
 class TSourcePagePile : public TSource {
 public:
-	TSourcePagePile ( TPlatform *p = NULL ) { platform = p ; } ;
+	TSourcePagePile ( TPlatform *p = NULL ) { platform = p ; source_name = "pagepile" ; } ;
+	virtual bool run () ;
+
+protected:
 	bool getPile ( uint32_t id ) ;
 } ;
 
 class TSourceManual : public TSource {
 public:
-	TSourceManual ( TPlatform *p = NULL ) { platform = p ; } ;
-	bool parseList ( string text , string new_wiki ) ;
+	TSourceManual ( TPlatform *p = NULL ) { platform = p ; source_name = "manual" ; } ;
+	virtual bool run () ;
+
+protected:
+	bool parseList ( string &text , string &new_wiki ) ;
 } ;
 
 class TSourceWikidata : public TSource {
 public:
-	TSourceWikidata ( TPlatform *p = NULL ) { platform = p ; } ;
+	TSourceWikidata ( TPlatform *p = NULL ) { platform = p ; source_name = "wikidata" ; } ;
+	virtual bool run () ;
+
+protected:
 	bool getData ( string sites ) ;
 } ;
 
@@ -280,12 +292,14 @@ public:
 
 class TSourceDatabase : public TSource {
 public:
-	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; } ;
+	TSourceDatabase ( TPlatform *p = NULL , TSourceDatabaseParams *_db_params = NULL ) { platform = p ; db_params = _db_params ; source_name = "categories" ; } ;
 	
-	bool getPages ( TSourceDatabaseParams &params ) ;
+	virtual bool run () ;
 	static string listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces = true ) ;
+	TSourceDatabaseParams *db_params = NULL ;
 
 protected:
+	bool getPages () ;
 	bool parseCategoryList ( TWikidataDB &db , vector <TSourceDatabaseCatDepth> &input , vector <vector<string> > &output ) ;
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;

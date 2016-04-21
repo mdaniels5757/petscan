@@ -44,6 +44,12 @@ bool TSourceSPARQL::runQuery ( string query ) {
 	return data_loaded ;
 }
 
+bool TSourceSPARQL::run () {
+	string query = platform->getParam("sparql","" ) ;
+	if ( query.empty() ) return false ;
+	return runQuery ( query ) ;
+}
+
 //________________________________________________________________________________________________________________________
 
 
@@ -67,6 +73,11 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	return true ;
 }
 
+bool TSourcePagePile::run () {
+	string pile = platform->getParam("pagepile","") ;
+	if ( pile.empty() ) return false ;
+	return getPile ( atoi ( pile.c_str() ) ) ;
+}
 
 
 //________________________________________________________________________________________________________________________
@@ -105,10 +116,13 @@ bool TSourceWikidata::getData ( string sites ) {
 	return true ;
 }
 
+bool TSourceWikidata::run () {
+	return getData ( platform->getParam("wikidata_source_sites","") ) ;
+}
 
 //________________________________________________________________________________________________________________________
 
-bool TSourceManual::parseList ( string text , string new_wiki ) {
+bool TSourceManual::parseList ( string &text , string &new_wiki ) {
 	wiki = new_wiki ;
 	vector <string> v ;
 	split ( text , v , '\n' ) ;
@@ -121,6 +135,13 @@ bool TSourceManual::parseList ( string text , string new_wiki ) {
 
 	data_loaded = true ;
 	return data_loaded ;
+}
+
+bool TSourceManual::run () {
+	string text = platform->getParam("manual_list","") ;
+	string wiki = platform->getParam("manual_list_wiki","") ;
+	if ( text.empty() || wiki.empty() ) return false ;
+	return parseList ( text , wiki ) ;
 }
 
 //________________________________________________________________________________________________________________________
@@ -226,7 +247,12 @@ string TSourceDatabase::linksToSubquery ( TWikidataDB &db , vector <string> inpu
 	return ret ;
 }
 
-bool TSourceDatabase::getPages ( TSourceDatabaseParams &params ) {
+bool TSourceDatabase::run () {
+	return getPages() ;
+}
+
+bool TSourceDatabase::getPages () {
+	TSourceDatabaseParams params = *db_params ;
 	wiki = params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( wiki , platform ) ;
