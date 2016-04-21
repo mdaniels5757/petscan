@@ -119,7 +119,6 @@ function applyParameters () {
 		$('input[type="text"][name="'+name+'"]').val ( deXSS(value) ) ;
 		$('input[type="number"][name="'+name+'"]').val ( parseInt(value) ) ;
 		$('textarea[name="'+name+'"]').val ( deXSS(value.replace(/\+/g,' ')) ) ;
-		console.log ( name , value ) ;
 		
 		if ( value == '1' || value == 'on' ) $('input[type="checkbox"][name="'+name+'"]').prop('checked', true);
 		
