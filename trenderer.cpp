@@ -31,12 +31,13 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 	
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		ret += "|-\n" ;
+		string pre = i->meta.ns == 0 ? "" : ":" ; // This should really involve the namespace name...
 		if ( is_wikidata ) {
 			string label = i->meta.getMisc("label","") ;
-			if ( label.empty() ) ret += "| [[:" + _2space(i->name) + "|]]" ;
-			else ret += "| [[" + i->name + "|"+label+"]]" ;
+			if ( label.empty() ) ret += "| [[" + pre + _2space(i->name) + "|]]" ;
+			else ret += "| [[" + pre + i->name + "|"+label+"]]" ;
 		} else {
-			ret += "| [[:" + _2space(i->name) + "|]]" ;
+			ret += "| [[" + pre + _2space(i->name) + "|]]" ;
 		}
 		ret += " || " + ui2s(i->meta.id) ;
 		ret += " || " + ui2s(i->meta.ns) ;
