@@ -431,7 +431,8 @@ bool TSourceDatabase::getPages () {
 		}
 	}
 	
-	
+//cout << sql << endl ;
+
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 

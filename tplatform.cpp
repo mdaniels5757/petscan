@@ -299,6 +299,8 @@ void TPlatform::legacyAutoListParameters () {
 	if ( !getParam("max","").empty() ) { // QuickIntersection URL
 		if ( getParam("format","") == "jsonfm" ) { params["json-pretty"] = 1 ; query += "&json-pretty=1" ; }
 		if ( getParam("output_compatability","") != "quick-intersection" ) { params["output_compatability"] = "quick-intersection" ; query += "&output_compatability=quick-intersection" ; }
+		params["ns["+getParam("ns")+"]"] = 1 ;
+		query += "&ns["+getParam("ns")+"]=1" ;
 	}
 	if ( getParam("language","").empty() && !getParam("lang","").empty() ) {
 		params["language"] = getParam("lang","") ;
