@@ -194,7 +194,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		out = string ( buffer ) ;
 		free ( buffer ) ;
 		
-		bool do_run_query = !platform.getParam("doit").empty() || !platform.getParam("run").empty() || !platform.getParam("max").empty() ;
+		bool do_run_query = false ;
+		for ( auto s:{"doit","run","max"} ) {
+			if ( platform.params.find(s) != platform.params.end() ) do_run_query = true ;
+		}
 		if ( do_run_query ) {
 			string results = platform.process() ;
 			type = platform.content_type ;
