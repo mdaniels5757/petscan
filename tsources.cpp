@@ -58,7 +58,8 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
 	json j ;
-	if ( !loadJSONfromURL ( url , j ) ) return error ( "PagePile retrieval error. PagePile "+ui2s(id)+" might not exists." ) ;
+
+	if ( !loadJSONfromURL ( url , j , false ) ) return error ( "PagePile retrieval error. PagePile "+ui2s(id)+" might not exists." ) ;
 
 	clear() ;
 	wiki = j["wiki"] ;

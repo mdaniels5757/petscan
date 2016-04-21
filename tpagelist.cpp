@@ -298,6 +298,26 @@ void TPageList::swap ( TPageList &pl ) {
 	{ bool tmp = data_loaded ; data_loaded = pl.data_loaded ; pl.data_loaded = tmp ; }
 }
 
+
+
+#define LABEL_BATCH_SIZE 10000
+
+void addLabels ( string &sql , map <string,TPage*> &item2page ) {
+	TWikidataDB db ( "wikidatawiki" ) ;
+	MYSQL_RES *result ;
+	result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		string name ( row[0] ) ;
+		if ( item2page.find(name) == item2page.end() ) continue ; // Say what?
+		TPage *p = item2page[name] ;
+		p->meta.misc[row[2]] = row[1] ;
+	}
+	mysql_free_result(result);
+}
+
+
+
 void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto &p: pages ) {
@@ -336,7 +356,6 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 				p->meta.timestamp = row[3] ;
 			}
 			mysql_free_result(result);
-			
 		}
 	}
 
@@ -344,25 +363,28 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	if ( wikidata_language.empty() ) return ;
 	if ( ns_page.find(0) == ns_page.end() ) return ; // Huh?
 	if ( ns_page[0].size() == 0 ) return ;
-	
+
 	// Getting labels and descriptions for items (ns0)
 	map <string,TPage*> item2page ;
-	string sql = "select term_entity_id,term_text,term_type from wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_entity_id IN (0" ;
+	vector <string> sqls ;
+	string base_sql = "select term_entity_id,term_text,term_type from wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_entity_id IN (0" ;
+	sqls.push_back ( base_sql ) ;
+	uint32_t cnt = 0 ;
 	for ( auto i = ns_page[0].begin() ; i != ns_page[0].end() ; i++ ) {
 		item2page[(*i)->name.substr(1)] = *i ;
-		sql += "," + (*i)->name.substr(1) ;
+		sqls[sqls.size()-1] += "," + (*i)->name.substr(1) ;
+		if ( cnt++ < LABEL_BATCH_SIZE ) continue ;
+		sqls[sqls.size()-1] += ")" ;
+		sqls.push_back ( base_sql ) ;
+		cnt = 0 ;
 	}
-	sql += ")" ;
+	sqls[sqls.size()-1] += ")" ;
 
-	MYSQL_RES *result = db.getQueryResults ( sql ) ;
-	MYSQL_ROW row;
-	while ((row = mysql_fetch_row(result))) {
-		string name ( row[0] ) ;
-		if ( item2page.find(name) == item2page.end() ) continue ; // Say what?
-		TPage *p = item2page[name] ;
-		p->meta.misc[row[2]] = row[1] ;
+	vector <std::thread *> threads ;
+	for ( auto &sql:sqls ) {
+		threads.push_back ( new std::thread ( &addLabels , std::ref(sql) , std::ref(item2page) ) ) ;
 	}
-	mysql_free_result(result);
+	for ( auto t:threads ) t->join() ;
 	
 }
 
