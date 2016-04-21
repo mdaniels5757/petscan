@@ -413,7 +413,7 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 		sprintf ( tmp , "%f" , platform->getQueryTime() ) ;
 		ret += json_object_open ;
 		ret += "\"n\":\"result\"" + json_comma ;
-		ret += "\"a\":" + json_object_open + "\"platform->getQueryTime()_sec\":" + string(tmp) ;
+		ret += "\"a\":" + json_object_open + "\"querytime_sec\":" + string(tmp) ;
 		if ( platform->query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
 			json url ( "https://petscan.wmflabs.org/?" + platform->query ) ;
 			ret += json_comma + "\"query\":" + url.dump() ;
@@ -477,7 +477,7 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 		sprintf ( tmp , "%f" , platform->getQueryTime() ) ;
 		ret += "\"start\":\"0\"" + json_comma ;
 		ret += "\"max\":\"" + ui2s(pagelist.size()+1) + "\"" + json_comma ;
-		ret += "\"platform->getQueryTime()\":\"" + string(tmp) + "s\"" + json_comma ;
+		ret += "\"querytime\":\"" + string(tmp) + "s\"" + json_comma ;
 		ret += "\"pagecount\":\"" + ui2s(pagelist.size()) + "\"" + json_comma ;
 		ret += "\"pages\":" ;
 		ret += json_array_open ;
@@ -524,7 +524,7 @@ string TRenderer::renderPageList ( TPageList &pagelist ) {
 	
 	platform->content_type = "text/html; charset=utf-8" ; // Default
 	
-	if ( format == "json" ) return renderPageListJSON ( pagelist ) ;
+	if ( format == "json" || format == "jsonfm" ) return renderPageListJSON ( pagelist ) ;
 	else if ( format == "wiki" ) return renderPageListWiki ( pagelist ) ;
 	else if ( format == "tsv" ) return renderPageListTSV ( pagelist ) ;
 	else if ( format == "pagepile" ) return renderPageListPagePile ( pagelist ) ;

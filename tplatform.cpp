@@ -296,8 +296,20 @@ string TPlatform::legacyCombinationParameters ( map <string,TSource *> &sources 
 }
 
 void TPlatform::legacyAutoListParameters () {
+	if ( !getParam("max","").empty() ) { // QuickIntersection URL
+		if ( getParam("format","") == "jsonfm" ) { params["json-pretty"] = 1 ; query += "&json-pretty=1" ; }
+		if ( getParam("output_compatability","") != "quick-intersection" ) { params["output_compatability"] = "quick-intersection" ; query += "&output_compatability=quick-intersection" ; }
+	}
+	if ( getParam("language","").empty() && !getParam("lang","").empty() ) {
+		params["language"] = getParam("lang","") ;
+		query += "&language=" + urlencode ( getParam("language","") ) ;
+	}
 	if ( getParam("categories","").empty() && !getParam("category","").empty() ) {
 		params["categories"] = getParam("category","") ;
+		query += "&categories=" + urlencode ( getParam("category","") ) ;
+	}
+	if ( getParam("categories","").empty() && !getParam("cats","").empty() ) {
+		params["categories"] = getParam("cats","") ;
 		query += "&categories=" + urlencode ( getParam("category","") ) ;
 	}
 	if ( getParam("sparql","").empty() && !getParam("wdqs","").empty() ) {

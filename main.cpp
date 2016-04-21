@@ -193,11 +193,10 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		char *buffer = loadFileFromDisk ( filename ) ;
 		out = string ( buffer ) ;
 		free ( buffer ) ;
-	
-	
-		if ( platform.params.find("doit") != platform.params.end() || platform.params.find("run") != platform.params.end() ) {
+		
+		bool do_run_query = !platform.getParam("doit").empty() || !platform.getParam("run").empty() || !platform.getParam("max").empty() ;
+		if ( do_run_query ) {
 			string results = platform.process() ;
-
 			type = platform.content_type ;
 
 			// Replace in HTML output
@@ -217,6 +216,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 				if ( thread_psid ) {
 					thread_psid->join() ;
 					delete thread_psid ;
+					thread_psid = NULL ;
 				}
 
 				if ( platform.psid ) {
@@ -233,6 +233,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 			}
 		}
 
+		if ( thread_psid ) thread_psid->join() ;
 	
 	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" || path.substr(path.length()-4,4)==".txt" ) {
 

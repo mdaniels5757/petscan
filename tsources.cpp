@@ -418,7 +418,6 @@ bool TSourceDatabase::getPages () {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 	
-//	sql += " GROUP BY p.page_id" ; // Could return multiple results per page in normal search, thus making this GROUP BY general // NOR SUPERSEDED BY MAP
 
 	vector <string> having ;	
 	if ( params.minlinks > -1 ) having.push_back ( "link_count>=" + ui2s(params.minlinks) ) ;
@@ -433,8 +432,6 @@ bool TSourceDatabase::getPages () {
 	}
 	
 	
-//cout << sql << endl ;
-
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 
@@ -449,9 +446,7 @@ bool TSourceDatabase::getPages () {
 	gettimeofday(&after , NULL);
 	if(DEBUG_OUTPUT) printf ( "Query time %2.2fs\n" , time_diff(before , after)/1000000 ) ;
 	
-//	int num_fields = mysql_num_fields(result);
 	MYSQL_ROW row;
-	uint32_t cnt = 0 ;
 	map <uint32_t,bool> hadthat ;
 	pl1.pages.reserve ( mysql_num_rows(result) ) ;
 	while ((row = mysql_fetch_row(result))) {
@@ -464,7 +459,6 @@ bool TSourceDatabase::getPages () {
 		p.meta.id = atol(row[0]) ;
 		p.meta.size = atol(row[4]) ;
 		p.meta.timestamp = row[3] ;
-//		strcpy ( p.meta.timestamp , row[3] ) ;
 		
 		if ( hadthat.find(p.meta.id) != hadthat.end() ) continue ;
 		hadthat[p.meta.id] = true ;
