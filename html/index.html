@@ -13,6 +13,9 @@
 <link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/tether/1.1.1/css/tether.min.css">
 
 <style>
+textarea, input[type=text], input[type=number], div.input-group-addon {
+	box-shadow:3px 3px 2px #DDD;
+}
 .smaller {
 	font-size:10pt;
 }
@@ -369,16 +372,18 @@ td.link_container {
 
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_wikidata_label_language"></label>
-<div class="col-sm-10">
-<input type='text' name='wikidata_label_language' class='col-sm-4 ph_wikidata_label_language_ph' />
+<div class="col-sm-4">
+<input type='text' name='wikidata_label_language' class='form-control ph_wikidata_label_language_ph' />
 </div>
 </div>
 
 
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_wikidata_prop_item_use"></label>
-<div class="col-sm-10">
-<input type='text' name='wikidata_prop_item_use' class='col-sm-4 ph_wikidata_prop_item_use_ph' style='margin-right:20px;' />
+<div class="col-sm-4">
+<input type='text' name='wikidata_prop_item_use' class='form-control ph_wikidata_prop_item_use_ph' style='margin-right:20px;' />
+</div>
+<div class="col-sm-6">
 <div class="radio-inline"><label><input type="radio" name="wpiu" value="any"><span class="l_wpiu_uses_any"></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="wpiu" value="all"><span class="l_wpiu_uses_all"></span></label></div>
 <div class="radio-inline"><label><input type="radio" name="wpiu" value="none"><span class="l_wpiu_uses_none"></span></label></div>
@@ -467,8 +472,11 @@ td.link_container {
 
 <div class="form-group row">
 <label class="col-sm-2 form-control-label l_regexp_filter"></label>
-<div class="col-sm-10">
-<input type='text' name='regexp_filter' class='col-sm-5 ph_regexp_filter_rules' /> <span style='margin-left:10px' class='l_regexp_filter_note'></span>
+<div class="col-sm-4">
+<input type='text' name='regexp_filter' class='form-control ph_regexp_filter_rules' />
+</div>
+<div class="col-sm-6">
+<span class='l_regexp_filter_note'></span>
 </div>
 </div>
 
@@ -480,8 +488,9 @@ td.link_container {
 <div class="radio-inline"><label><input type='checkbox' name='show_redlinks' /> <span class='l_show_redlinks'></span></label></div>
 <div class="radio-inline"><label><input type='checkbox' name='remove_template_redlinks' /> <span class='l_remove_template_redlinks'></span></label></div>
 <div class="radio-inline"><label><input type='checkbox' name='article_redlinks_only' /> <span class='l_article_redlinks_only'></span></label></div>
-<br/>
-<input type='text' name='min_redlink_count' class='col-sm-1' /> <span style='margin-left:10px' class='l_min_redlink_count'></span>
+</div>
+<div class="col-sm-4">
+<div class="input-group"><div class="input-group-addon l_min_redlink_count"></div><input class="form-control" name="min_redlink_count" value="" type="number"></div>
 </div>
 </div>
 
