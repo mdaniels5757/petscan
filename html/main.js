@@ -97,7 +97,14 @@ function setPermalink ( q ) {
 	h = h.replace ( /\$1/ , url+"&doit=" ) ;
 	h = h.replace ( /\$2/ , url ) ;
 	
-	if ( psid != 0 ) h += ' ' + (_t("psid_note")).replace ( /\$1/ , psid ) ;
+	if ( psid != 0 ) {
+		var psid_note = (_t("psid_note")).split('$1').join(psid) ;// ( /\$1/ , psid ) ;
+		h += ' ' ;
+		h += psid_note ;
+		h += " <span><a target='_blank' href='https://tools.wmflabs.org/fist/wdfist/index.html?psid="+psid+"'>" ;
+		h += _t("psid_image_link") ;
+		h += "</a>.</span>" ;
+	}
 	
 	$('#permalink').html ( h ) ;
 }
