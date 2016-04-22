@@ -238,6 +238,20 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 
 		if ( thread_psid ) thread_psid->join() ;
 	
+	} else if ( path == "/wdq2sparql/" ) { // Proxy for WDQ2SPARQL
+
+		type = "application/json; charset=utf-8" ;
+		string url = "https://tools.wmflabs.org/wdq2sparql/w2s.php?wdq=" + query ; // query should already be url-encoded
+		string sparql = loadTextfromURL ( url ) ;
+		json j ;
+		if ( !sparql.empty() && sparql[0] != '<' ) {
+			j["status"] = "OK" ;
+			j["sparql"] = sparql ;
+		} else {
+			j["status"] = "ERROR" ;
+		}
+		out = j.dump() ;
+
 	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" || path.substr(path.length()-4,4)==".txt" ) {
 
 		string filename = "html" + path ;

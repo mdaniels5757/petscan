@@ -187,7 +187,7 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	if ( pagelist.pages.size() == 0 ) return ret ; // No need for empty table
 	
 	if ( pagelist.size() > MAX_HTML_RESULTS ) {
-		ret += "<div class='alert alert-warning'>Only the first " + ui2s(MAX_HTML_RESULTS) + " results are shown in HTML, so as to not crash your browser; other formats will have complete results.</div>" ;
+		ret += "<div class='alert alert-warning' style='clear:both'>Only the first " + ui2s(MAX_HTML_RESULTS) + " results are shown in HTML, so as to not crash your browser; other formats will have complete results.</div>" ;
 		pagelist.pages.resize ( MAX_HTML_RESULTS ) ;
 	}
 	
