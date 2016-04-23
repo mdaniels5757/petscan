@@ -310,7 +310,7 @@ function AutoList ( callback ) {
 			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm l_al_toggle' style='width:100%'></button><br/>" ;
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
-			h += "<textarea id='al_commands' class='ph_al_commands_ph' rows=3 style='width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
+			h += "<textarea id='al_commands' class='ph_al_commands_ph' rows=3 style='padding:2px;width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
 			h += "<button id='al_do_process' class='btn btn-success btn-sm l_al_process'></button>" ;
 			h += "<button id='al_do_stop' class='btn btn-danger btn-sm l_al_stop' style='display:none'></button>" ;
 			h += "<div id='al_status'></div>" ;

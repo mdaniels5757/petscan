@@ -252,7 +252,7 @@ static void ev_handler(struct mg_connection *c, int ev, void *p) {
 		}
 		out = j.dump() ;
 
-	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" || path.substr(path.length()-4,4)==".txt" ) {
+	} else if ( path == "/" || path.substr(path.length()-3,3)==".js" || path.substr(path.length()-4,4)==".css" || path.substr(path.length()-4,4)==".map" || path.substr(path.length()-4,4)==".txt" || path.substr(path.length()-5,5)==".html" ) {
 
 		string filename = "html" + path ;
 		if ( path == "/" ) filename = "html/index.html" ;

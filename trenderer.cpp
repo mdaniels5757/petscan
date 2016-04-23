@@ -209,6 +209,8 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	sprintf ( tmp , "<div style='font-size:8pt' id='query_length' sec='%2.2f'></div>" , platform->getQueryTime() ) ;
 	ret += tmp ;
 	
+	ret += "<script src='autolist.js'></script>" ;
+	
 	return ret ;
 }
 
@@ -273,8 +275,8 @@ string TRenderer::getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &page
 			if ( !file.empty() ) {
 				string url = "https://" + getWikiServer ( wiki ) + "/wiki/File:" + urlencode(file) ;
 				string src = "https://" + getWikiServer ( wiki ) + "/wiki/Special:Redirect/file/" + urlencode(file) + "?width="+thumnail_size ;
-				ret += "<div class='card' style='max-height:"+thumnail_size+";text-align:center'>" ; // style='width:60px;height:60px'
-				ret += "<a target='_blank' href='" + url + "'><img class='card-img' style='max-height:"+thumnail_size+"' border=0 src='" + src + "'/></a>" ;
+				ret += "<div class='card thumbcard'>" ;
+				ret += "<a target='_blank' href='" + url + "'><img class='card-img thumbcard-img' src='" + src + "'/></a>" ;
 				ret += "</div>" ;
 			}
 			ret += "</td>" ;
