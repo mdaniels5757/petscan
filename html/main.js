@@ -187,19 +187,14 @@ function setInterfaceLanguage ( l ) {
 
 function loadInterface ( init_lang , callback ) {
 
-	var running = 2 ;
-	function isDone () {
-		running-- ;
-		if ( running > 0 ) return ;
-		applyParameters() ;
-		if ( typeof callback != 'undefined' ) callback() ;
+	if ( typeof raw_interface_text_object == 'undefined' ) {
+		setTimeout ( function () { loadInterface ( init_lang , callback ) } , 100 ) ;
+		return ;
 	}
 
-	loadNamespaces ( isDone ) ;
+	loadNamespaces ( function () {
 
-
-	$.getJSON ( 'https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=?' , function ( d ) {
-		var wt = d.parse.wikitext['*'] ;
+		var wt = raw_interface_text_object.parse.wikitext['*'] ;
 		var rows = wt.split("\n") ;
 		var lang = '' ;
 		$.each ( rows , function ( k , v ) {
@@ -207,7 +202,7 @@ function loadInterface ( init_lang , callback ) {
 			if ( m != null ) {
 				lang = m[1].toLowerCase() ;
 				interface_text[lang] = {} ;
-				
+			
 				var h = '<a class="dropdown-item" href="#">' + m[1] + '</a>' ;
 				$('#interface_languages').append ( h ) ;
 				return ;
@@ -217,26 +212,29 @@ function loadInterface ( init_lang , callback ) {
 			if ( m[1] == 'toolname' ) m[2] = 'PetScan' ; // HARDHACK FIXME
 			interface_text[lang][m[1]] = m[2] ;
 		} ) ;
-		
+	
 		$('#interface_languages a.dropdown-item').click ( function (e) {
 			e.preventDefault();
 			var o = $(this) ;
 			var lang = o.text().toLowerCase() ;
 			setInterfaceLanguage ( lang ) ;
 		} ) ;
-		
+	
 		setInterfaceLanguage ( init_lang ) ;
 
-//		loadNamespaces() ;
 		$('input[name="language"]').keyup ( loadNamespaces ) ;
 		$('input[name="project"]').keyup ( loadNamespaces ) ;
-		
-		isDone() ;
+
+
+		applyParameters() ;
+		if ( typeof callback != 'undefined' ) callback() ;
+	
 	} ) ;
 }
 
 function loadNamespaces ( callback ) {
 	if ( namespaces_loading ) return false ;
+	
 	var l = $('input[name="language"]').val() ;
 	if ( l.length < 2 ) return false ;
 	var p = $('input[name="project"]').val() ;
@@ -244,9 +242,7 @@ function loadNamespaces ( callback ) {
 	var lp = l+'.'+p ;
 	if ( lp == last_namespace_project ) return false ;
 	
-	var server = lp+'.org' ;
-	namespaces_loading = true ;
-	$.getJSON ( 'https://'+server+'/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json&callback=?' , function ( d ) {
+	function namespaceDataLoaded ( d ) {
 		namespaces_loading = false ;
 		if ( typeof d == 'undefined' ) return ;
 		if ( typeof d.query == 'undefined' ) return ;
@@ -304,10 +300,23 @@ function loadNamespaces ( callback ) {
 			if ( o.is(':checked') ) namespaces_selected.push ( ns ) ;
 		} ) ;
 		
-	} ) . always ( function () {
+	}
+	
+	var server = lp+'.org' ;
+	if ( typeof global_namespace_cache[server] == 'undefined' ) {
+		namespaces_loading = true ;
+		$.getJSON ( 'https://'+server+'/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json&callback=?' , function ( d ) {
+			global_namespace_cache[server] = d ;
+			namespaceDataLoaded ( d ) ;
+		} ) . always ( function () {
+			namespaces_loading = false ;
+			if ( typeof callback != 'undefined' ) callback() ;
+		} ) ;
+	} else {
+		namespaceDataLoaded ( global_namespace_cache[server] ) ;
 		namespaces_loading = false ;
 		if ( typeof callback != 'undefined' ) callback() ;
-	} ) ;
+	}
 	return false ;
 }
 
@@ -433,7 +442,7 @@ function initializeInterface () {
 	if ( typeof params.interface_language != 'undefined' ) l = params.interface_language ;
 	
 	loadInterface ( l , function () {
-		autolist = new AutoList () ;
+		if ( typeof window.AutoList != 'undefined' ) autolist = new AutoList () ;
 	} ) ;
 	$('input[name="language"]').focus() ;
 /*	$('#doit').click ( function () {

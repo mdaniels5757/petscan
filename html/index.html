@@ -70,6 +70,24 @@ img.thumbcard-img {
 }
 </style>
 
+
+
+<script>
+var raw_interface_text_object ;
+var global_namespace_cache = {} ;
+
+function receiveRawInterfaceText ( j ) {
+	raw_interface_text_object = j ;
+}
+
+function receiveEnglishNamespaceData ( j ) {
+	global_namespace_cache['en.wikipedia.org'] = j ;
+}
+
+</script>
+<script src='https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=receiveRawInterfaceText'></script>
+<script src='https://en.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json&callback=receiveEnglishNamespaceData'></script>
+
 <script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/1.12.1/jquery.min.js'></script>
 <script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/tether/1.1.1/js/tether.min.js'></script>
 <script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/js/bootstrap.min.js'></script>
