@@ -92,57 +92,99 @@ string TRenderer::renderPageListPagePile ( TPageList &pagelist ) {
 }
 
 
-string TRenderer::renderPageListTSV ( TPageList &pagelist ) {
-	platform->content_type = "text/tab-separated-values; charset=utf-8" ;
-
-	bool file_data = !platform->getParam("ext_image_data","").empty() ;
-	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
-
-	string wdi = platform->getParam("wikidata_item","no") ;
-	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
-
-	is_wikidata = pagelist.wiki == "wikidatawiki" ;
+string TRenderer::renderPageListCTSV ( TPageList &pagelist , string mode ) {
+	if ( mode == "csv" ) platform->content_type = "text/csv; charset=utf-8" ;
+	if ( mode == "tsv" ) platform->content_type = "text/tab-separated-values; charset=utf-8" ;
 
 	string ret ;
-	ret += "Title" ;
-	if ( is_wikidata ) ret += "\tLabel" ;
-	ret += "\tPage ID\tNamespace\tSize (bytes)\tLast change" ;
-	if ( show_wikidata_item ) ret += "\tWikidata" ;
-
-	if ( file_data ) {
-		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += "\t" + (*k) ;
-	}
 	
+	initializeColumns() ;
+	
+	bool first = true ;
+	string sep ( mode=="csv"?",":"\t" ) ;
+	for ( auto col:columns ) {
+		if ( col == "checkbox" ) continue ; // Not suitable for TSC/CSV
+		string out = col ;
+		if ( mode == "csv" ) escapeCSV ( out ) ;
+		if ( first ) first = false ;
+		else ret += sep ;
+		ret += out ;
+	}
 	ret += "\n" ;
 	
+	uint32_t cnt = 0 ;
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
-		ret += _2space(i->name) ;
-		if ( is_wikidata )  ret += "\t" + i->meta.getMisc("label","") ;
-		ret += "\t" + ui2s(i->meta.id) ;
-		ret += "\t" + ui2s(i->meta.ns) ;
-		ret += "\t" + ui2s(i->meta.size) ;
-		ret += "\t" + i->meta.timestamp ;
-
-		if ( show_wikidata_item ) {
-			ret += "\t" ;
-			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) ret += "Q" + ui2s(i->meta.q) ;
-		}
-
-		if ( file_data ) {
-			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
-				ret += "\t" + i->meta.getMisc(*k,"") ;
-			}
-		}
-//		if ( file_usage ) ret += json_comma + "\"gil\":\"" + ...
-
-		ret += "\n" ;
+		cnt++ ;
+		ret += getTableRowCTSV ( cnt , *i , pagelist , mode ) ;
 	}
-
-	if ( platform->query.length() < MAX_QUERY_OUTPUT_LENGTH ) {
-//		ret += "\n\nhttps://petscan.wmflabs.org/?" + query ;
-	}
-	
 	return ret ;
+}
+
+
+string TRenderer::getTableRowCTSV ( uint32_t cnt , TPage &page , TPageList &pagelist , string &mode ) {
+	char tmp[1000] ;
+	string ret ;
+	string sep ( mode=="csv"?",":"\t" ) ;
+
+	bool first = true ;
+	for ( auto col:columns ) {
+	
+		string out ;
+
+		if ( col == "checkbox" ) {
+			continue ;
+		} else if ( col == "number" ) {
+			sprintf ( tmp , "%d" , cnt ) ;
+			out = tmp ;
+		} else if ( col == "image" ) {
+			string file = page.meta.ns == 6 ? page.getNameWithoutNamespace() : page.meta.getMisc("image","") ;
+			if ( !file.empty() ) {
+				string url = "https://" + getWikiServer ( wiki ) + "/wiki/File:" + urlencode(file) ;
+				out = url ;
+			}
+		} else if ( col == "title" ) {
+			out = page.name ;
+		} else if ( col == "pageid" ) {
+			out = ui2s ( page.meta.id ) ;
+		}else if ( col == "namespace" ) {
+			out = pagelist.getNamespaceString(page.meta.ns) ;
+		} else if ( col == "linknumber" ) {
+			out = string(page.meta.getMisc("count","?")) ;
+		} else if ( col == "length" ) {
+			out = ui2s ( page.meta.size ) ;
+		} else if ( col == "touched" ) {
+			out = string(page.meta.timestamp) ;
+		} else if ( col == "wikidata" ) {
+			if ( page.meta.q != UNKNOWN_WIKIDATA_ITEM ) {
+				out = "Q" + ui2s ( page.meta.q ) ;
+			}
+		} else if ( col == "coordinates" ) {
+			string lat = page.meta.getMisc("latitude","") ;
+			string lon = page.meta.getMisc("longitude","") ;
+			if ( !lat.empty() && !lon.empty() ) {
+				out = lat + "/" + lon ;
+			}
+		} else if ( col == "fileusage" ) {
+			out = page.meta.getMisc("gil","") ;
+		} else { // File data etc.
+			out = page.meta.getMisc(col,"") ;
+		}
+		
+		if ( first ) first = false ;
+		else ret += sep ;
+		if ( mode == "csv" ) escapeCSV ( out ) ;
+		ret += out ;
+	}
+
+	ret += "\n" ;
+	return ret ;
+}
+
+
+void TRenderer::escapeCSV ( string &out ) {
+	stringReplace ( out , "\\" , "\\\\") ;
+	stringReplace ( out , "\"" , "\\\"" ) ;
+	out = '"' + out + '"' ;
 }
 
 string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
@@ -548,7 +590,8 @@ string TRenderer::renderPageList ( TPageList &pagelist ) {
 	
 	if ( format == "json" || format == "jsonfm" ) return renderPageListJSON ( pagelist ) ;
 	else if ( format == "wiki" ) return renderPageListWiki ( pagelist ) ;
-	else if ( format == "tsv" ) return renderPageListTSV ( pagelist ) ;
+	else if ( format == "tsv" ) return renderPageListCTSV ( pagelist , format ) ;
+	else if ( format == "csv" ) return renderPageListCTSV ( pagelist , format ) ;
 	else if ( format == "pagepile" ) return renderPageListPagePile ( pagelist ) ;
 	else return renderPageListHTML ( pagelist ) ;
 	

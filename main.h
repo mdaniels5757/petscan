@@ -364,12 +364,14 @@ private:
 	string renderPageListHTML ( TPageList &pagelist ) ;
 	string renderPageListJSON ( TPageList &pagelist ) ;
 	string renderPageListWiki ( TPageList &pagelist ) ;
-	string renderPageListTSV ( TPageList &pagelist ) ;
+	string renderPageListCTSV ( TPageList &pagelist , string mode ) ;
 	string renderPageListPagePile ( TPageList &pagelist ) ;
 	string getLink ( TPage &page ) ;
 	void initializeColumns() ;
 	string getTableHeaderHTML() ;
 	string getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &pagelist ) ;
+	string getTableRowCTSV ( uint32_t cnt , TPage &page , TPageList &pagelist , string &mode ) ;
+	void escapeCSV ( string &out ) ;
 
 	vector <string> columns ;
 	TPlatform *platform = NULL ;
