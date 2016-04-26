@@ -400,11 +400,15 @@ bool TSourceDatabase::getPages () {
 	
 	
 	if ( params.only_new_since ) {
-		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+		if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+		if ( !params.after.empty() )  sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+//		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+//		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
 	} else {
-		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+		if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+		if ( !params.after.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+//		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+//		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
 	}
 
 
