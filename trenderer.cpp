@@ -408,8 +408,10 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 		json_comma = ",\n" ;
 	}
 
+	bool giu = !platform->getParam("giu","").empty() ;
 	bool file_data = !platform->getParam("ext_image_data","").empty() ;
-	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
+	bool file_usage = giu || !platform->getParam("file_usage_data","").empty() ;
+	if ( giu ) sparse = false ;
 	
 	if ( !callback.empty() ) ret += callback + "(" ;
 	if ( mode == "catscan" ) {
@@ -498,6 +500,23 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 					{"page_latest",i->meta.timestamp},
 					{"page_len",i->meta.size}
 				} ;
+				if ( file_usage && !i->meta.getMisc("gil","").empty() ) {
+					json giu = {} ;
+					string s = i->meta.getMisc("gil","") ;
+					vector <string> v0 ;
+					split ( s , v0 , '|' ) ;
+					for ( auto gil:v0 ) {
+						vector <string> v1 ;
+						split ( gil , v1 , ':' ) ;
+						if ( v1.size() != 4 ) continue ; // Paranoia
+						json ngiu ;
+						ngiu["wiki"] = v1[0] ;
+						ngiu["page"] = v1[3] ;
+						ngiu["ns"] = v1[1] ;
+						giu.push_back ( ngiu ) ;
+					}
+					o["giu"] = giu ;
+				}
 				ret += o.dump() ;
 			}
 		}
