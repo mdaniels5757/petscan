@@ -29,6 +29,13 @@ function getSubset ( $a1 , $a2 ) {
 	return $ret ;
 }
 
+function getUnion ( $pages1 , $pages2 ) {
+	$ret = array() ;
+	foreach ( $pages1 AS $p ) $ret[$p] = $p ;
+	foreach ( $pages2 AS $p ) $ret[$p] = $p ;
+	return $ret ;
+}
+
 function compareArrays ( $name , $a1 , $a2 ) {
 	$only1 = array() ;
 	$only2 = array() ;
@@ -60,13 +67,13 @@ function compareArrays ( $name , $a1 , $a2 ) {
 
 // TESTS
 
-function testCategories () {
+function testCategorySubset () {
 	$db = openDBwiki ( 'dewiki' ) ;
 	$mann = getPagesInCategory ( $db , 'Mann' , 2 , 0 , true ) ;
 	$frau = getPagesInCategory ( $db , 'Frau' , 2 , 0 , true ) ;
 	$subset = getSubset ( $mann , $frau ) ;
 	$psd = getFromPSID ( 18390 ) ;
-	compareArrays ( "Categories" , $subset , $psd ) ;
+	compareArrays ( "CategorySubset" , $subset , $psd ) ;
 }
 
 function testPagePile () {
@@ -87,10 +94,19 @@ function testSPARQL () {
 	compareArrays ( "SPARQL" , $subset , $psd ) ;
 }
 
+function testCategoryUnion () {
+	$db = openDBwiki ( 'enwiki' ) ;
+	$pages1 = getPagesInCategory ( $db , 'Sport in Varna' , 1 , 0 , true ) ;
+	$pages2 = getPagesInCategory ( $db , '1396 deaths' , 1 , 0 , true ) ;
+	$result = getUnion ( $pages1 , $pages2 ) ;
+	$psd = getFromPSID ( 18635 ) ;
+	compareArrays ( "CategoryUnion" , $result , $psd ) ;
+}
 
 // TEST CALLS
 testPagePile() ;
 testSPARQL() ;
-testCategories() ;
+testCategorySubset() ;
+testCategoryUnion() ;
 
 ?>
