@@ -1,7 +1,7 @@
-CC=gcc-4.9
-CXX=g++-4.9
-CFLAGS=-DMG_ENABLE_THREADS -pthread
-CPPFLAGS=-std=c++11  -g `mysql_config --include` -pthread
+CC=gcc-5
+CXX=g++-5
+CFLAGS=-DMG_ENABLE_THREADS -pthread -O3
+CPPFLAGS=-std=c++11 -O3 -g `mysql_config --include` -pthread
 
 SRCS_C=mongoose.c
 SRCS_CXX=tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp tpagelist.cpp trenderer.cpp
