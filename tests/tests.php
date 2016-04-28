@@ -44,7 +44,15 @@ function getRemove2 ( $pages1 , $pages2 ) {
 	return $ret ;
 }
 
-function compareArrays ( $name , $a1 , $a2 ) {
+function compareArrays ( $a1 , $a2 ) {
+	global $test_name ;
+
+	if ( count($a1) == 0 || count($a2) == 0 ) {
+		print "ZERO\t$test_name\t" . count($a1) . '/' . count($a2) . "\n" ;
+		return 0 ;
+	}
+	
+
 	$only1 = array() ;
 	$only2 = array() ;
 	$both = 0 ;
@@ -62,11 +70,11 @@ function compareArrays ( $name , $a1 , $a2 ) {
 	}
 	
 	if ( count($only1) == 0 and count($only2) == 0 and count($a1) == $both ) {
-		print "$name\tPASSED\n" ;
+		print "PASSED\t$test_name\n" ;
 		return 1 ;
 	}
 	
-	print "$name\tFAILED\n" ;
+	print "FAILED\t$test_name\n" ;
 	foreach ( $only1 AS $a ) print "* Only in list 1: $a\n" ;
 	foreach ( $only2 AS $a ) print "* Only in list 2: $a\n" ;
 	return 0 ;
@@ -80,56 +88,86 @@ function testCategorySubset () {
 	$db = openDBwiki ( 'enwiki' ) ;
 	$pages1 = getPagesInCategory ( $db , 'Instrumental albums' , 2 , 0 , true ) ;
 	$pages2 = getPagesInCategory ( $db , 'Free jazz albums' , 2 , 0 , true ) ;
-	$result = getSubset ( $pages1 , $pages2 ) ;
+	$results = getSubset ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 19833 ) ;
-	return compareArrays ( "CategorySubset" , $result , $psd ) ;
+	return compareArrays ( $results , $psd ) ;
 }
 
 function testPagePile () {
 	$db = openDBwiki ( 'enwiki' ) ;
-	$cat = getPagesInCategory ( $db , '1995 Formula One races' , 1 , 0 , true ) ;
-	$pages = getPagePile ( 2939 ) ;
-	$result = getSubset ( $cat , $pages ) ;
+	$pages1 = getPagesInCategory ( $db , '1995 Formula One races' , 1 , 0 , true ) ;
+	$pages2 = getPagePile ( 2939 ) ;
+	$results = getSubset ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 18588 ) ;
-	return compareArrays ( "PagePile" , $result , $psd ) ;
+	return compareArrays ( $results , $psd ) ;
 }
 
 function testSPARQL () {
 	$sparql = 'SELECT ?item WHERE { ?item wdt:P180 wd:Q148706 }' ;
-	$items_sparql = getSPARQLitems ( $sparql , 'item' ) ;
-	$items_pagepile = getPagePile ( 2941 ) ;
-	$result = getSubset ( $items_sparql , $items_pagepile ) ;
+	$pages1 = getSPARQLitems ( $sparql , 'item' ) ;
+	$pages2 = getPagePile ( 2941 ) ;
+	$results = getSubset ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 18607 ) ;
-	return compareArrays ( "SPARQL" , $result , $psd ) ;
+	return compareArrays ( $results , $psd ) ;
 }
 
 function testCategoryUnion () {
 	$db = openDBwiki ( 'enwiki' ) ;
 	$pages1 = getPagesInCategory ( $db , 'Sport in Varna' , 1 , 0 , true ) ;
 	$pages2 = getPagesInCategory ( $db , '1396 deaths' , 1 , 0 , true ) ;
-	$result = getUnion ( $pages1 , $pages2 ) ;
+	$results = getUnion ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 18635 ) ;
-	return compareArrays ( "CategoryUnion" , $result , $psd ) ;
+	return compareArrays ( $results , $psd ) ;
 }
 
 function testNegativeCategories () {
 	$db = openDBwiki ( 'enwiki' ) ;
 	$pages1 = getPagesInCategory ( $db , 'Instrumental albums' , 0 , 0 , true ) ;
 	$pages2 = getPagesInCategory ( $db , 'Free jazz albums' , 0 , 0 , true ) ;
-	$result = getRemove2 ( $pages1 , $pages2 ) ;
+	$results = getRemove2 ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 19820 ) ;
-	return compareArrays ( "NegativeCategories" , $result , $psd ) ;
+	return compareArrays ( $results , $psd ) ;
 	
 }
 
+function testWikidataSitelink () {
+	$db = openDBwiki ( 'wikidatawiki' ) ;
+	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=120 AND pl_title='P1415' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
+	$results = array() ;
+	while($o = $result->fetch_object()) $results[] = $o->q ;
+	$psd = getFromPSID ( 19977 ) ;
+	return compareArrays ( $results , $psd ) ;
+}
+
+function testWikidataUses () {
+	$db = openDBwiki ( 'wikidatawiki' ) ;
+
+	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=120 AND pl_title='P1415' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
+	$pages1 = array() ;
+	while($o = $result->fetch_object()) $pages1[] = $o->q ;
+
+	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=0 AND pl_title='Q1860' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
+	$pages2 = array() ;
+	while($o = $result->fetch_object()) $pages2[] = $o->q ;
+	
+	$results = getUnion ( $pages1 , $pages2 ) ;
+	$psd = getFromPSID ( 20004 ) ;
+	return compareArrays ( $results , $psd ) ;
+}
+
+
 // TEST CALLS
 
-$tests = array ( 'PagePile' , 'SPARQL' , 'CategoryUnion' , 'NegativeCategories' , 'CategorySubset' ) ;
+$tests = array ( 'PagePile' , 'SPARQL' , 'CategoryUnion' , 'NegativeCategories' , 'CategorySubset' , 'WikidataSitelink' , 'WikidataUses' ) ;
+//$tests = array ( array_pop ( $tests ) ) ; // Run last test only; useful for testing a new test
 
 $total = 0 ;
 $passed = 0 ;
-foreach ( $tests AS $t ) {
-	$fn = 'test' . $t ;
+foreach ( $tests AS $test_name ) {
+	$fn = 'test' . $test_name ;
 	$total++ ;
 	$passed += $fn() ;
 }
