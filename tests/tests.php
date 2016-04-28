@@ -36,6 +36,14 @@ function getUnion ( $pages1 , $pages2 ) {
 	return $ret ;
 }
 
+function getRemove2 ( $pages1 , $pages2 ) {
+	$ret = array () ;
+	foreach ( $pages1 AS $p ) {
+		if ( !in_array ( $p , $pages2 ) ) $ret[] = $p ;
+	}
+	return $ret ;
+}
+
 function compareArrays ( $name , $a1 , $a2 ) {
 	$only1 = array() ;
 	$only2 = array() ;
@@ -55,12 +63,13 @@ function compareArrays ( $name , $a1 , $a2 ) {
 	
 	if ( count($only1) == 0 and count($only2) == 0 and count($a1) == $both ) {
 		print "$name\tPASSED\n" ;
-		return ;
+		return 1 ;
 	}
 	
 	print "$name\tFAILED\n" ;
 	foreach ( $only1 AS $a ) print "* Only in list 1: $a\n" ;
 	foreach ( $only2 AS $a ) print "* Only in list 2: $a\n" ;
+	return 0 ;
 }
 
 
@@ -68,30 +77,30 @@ function compareArrays ( $name , $a1 , $a2 ) {
 // TESTS
 
 function testCategorySubset () {
-	$db = openDBwiki ( 'dewiki' ) ;
-	$mann = getPagesInCategory ( $db , 'Mann' , 2 , 0 , true ) ;
-	$frau = getPagesInCategory ( $db , 'Frau' , 2 , 0 , true ) ;
-	$subset = getSubset ( $mann , $frau ) ;
-	$psd = getFromPSID ( 18390 ) ;
-	compareArrays ( "CategorySubset" , $subset , $psd ) ;
+	$db = openDBwiki ( 'enwiki' ) ;
+	$pages1 = getPagesInCategory ( $db , 'Instrumental albums' , 2 , 0 , true ) ;
+	$pages2 = getPagesInCategory ( $db , 'Free jazz albums' , 2 , 0 , true ) ;
+	$result = getSubset ( $pages1 , $pages2 ) ;
+	$psd = getFromPSID ( 19833 ) ;
+	return compareArrays ( "CategorySubset" , $result , $psd ) ;
 }
 
 function testPagePile () {
 	$db = openDBwiki ( 'enwiki' ) ;
 	$cat = getPagesInCategory ( $db , '1995 Formula One races' , 1 , 0 , true ) ;
 	$pages = getPagePile ( 2939 ) ;
-	$subset = getSubset ( $cat , $pages ) ;
+	$result = getSubset ( $cat , $pages ) ;
 	$psd = getFromPSID ( 18588 ) ;
-	compareArrays ( "PagePile" , $subset , $psd ) ;
+	return compareArrays ( "PagePile" , $result , $psd ) ;
 }
 
 function testSPARQL () {
 	$sparql = 'SELECT ?item WHERE { ?item wdt:P180 wd:Q148706 }' ;
 	$items_sparql = getSPARQLitems ( $sparql , 'item' ) ;
 	$items_pagepile = getPagePile ( 2941 ) ;
-	$subset = getSubset ( $items_sparql , $items_pagepile ) ;
+	$result = getSubset ( $items_sparql , $items_pagepile ) ;
 	$psd = getFromPSID ( 18607 ) ;
-	compareArrays ( "SPARQL" , $subset , $psd ) ;
+	return compareArrays ( "SPARQL" , $result , $psd ) ;
 }
 
 function testCategoryUnion () {
@@ -100,13 +109,31 @@ function testCategoryUnion () {
 	$pages2 = getPagesInCategory ( $db , '1396 deaths' , 1 , 0 , true ) ;
 	$result = getUnion ( $pages1 , $pages2 ) ;
 	$psd = getFromPSID ( 18635 ) ;
-	compareArrays ( "CategoryUnion" , $result , $psd ) ;
+	return compareArrays ( "CategoryUnion" , $result , $psd ) ;
+}
+
+function testNegativeCategories () {
+	$db = openDBwiki ( 'enwiki' ) ;
+	$pages1 = getPagesInCategory ( $db , 'Instrumental albums' , 0 , 0 , true ) ;
+	$pages2 = getPagesInCategory ( $db , 'Free jazz albums' , 0 , 0 , true ) ;
+	$result = getRemove2 ( $pages1 , $pages2 ) ;
+	$psd = getFromPSID ( 19820 ) ;
+	return compareArrays ( "NegativeCategories" , $result , $psd ) ;
+	
 }
 
 // TEST CALLS
-testPagePile() ;
-testSPARQL() ;
-testCategorySubset() ;
-testCategoryUnion() ;
+
+$tests = array ( 'PagePile' , 'SPARQL' , 'CategoryUnion' , 'NegativeCategories' , 'CategorySubset' ) ;
+
+$total = 0 ;
+$passed = 0 ;
+foreach ( $tests AS $t ) {
+	$fn = 'test' . $t ;
+	$total++ ;
+	$passed += $fn() ;
+}
+$failed = $total - $passed ;
+print "$total tests; $passed passed, $failed failed\n" ;
 
 ?>
