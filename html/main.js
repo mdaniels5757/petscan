@@ -136,7 +136,8 @@ function applyParameters () {
 			setTimeout ( wait2load_ns , 100 ) ;
 			return ;
 		}
-		
+		last_namespace_project = '' ;
+	
 		loadNamespaces() ;
 	}
 	wait2load_ns() ;
