@@ -68,6 +68,20 @@ img.thumbcard-img {
 	max-height:120px;
 	border:0px;
 }
+div.example_psid {
+	padding:5px;
+	text-align:right;
+	font-weight:bold;
+	display:table-cell;
+}
+div.example_desc {
+	padding:5px;
+	display:table-cell;
+}
+#example_list {
+	height:500px;
+	overflow:auto;
+}
 </style>
 
 
@@ -115,6 +129,10 @@ function receiveEnglishNamespaceData ( j ) {
       <a class="nav-item nav-link" href="http://blog.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Blog');">Blog</a>-->
 
 	  <div class='pull-sm-right'>
+		  <div class="btn-group nav-item nav-link">
+		      <a target='_blank' class="nav-item nav-link btn btn-warning-outline l_examples" href="#"></a>
+		  </div>
+
 		  <div class="btn-group nav-item nav-link">
 			<button type="button" class="btn btn-secondary dropdown-toggle l_interface_language" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
 			<div class="dropdown-menu" id='interface_languages'></div>
@@ -550,6 +568,30 @@ function receiveEnglishNamespaceData ( j ) {
 <div class="row"><div class="col-md-12"><!--output--></div></div>
 
 </div><!--container-->
+
+<div class="modal fade" id="example_dialog" tabindex="-1" role="dialog" style='display:none'>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title l_example_title"></h4>
+      </div>
+      <div class="modal-body">
+      	<div><input type='text' value='' id='example_search' class='form-control ph_search_examples' /></div>
+      	<div>
+      		<div id='example_list'>
+      		</select>
+      	</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary l_close" data-dismiss="modal"></button>
+        <a type="button" id='edit_examples' class="btn btn-secondary l_edit_examples" href='https://meta.wikimedia.org/w/index.php?title=PetScan/Examples&action=edit' target='_blank'></a>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

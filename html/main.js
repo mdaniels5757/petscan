@@ -414,6 +414,64 @@ function validateSourceCombination () {
 	return false ;
 }
 
+var example_list = [] ;
+
+function showExamples ( filter ) {
+	var h = '' ;
+	$('#example_list').html ( h ) ;
+	$.each ( example_list , function ( dummy , example ) {
+		if ( filter != '' ) {
+			var desc = example.desc.toLowerCase() ;
+			var words = filter.toLowerCase().split ( /\s+/ ) ;
+			var found = 0 ;
+			var max_words = 0 ;
+			$.each ( words , function ( k , v ) {
+				if ( v == '' ) return ;
+				max_words++ ;
+				if ( null !== desc.match ( v ) ) found++ ;
+			} ) ;
+			if ( found != max_words ) return ;
+		}
+		h += "<div style='display:table-row'>" ;
+		h += "<div class='example_psid'><a href='?psid=" + example.psid + "'>" + example.psid + "</a></div>" ;
+		h += "<div class='example_desc'>" + example.desc + "</div>" ;
+		h += "</div>" ;
+	} ) ;
+	
+	$('#example_list').html ( h ) ;
+
+	if ( filter != '' ) return ;
+
+	$('#example_dialog').modal ( 'show' ) ;
+}
+
+function addExamples () {
+//	$('#example_dialog').on('shown.bs.modal',function(){$('#example_search').focus(); return false}) ;
+	var o = $('a.l_examples') ;
+	o.click ( function () {
+		$('#example_search').val('') ;
+		if ( example_list.length == 0 ) {
+			$.getJSON('https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Examples&format=json&callback=?',function(d){
+				var rows = d.parse.wikitext['*'].split("\n") ;
+				$.each ( rows , function ( dummy , row ) {
+					var m = row.match ( /^;\s*(\d+)\s*:(.*)$/ ) ;
+					if ( m === null ) return ;
+					example_list.push ( { psid:m[1] , desc:deXSS(m[2]) } ) ;
+				} ) ;
+				showExamples('');
+			} ) ;
+		} else {
+			showExamples('');
+		}
+		return false ;
+	} ) ;
+	
+	$('#example_search').keyup ( function () {
+		var filter = $('#example_search').val() ;
+		showExamples ( filter ) ;
+	} ) ;
+}
+
 function initializeInterface () {
 	var p = getUrlVars() ;
 	
@@ -465,6 +523,8 @@ function initializeInterface () {
 	} ) ;
 	
 	$('input[name="source_combination"]').keyup ( validateSourceCombination ) ;
+	
+	addExamples() ;
 	
 	$('#file_results label').change ( function () {
 		var o = $('#file_results input[name="results_mode"]:checked') ;
