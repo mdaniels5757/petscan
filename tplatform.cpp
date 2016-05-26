@@ -393,6 +393,7 @@ string TPlatform::process () {
 }
 
 void TPlatform::processRedlinks ( TPageList &pagelist ) {
+	if ( pagelist.size() == 0 ) return ;
 	if ( getParam("show_redlinks","").empty() ) return ;
 	if ( wiki == "wikidiatawiki" ) {
 		error ( "Redlinks are rather pointless on Wikidata" ) ;
