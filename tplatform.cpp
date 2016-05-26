@@ -415,14 +415,17 @@ void TPlatform::processRedlinks ( TPageList &pagelist ) {
 		p++ ;
 		if ( cnt >= DB_PAGE_BATCH_SIZE || ( cnt > 0 && p == pagelist.pages.end() ) ) {
 			for ( auto nsgroup:nslist ) {
-				string sql = "SELECT pl_namespace,pl_title from page p0,pagelinks pl0 WHERE p0.page_namespace=" + ui2s(nsgroup.first) + " AND p0.page_title IN (" + TSourceDatabase::listEscapedStrings ( db , nsgroup.second ) + ")" ;
-				sql += " AND pl_from=p0.page_id AND NOT EXISTS (SELECT * FROM page p1 WHERE p1.page_namespace=pl_namespace AND p1.page_title=pl_title LIMIT 1)" ;
+				string sql = "SELECT pl_namespace,pl_title,(SELECT COUNT(*) FROM page p1 WHERE p1.page_title=pl0.pl_title AND p1.page_namespace=pl0.pl_namespace) AS cnt from page p0,pagelinks pl0 WHERE pl_from=p0.page_id" ;
+				sql += " AND p0.page_namespace=" + ui2s(nsgroup.first) ;
+				sql += " AND p0.page_title IN (" + TSourceDatabase::listEscapedStrings ( db , nsgroup.second ) + ")" ;
 				if ( ns0_only ) sql += " AND pl_namespace=0" ;
 				else sql += " AND pl_namespace>=0" ;
 				
 				if ( remove_template_redlinks ) {
 					sql += " AND NOT EXISTS (SELECT * FROM pagelinks pl1 WHERE pl1.pl_from_namespace=10 AND pl0.pl_namespace=pl1.pl_namespace AND pl0.pl_title=pl1.pl_title LIMIT 1)" ;
 				}
+				sql += " GROUP BY page_id,pl_namespace,pl_title" ;
+				sql += " HAVING cnt=0" ;
 
 				MYSQL_RES *result = db.getQueryResults ( sql ) ;
 				MYSQL_ROW row;
