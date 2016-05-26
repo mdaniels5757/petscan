@@ -413,7 +413,7 @@ void TPlatform::processRedlinks ( TPageList &pagelist ) {
 		nslist[p->meta.ns].push_back ( p->name ) ;
 		cnt++ ;
 		p++ ;
-		if ( cnt >= DB_PAGE_BATCH_SIZE || ( cnt > 0 && p == pagelist.pages.end() ) ) {
+		if ( cnt >= 200 /*DB_PAGE_BATCH_SIZE*/ || ( cnt > 0 && p == pagelist.pages.end() ) ) {
 			for ( auto nsgroup:nslist ) {
 				string sql = "SELECT pl_namespace,pl_title,(SELECT COUNT(*) FROM page p1 WHERE p1.page_title=pl0.pl_title AND p1.page_namespace=pl0.pl_namespace) AS cnt from page p0,pagelinks pl0 WHERE pl_from=p0.page_id" ;
 				sql += " AND p0.page_namespace=" + ui2s(nsgroup.first) ;
