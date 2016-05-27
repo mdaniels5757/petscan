@@ -15,7 +15,9 @@ void TPlatform::parseCats ( string input , vector <TSourceDatabaseCatDepth> &out
 		split ( (*i) , parts , '|' , 2 ) ;
 		if ( parts.empty() ) continue ; // Huh?
 		if ( parts.size() < 2 ) parts.push_back ( getParam("depth","0") ) ;
-		output.push_back ( TSourceDatabaseCatDepth ( trim(parts[0]) , atoi(parts[1].c_str()) ) ) ;
+		uint64_t depth = atoi(parts[1].c_str()) ;
+		if ( depth > 32000 ) depth = 32000 ; // Someone actually filed a bug report that depth 35000 doesn't work. Seriously, WTF?
+		output.push_back ( TSourceDatabaseCatDepth ( trim(parts[0]) , depth ) ) ;
 	}
 }
 
