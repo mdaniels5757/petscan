@@ -182,6 +182,13 @@ function AutoList ( callback ) {
 			me.widar.createItemForPage ( cmd.page , output_wiki , function ( d ) {
 				// TODO error check: d.error=="OK"
 				if ( d.error != 'OK' ) {
+					if ( typeof d.error == 'object' ) {
+						if ( d.error.code == 'no-external-page' ) {
+							console.log ( cmd.page + " does not exist on " + output_wiki + "; maybe it has been deleted?" ) ;
+							me.finishCommand ( id ) ;
+							return ;
+						}
+					}
 					console.log ( d ) ;
 				}
 				
@@ -226,7 +233,7 @@ function AutoList ( callback ) {
 				me.finishCommand ( id ) ;
 			} ) ;
 		} else {
-			
+			console.log ( "Unknown mode: " + cmd.mode ) ;
 		}
 	}
 	
