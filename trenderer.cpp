@@ -73,7 +73,7 @@ string TRenderer::renderPageListPagePile ( TPageList &pagelist ) {
 	string url = "https://tools.wmflabs.org/pagepile/api.php" ;
 	string params = "action=create_pile_with_data&wiki="+pagelist.wiki+"&data=" ;
 	for ( auto page:pagelist.pages ) {
-		params += urlencode(page.name) + "%09" + ui2s(page.meta.ns) + "%0A" ;
+		params += urlencode(page.getNameWithoutNamespace()) + "%09" + ui2s(page.meta.ns) + "%0A" ;
 	}
 	
 
