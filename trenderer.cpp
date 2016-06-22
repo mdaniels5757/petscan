@@ -158,6 +158,8 @@ string TRenderer::getTableRowCTSV ( uint32_t cnt , TPage &page , TPageList &page
 			if ( page.meta.q != UNKNOWN_WIKIDATA_ITEM ) {
 				out = "Q" + ui2s ( page.meta.q ) ;
 			}
+		} else if ( col == "defaultsort" || col == "disambiguation" ) {
+			out = string(page.meta.getMisc(col,"")) ;
 		} else if ( col == "coordinates" ) {
 			string lat = page.meta.getMisc("latitude","") ;
 			string lon = page.meta.getMisc("longitude","") ;
@@ -262,6 +264,8 @@ void TRenderer::initializeColumns() {
 	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
 	bool add_coordinates = !platform->getParam("add_coordinates","").empty() ;
 	bool add_image = !platform->getParam("add_image","").empty() ;
+	bool add_defaultsort = !platform->getParam("add_defaultsort","").empty() ;
+	bool add_disambiguation = !platform->getParam("add_disambiguation","").empty() ;
 
 	string wdi = platform->getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
@@ -282,6 +286,8 @@ void TRenderer::initializeColumns() {
 	}
 	if ( show_wikidata_item ) columns.push_back ( "wikidata" ) ;
 	if ( add_coordinates ) columns.push_back ( "coordinates" ) ;
+	if ( add_defaultsort ) columns.push_back ( "defaultsort" ) ;
+	if ( add_disambiguation ) columns.push_back ( "disambiguation" ) ;
 	if ( file_data ) {
 		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) columns.push_back ( *k ) ;
 	}
@@ -367,6 +373,10 @@ string TRenderer::getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &page
 				ret += "<a class='smaller' target='_blank' href='" + url + "'>" + lat + "/" + lon + "</a>" ;
 			}
 			ret += "</td>" ;
+		} else if ( col == "defaultsort" || col == "disambiguation" ) {
+			ret += "<td>" ;
+			ret += page.meta.getMisc(col,"") ;
+			ret += "</td>" ;
 		} else if ( col == "fileusage" ) {
 			string gil = page.meta.getMisc("gil","") ;
 			vector <string> pages ;
@@ -414,6 +424,8 @@ string TRenderer::getTableHeaderHTML() {
 		else if ( col == "touched" ) ret += "<th class='text-nowrap l_h_touched'></th>" ;
 		else if ( col == "wikidata" ) ret += "<th class='l_h_wikidata'></th>" ;
 		else if ( col == "coordinates" ) ret += "<th class='l_h_coordinates'></th>" ;
+		else if ( col == "defaultsort" ) ret += "<th class='l_h_defaultsort'></th>" ;
+		else if ( col == "disambiguation" ) ret += "<th class='l_h_disambiguation'></th>" ;
 		else if ( col == "fileusage" ) ret += "<th class='l_file_usage_data'></th>" ;
 		else { // File data etc.
 			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {

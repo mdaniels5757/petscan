@@ -575,7 +575,9 @@ void TPlatform::processCreator ( TPageList &pagelist ) {
 void TPlatform::processPages ( TPageList &pl ) {
 	bool add_coordinates = !getParam("add_coordinates","").empty() ;
 	bool add_image = !getParam("add_image","").empty() ;
-	if ( !add_coordinates && !add_image ) return ; // Nothing to do
+	bool add_defaultsort = !getParam("add_defaultsort","").empty() ;
+	bool add_disambiguation = !getParam("add_disambiguation","").empty() ;
+	if ( !add_coordinates && !add_image && !add_defaultsort && !add_disambiguation ) return ; // Nothing to do
 	
 	uint32_t cnt = 0 ;
 	TWikidataDB db ( pl.wiki , this ) ;
@@ -584,15 +586,15 @@ void TPlatform::processPages ( TPageList &pl ) {
 		ns_pages[i->meta.ns].push_back ( &(*i) )  ;
 		cnt++ ;
 		if ( cnt < DB_PAGE_BATCH_SIZE ) continue ;
-		annotatePage ( db , ns_pages , add_image , add_coordinates ) ;
+		annotatePage ( db , ns_pages , add_image , add_coordinates , add_defaultsort , add_disambiguation ) ;
 		cnt = 0 ;
 		ns_pages.clear() ;
 	}
-	annotatePage ( db , ns_pages , add_image , add_coordinates ) ;
+	annotatePage ( db , ns_pages , add_image , add_coordinates , add_defaultsort , add_disambiguation ) ;
 	
 }
 
-void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates ) {
+void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates , bool add_defaultsort , bool add_disambiguation ) {
 	for ( auto ns_group:ns_pages ) {
 		vector <string> titles ;
 		map <string,TPage *> title2page ;
@@ -604,6 +606,8 @@ void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> 
 		string sql = "SELECT page_title" ;
 		if ( add_image ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='page_image' LIMIT 1) AS image" ;
 		if ( add_coordinates ) sql += ",(SELECT concat(gt_lat,',',gt_lon) FROM geo_tags WHERE gt_primary=1 AND gt_globe='earth' AND gt_page_id=page_id LIMIT 1) AS coord" ;
+		if ( add_defaultsort ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='defaultsort' LIMIT 1) AS defaultsort" ;
+		if ( add_disambiguation ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='disambiguation' LIMIT 1) AS disambiguation" ;
 		sql += " FROM page" ;
 		sql += " WHERE page_namespace=" + ui2s(ns_group.first) ;
 		sql += " AND page_title IN (" + TSourceDatabase::listEscapedStrings ( db , titles , false ) + ")" ;
@@ -613,7 +617,7 @@ void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> 
 		while ((row = mysql_fetch_row(result))) {
 			string title = row[0] ;
 			if ( title2page.find(title) == title2page.end() ) continue ; // Paranoia
-			string image , coordinates ;
+			string image , coordinates , defaultsort , disambiguation ;
 			uint32_t pos = 0 ;
 
 			if ( add_image ) {
@@ -624,8 +628,18 @@ void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> 
 				char *s = row[++pos] ;
 				if ( s ) coordinates = trim(s) ;
 			}
+			if ( add_defaultsort ) {
+				char *s = row[++pos] ;
+				if ( s ) defaultsort = trim(s) ;
+			}
+			if ( add_disambiguation ) {
+				char *s = row[++pos] ;
+				if ( s ) disambiguation = trim(s) ;
+			}
 
 			if ( !image.empty() ) title2page[title]->meta.misc["image"] = image ;
+			if ( !defaultsort.empty() ) title2page[title]->meta.misc["defaultsort"] = defaultsort ;
+			if ( !disambiguation.empty() ) title2page[title]->meta.misc["disambiguation"] = disambiguation ;
 			if ( !coordinates.empty() ) {
 				vector <string> v ;
 				split ( coordinates , v , ',' ) ;
