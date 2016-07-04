@@ -337,7 +337,7 @@ protected:
 	void processFiles ( TPageList &pl ) ;
 	void annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , bool file_data , bool file_usage , bool file_usage_data_ns0 ) ;
 	void processPages ( TPageList &pl ) ;
-	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates , bool add_defaultsort , bool add_disambiguation ) ;
+	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates , bool add_defaultsort , bool add_disambiguation , bool add_incoming_links ) ;
 	void processWikidata ( TPageList &pl ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;

@@ -496,6 +496,7 @@ function initializeInterface () {
 	
 
 	params = $.extend ( {} , default_params , p ) ;
+	params.sortby = params.sortby.replace ( / /g , '_' ) ;
 	
 	var l = 'en' ;
 	if ( typeof params.interface_language != 'undefined' ) l = params.interface_language ;

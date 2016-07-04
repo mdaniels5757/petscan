@@ -158,7 +158,7 @@ string TRenderer::getTableRowCTSV ( uint32_t cnt , TPage &page , TPageList &page
 			if ( page.meta.q != UNKNOWN_WIKIDATA_ITEM ) {
 				out = "Q" + ui2s ( page.meta.q ) ;
 			}
-		} else if ( col == "defaultsort" || col == "disambiguation" ) {
+		} else if ( col == "defaultsort" || col == "disambiguation" || col == "incoming_links" ) {
 			out = string(page.meta.getMisc(col,"")) ;
 		} else if ( col == "coordinates" ) {
 			string lat = page.meta.getMisc("latitude","") ;
@@ -266,6 +266,7 @@ void TRenderer::initializeColumns() {
 	bool add_image = !platform->getParam("add_image","").empty() ;
 	bool add_defaultsort = !platform->getParam("add_defaultsort","").empty() ;
 	bool add_disambiguation = !platform->getParam("add_disambiguation","").empty() ;
+	bool add_incoming_links = platform->getParam("sortby") == "incoming_links" ;
 
 	string wdi = platform->getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
@@ -288,6 +289,7 @@ void TRenderer::initializeColumns() {
 	if ( add_coordinates ) columns.push_back ( "coordinates" ) ;
 	if ( add_defaultsort ) columns.push_back ( "defaultsort" ) ;
 	if ( add_disambiguation ) columns.push_back ( "disambiguation" ) ;
+	if ( add_incoming_links ) columns.push_back ( "incoming_links" ) ;
 	if ( file_data ) {
 		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) columns.push_back ( *k ) ;
 	}
@@ -373,7 +375,7 @@ string TRenderer::getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &page
 				ret += "<a class='smaller' target='_blank' href='" + url + "'>" + lat + "/" + lon + "</a>" ;
 			}
 			ret += "</td>" ;
-		} else if ( col == "defaultsort" || col == "disambiguation" ) {
+		} else if ( col == "defaultsort" || col == "disambiguation" || col == "incoming_links" ) {
 			ret += "<td>" ;
 			ret += page.meta.getMisc(col,"") ;
 			ret += "</td>" ;
@@ -426,6 +428,7 @@ string TRenderer::getTableHeaderHTML() {
 		else if ( col == "coordinates" ) ret += "<th class='l_h_coordinates'></th>" ;
 		else if ( col == "defaultsort" ) ret += "<th class='l_h_defaultsort'></th>" ;
 		else if ( col == "disambiguation" ) ret += "<th class='l_h_disambiguation'></th>" ;
+		else if ( col == "incoming_links" ) ret += "<th class='l_h_incoming_links'></th>" ;
 		else if ( col == "fileusage" ) ret += "<th class='l_file_usage_data'></th>" ;
 		else { // File data etc.
 			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
