@@ -96,6 +96,7 @@ function AutoList ( callback ) {
 
 	this.running = [] ;
 	this.max_concurrent = 1 ; // 1 thread for non-bot user
+	this.concurrent = 1 ;
 	this.delay = 2000 ; // 2 sec delay for non-bot user
 
 	this.setupCommands = function () {
@@ -181,7 +182,7 @@ function AutoList ( callback ) {
 		
 			me.widar.createItemForPage ( cmd.page , output_wiki , function ( d ) {
 				// TODO error check: d.error=="OK"
-				if ( d.error != 'OK' ) {
+				if ( typeof d == 'undefined' || d.error != 'OK' ) {
 					if ( typeof d.error == 'object' ) {
 						if ( d.error.code == 'no-external-page' ) {
 							console.log ( cmd.page + " does not exist on " + output_wiki + "; maybe it has been deleted?" ) ;
@@ -246,9 +247,11 @@ function AutoList ( callback ) {
 	this.runNextCommand = function () {
 		var me = this ;
 		
+console.log ( me.concurrent , me.running.length ) ;
+		
 		if ( me.emergency_stop ) return ; // Used clicked stop
 
-		if ( me.running.length >= me.max_concurrent ) {
+		if ( me.running.length >= me.concurrent ) {
 			setTimeout ( function () { me.runNextCommand } , 100 ) ; // Was already called, so short delay
 			return ;
 		}
@@ -306,9 +309,10 @@ function AutoList ( callback ) {
 				h += "<div class='l_al_creator_mode'></div>" ;
 			}
 			if ( me.widar.isBot() ) {
-				h += "<div class='l_al_bot'></div>" ;
 				me.max_concurrent = 5 ;
+				me.concurrent = 5 ;
 				me.delay = 1 ;
+				h += "<div><input class='form-control'  style='width:50px;display:inline-block;font-size:8pt' type='number' id='bot_concurrent' value='"+me.concurrent+"' /> <span class='l_al_concurrent'></span> (1-"+me.max_concurrent+")</div>" ;
 			}
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
@@ -327,6 +331,15 @@ function AutoList ( callback ) {
 		}
 		$('#autolist_box').html ( h ) ;
 		
+		function updateConcurrency () {
+			var v = Math.floor ( $('#bot_concurrent').val() * 1 ) ;
+			if ( v < 1 || v > me.max_concurrent ) return ;
+			me.concurrent = v ;
+		}
+		
+		$('#bot_concurrent').keyup ( function(){updateConcurrency()} ) ;
+		$('#bot_concurrent').change ( function(){updateConcurrency()} ) ;
+		
 		if ( typeof p.al_commands != 'undefined' ) {
 			$('#al_commands').val ( p.al_commands ) ;
 			me.commandsHaveChanged() ;
@@ -342,7 +355,7 @@ function AutoList ( callback ) {
 			me.setupCommands() ;
 			me.updateRunCounter() ;
 
-			for ( var i = 0 ; i < me.max_concurrent ; i++ ) {
+			for ( var i = 0 ; i < me.concurrent ; i++ ) {
 				me.runNextCommand() ;
 			}
 		} ) ;
