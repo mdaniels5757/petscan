@@ -217,8 +217,8 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	// Todo: meta.misc["image"]
 	if ( only_files && !use_autolist ) {
 		ret += "<div id='file_results' style='float:right' class='btn-group' data-toggle='buttons'>" ;
-		ret += "<label class='btn btn-secondary active'><input type='radio' checked name='results_mode' value='titles' autocomplete='off' /><span class='l_show_titles'></span></label>" ;
-		ret += "<label class='btn btn-secondary'><input type='radio' name='results_mode' value='thumbnails' checked autocomplete='off' /><span class='l_show_thumbnails'></span></label>" ;
+		ret += "<label class='btn btn-secondary active'><input type='radio' checked name='results_mode' value='titles' autocomplete='off' /><span tt='show_titles'></span></label>" ;
+		ret += "<label class='btn btn-secondary'><input type='radio' name='results_mode' value='thumbnails' checked autocomplete='off' /><span tt='show_thumbnails'></span></label>" ;
 		ret += "</div>" ;
 	}
 	
@@ -342,7 +342,7 @@ string TRenderer::getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &page
 			ret += tmp ;
 		}else if ( col == "namespace" ) {
 			string nsname = pagelist.getNamespaceString(page.meta.ns) ;
-			if ( nsname.empty() ) nsname = "<span class='l_namespace_0'>Article</span>" ;
+			if ( nsname.empty() ) nsname = "<span tt='namespace_0'>Article</span>" ;
 			ret += "<td>" + nsname + "</td>" ;
 		} else if ( col == "linknumber" ) {
 			ret += "<td class='num'>" + string(page.meta.getMisc("count","?")) + "</td>" ;
@@ -417,22 +417,22 @@ string TRenderer::getTableHeaderHTML() {
 	for ( auto col:columns ) {
 		if ( col == "checkbox" ) ret += "<th></th>" ;
 		else if ( col == "number" ) ret += "<th class='num'>#</th>" ;
-		else if ( col == "image" ) ret += "<th class='l_h_image'></th>" ;
-		else if ( col == "title" ) ret += "<th class='text-nowrap l_h_title'></th>" ;
-		else if ( col == "pageid" ) ret += "<th class='text-nowrap l_h_id'></th>" ;
-		else if ( col == "namespace" ) ret += "<th class='text-nowrap l_h_namespace'></th>" ;
-		else if ( col == "linknumber" ) ret += "<th class='l_link_number'></th>" ;
-		else if ( col == "length" ) ret += "<th class='text-nowrap l_h_len'></th>" ;
-		else if ( col == "touched" ) ret += "<th class='text-nowrap l_h_touched'></th>" ;
-		else if ( col == "wikidata" ) ret += "<th class='l_h_wikidata'></th>" ;
-		else if ( col == "coordinates" ) ret += "<th class='l_h_coordinates'></th>" ;
-		else if ( col == "defaultsort" ) ret += "<th class='l_h_defaultsort'></th>" ;
-		else if ( col == "disambiguation" ) ret += "<th class='l_h_disambiguation'></th>" ;
-		else if ( col == "incoming_links" ) ret += "<th class='l_h_incoming_links'></th>" ;
-		else if ( col == "fileusage" ) ret += "<th class='l_file_usage_data'></th>" ;
+		else if ( col == "image" ) ret += "<th tt='h_image'></th>" ;
+		else if ( col == "title" ) ret += "<th class='text-nowrap' tt='h_title'></th>" ;
+		else if ( col == "pageid" ) ret += "<th class='text-nowrap' tt='h_id'></th>" ;
+		else if ( col == "namespace" ) ret += "<th class='text-nowrap' tt='h_namespace'></th>" ;
+		else if ( col == "linknumber" ) ret += "<th tt='link_number'></th>" ;
+		else if ( col == "length" ) ret += "<th class='text-nowrap' tt='h_len'></th>" ;
+		else if ( col == "touched" ) ret += "<th class='text-nowrap' tt='h_touched'></th>" ;
+		else if ( col == "wikidata" ) ret += "<th tt='h_wikidata'></th>" ;
+		else if ( col == "coordinates" ) ret += "<th tt='h_coordinates'></th>" ;
+		else if ( col == "defaultsort" ) ret += "<th tt='h_defaultsort'></th>" ;
+		else if ( col == "disambiguation" ) ret += "<th tt='h_disambiguation'></th>" ;
+		else if ( col == "incoming_links" ) ret += "<th tt='h_incoming_links'></th>" ;
+		else if ( col == "fileusage" ) ret += "<th tt='file_usage_data'></th>" ;
 		else { // File data etc.
 			for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) {
-				if ( *k == col ) ret += "<th class='l_h_"+col+"'></th>" ;
+				if ( *k == col ) ret += "<th tt='h_"+col+"'></th>" ;
 			}
 		}
 	}
