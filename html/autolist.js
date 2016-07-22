@@ -164,7 +164,8 @@ function AutoList ( callback ) {
 	
 	this.addNewQ = function ( q ) {
 		if ( $('#autolist_box_new_q').length == 0 ) {
-			$('#autolist_box').append ( "<div class='autolist_subbox'><div class='l_created_items'>"+_t('created_items')+"</div><textarea id='autolist_box_new_q' rows='4' style='width:80px;font-size:8pt'></textarea></div>" ) ;
+			$('#autolist_box').append ( "<div class='autolist_subbox'><div tt='created_items'></div><textarea id='autolist_box_new_q' rows='4' style='width:80px;font-size:8pt'></textarea></div>" ) ;
+			tt.updateInterface ( $('#autolist_box') ) ;
 		}
 		var t = $('#autolist_box_new_q').val() ;
 		if ( t != '' ) t += "\n" ;
@@ -306,30 +307,31 @@ console.log ( me.concurrent , me.running.length ) ;
 			h += "<div class='autolist_subbox'>" ;
 			h += "<div>" + _t('al_welcome').replace( '$1', me.widar.getUserName() ) + "</div>" ;
 			if ( me.mode == "creator" ) {
-				h += "<div class='l_al_creator_mode'></div>" ;
+				h += "<div tt='al_creator_mode'></div>" ;
 			}
 			if ( me.widar.isBot() ) {
 				me.max_concurrent = 5 ;
 				me.concurrent = 5 ;
 				me.delay = 1 ;
-				h += "<div><input class='form-control'  style='width:50px;display:inline-block;font-size:8pt' type='number' id='bot_concurrent' value='"+me.concurrent+"' /> <span class='l_al_concurrent'></span> (1-"+me.max_concurrent+")</div>" ;
+				h += "<div><input class='form-control'  style='width:50px;display:inline-block;font-size:8pt' type='number' id='bot_concurrent' value='"+me.concurrent+"' /> <span tt='al_concurrent'></span> (1-"+me.max_concurrent+")</div>" ;
 			}
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
-			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm l_al_all' style='width:100%'></button><br/>" ;
-			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm l_al_none' style='width:100%'></button><br/>" ;
-			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm l_al_toggle' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm' tt='al_all' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm' tt='al_none' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm' tt='al_toggle' style='width:100%'></button><br/>" ;
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
-			h += "<textarea id='al_commands' class='ph_al_commands_ph' rows=3 style='padding:2px;width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
-			h += "<button id='al_do_process' class='btn btn-success btn-sm l_al_process'></button>" ;
-			h += "<button id='al_do_stop' class='btn btn-danger btn-sm l_al_stop' style='display:none'></button>" ;
+			h += "<textarea id='al_commands' tt_placeholder='al_commands_ph' rows=3 style='padding:2px;width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
+			h += "<button id='al_do_process' class='btn btn-success btn-sm' tt='al_process'></button>" ;
+			h += "<button id='al_do_stop' class='btn btn-danger btn-sm' tt='al_stop' style='display:none'></button>" ;
 			h += "<div id='al_status'></div>" ;
 			h += "</div>" ;
 		} else {
-			h += "<div>" + me.widar.getLoginLink("<span class='l_al_login'></span>") + "</div>" ;
+			h += "<div>" + me.widar.getLoginLink("<span tt='al_login'></span>") + "</div>" ;
 		}
 		$('#autolist_box').html ( h ) ;
+		tt.updateInterface ( $('#autolist_box') ) ;
 		
 		function updateConcurrency () {
 			var v = Math.floor ( $('#bot_concurrent').val() * 1 ) ;
@@ -408,12 +410,7 @@ console.log ( me.concurrent , me.running.length ) ;
 	}
 
 	this.setInterfaceLanguage = function ( l ) {
-		$.each ( interface_text['en'] , function ( k , v ) {
-			if ( !k.match(/^al_/) ) return ; // AutoList only
-			if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
-			$('#autolist_box .l_'+k).html ( v ) ;
-			$('#autolist_box .ph_'+k).attr ( { placeholder:v } ) ;
-		} ) ;
+		tt.setLanguage ( l ) ;
 	}
 	
 	this.addCheckLinks = function () {
@@ -423,8 +420,9 @@ console.log ( me.concurrent , me.running.length ) ;
 			var tr = $(this) ;
 			var td = $(tr.find('td').get(2)) ;
 			var page = $(td.find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'').replace(/_/,' ') ;
-			td.append ( " <span class='pull-xs-right smaller'>[<a class='l_check_wd' target='_blank'>"+_t('check_wd')+"</a>]</span>" ) ;
-			td.find('a.l_check_wd').attr({href:'https://tools.wmflabs.org/wikidata-todo/duplicity.php?wiki='+output_wiki+'&norand=1&page='+page}) ;
+			td.append ( " <span class='pull-xs-right smaller'>[<a tt='check_wd' target='_blank'></a>]</span>" ) ;
+			tt.updateInterface ( td ) ;
+			td.find('a[tt="check_wd"]').attr({href:'https://tools.wmflabs.org/wikidata-todo/duplicity.php?wiki='+output_wiki+'&norand=1&page='+page}) ;
 		} ) ;
 	}
 

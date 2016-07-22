@@ -1,3 +1,4 @@
+var tt = {} ; // Translations from tools-static.wmflabs.org/tooltranslate/tt.js
 var params = {} ;
 var default_params = {
 	'show_redirects':'both',
@@ -24,7 +25,6 @@ var namespaces_loading = false ;
 var last_namespaces = {} ;
 var last_namespace_project = '' ;
 var interface_language = '' ;
-var interface_text = {} ;
 
 var load_thumbnails_ahead = 2 ; // 1 to not load ahead
 $.fn.is_on_screen = function(){
@@ -63,13 +63,7 @@ function getUrlVars () {
 }
 
 function _t ( k , alt_lang ) {
-	if ( typeof alt_lang == 'undefined' ) alt_lang = '' ;
-	var l = interface_language ;
-	if ( alt_lang != '' ) l = alt_lang ;
-	var ret = "<i>" + k + "</i>" ;
-	if ( typeof interface_text['en'][k] != 'undefined' ) ret = interface_text['en'][k] ;
-	if ( typeof interface_text[l] != 'undefined' && typeof interface_text[l][k] != 'undefined' ) ret = interface_text[l][k] ;
-	return ret ;
+	return tt.t(k,{lang:alt_lang}) ;
 }
 
 function setPermalink ( q ) {
@@ -156,18 +150,13 @@ function applyParameters () {
 function setInterfaceLanguage ( l ) {
 	if ( interface_language == l ) return false ;
 	interface_language = l ;
-	$('input[name="interface_language"]').val ( l ) ;
-	$.each ( interface_text['en'] , function ( k , v ) {
-		if ( typeof interface_text[l][k] != 'undefined' ) v = interface_text[l][k] ;
-		$('.l_'+k).html ( v ) ;
-		$('.ph_'+k).attr ( { placeholder:v } ) ;
-	} ) ;
-	$('a.l_manual').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
-	$('a.l_interface_text').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/Interface#'+l.toUpperCase() } ) ;
-//	if ( typeof autolist != 'undefined' ) autolist.setInterfaceLanguage ( l ) ;
-	$('#doit').attr ( { value : _t('doit') } ) ;
+
+	if ( tt.language != l ) tt.setLanguage ( l ) ;
+	
 	
 	// Misc special updates
+//console.log ( "!" ) ;
+	$('a[tt="manual"]').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
 	$('#query_length').text ( _t('query_length').replace('$1',$('#query_length').attr('sec')) ) ;
 	$('#num_results').text ( _t('num_results').replace('$1',$('#num_results').attr('num')) ) ;
 
@@ -182,49 +171,18 @@ function setInterfaceLanguage ( l ) {
 		if ( h == h2 ) h2 = h + "&interface_language=" + l ;
 		a.attr ( { href : h2 } ) ;
 	} ) ;
-	
+
 	return false ;
 }
 
 function loadInterface ( init_lang , callback ) {
 
-	if ( typeof raw_interface_text_object == 'undefined' ) {
-		setTimeout ( function () { loadInterface ( init_lang , callback ) } , 100 ) ;
-		return ;
-	}
-
 	loadNamespaces ( function () {
 
-		var wt = raw_interface_text_object.parse.wikitext['*'] ;
-		var rows = wt.split("\n") ;
-		var lang = '' ;
-		$.each ( rows , function ( k , v ) {
-			var m = v.match ( /^==\s*(.+?)\s*==$/ ) ;
-			if ( m != null ) {
-				lang = m[1].toLowerCase() ;
-				interface_text[lang] = {} ;
-			
-				var h = '<a class="dropdown-item" href="#">' + m[1] + '</a>' ;
-				$('#interface_languages').append ( h ) ;
-				return ;
-			}
-			m = v.match ( /^;(.+?):(.*)$/ ) ;
-			if ( m == null ) return ;
-			if ( m[1] == 'toolname' ) m[2] = 'PetScan' ; // HARDHACK FIXME
-			interface_text[lang][m[1]] = m[2] ;
-		} ) ;
-	
-		$('#interface_languages a.dropdown-item').click ( function (e) {
-			e.preventDefault();
-			var o = $(this) ;
-			var lang = o.text().toLowerCase() ;
-			setInterfaceLanguage ( lang ) ;
-		} ) ;
-	
 		setInterfaceLanguage ( init_lang ) ;
 
-		$('input[name="language"]').keyup ( loadNamespaces ) ;
-		$('input[name="project"]').keyup ( loadNamespaces ) ;
+		$('input[name="language"]').keyup ( function () { loadNamespaces() } ) ;
+		$('input[name="project"]').keyup (  function () { loadNamespaces() } ) ;
 
 
 		applyParameters() ;
@@ -254,7 +212,7 @@ function loadNamespaces ( callback ) {
 			id *= 1 ;
 			if ( id < 0 ) return ;
 			var title = v['*'] ;
-			if ( title == '' ) title = "<span class='l_namespace_0'></span>" ; //_t('namespace_0',l) ;
+			if ( title == '' ) title = "<span tt='namespace_0'></span>" ; //_t('namespace_0',l) ;
 			last_namespaces[id] = [ title , (v.canonical||title) ] ;
 			if ( id > max_namespace_id ) max_namespace_id = id ;
 		} ) ;
@@ -447,7 +405,7 @@ function showExamples ( filter ) {
 
 function addExamples () {
 //	$('#example_dialog').on('shown.bs.modal',function(){$('#example_search').focus(); return false}) ;
-	var o = $('a.l_examples') ;
+	var o = $('a[tt="examples"]') ;
 	o.click ( function () {
 		$('#example_search').val('') ;
 		if ( example_list.length == 0 ) {
@@ -505,9 +463,6 @@ function initializeInterface () {
 		if ( typeof window.AutoList != 'undefined' ) autolist = new AutoList () ;
 	} ) ;
 	$('input[name="language"]').focus() ;
-/*	$('#doit').click ( function () {
-		$('#main_form').submit() ;
-	} ) ;*/
 	
 	$('#main_form ul.nav-tabs a').click ( function (e) {
 		e.preventDefault() ;
@@ -590,5 +545,17 @@ function initializeInterface () {
 }
 
 $(document).ready ( function () {
-	initializeInterface() ;
+	tt = new ToolTranslation ( {
+		tool:'petscan',
+		language:'en',
+		fallback:'en',
+		highlight_missing:true,
+		callback:function () {
+			tt.addILdropdown ( '#interface_languages_wrapper' ) ;
+			initializeInterface() ;
+		} , 
+		onUpdateInterface : function () {
+			setInterfaceLanguage ( tt.language ) ;
+		}
+	} ) ;
 } ) ;
