@@ -88,6 +88,7 @@ function setPermalink ( q ) {
 	
 	var url = '/?' + q ;
 	var h = _t("query_url") ;
+	if ( typeof h == 'undefined' ) return ;
 	h = h.replace ( /\$1/ , url+"&doit=" ) ;
 	h = h.replace ( /\$2/ , url ) ;
 	
@@ -151,26 +152,35 @@ function setInterfaceLanguage ( l ) {
 	if ( interface_language == l ) return false ;
 	interface_language = l ;
 
-	if ( tt.language != l ) tt.setLanguage ( l ) ;
-	
-	
-	// Misc special updates
-//console.log ( "!" ) ;
-	$('a[tt="manual"]').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
-	$('#query_length').text ( _t('query_length').replace('$1',$('#query_length').attr('sec')) ) ;
-	$('#num_results').text ( _t('num_results').replace('$1',$('#num_results').attr('num')) ) ;
+	function specialUpdates () {
+		// Misc special updates
+		$('a[tt="manual"]').attr ( { href:'https://meta.wikimedia.org/wiki/PetScan/'+l } ) ;
+		$('#query_length').text ( _t('query_length').replace('$1',$('#query_length').attr('sec')) ) ;
+		$('#num_results').text ( _t('num_results').replace('$1',$('#num_results').attr('num')) ) ;
 
-	// Permalink
-	var query = decodeURIComponent ( $('#querystring').text() ) ;
-	if ( query != '' ) setPermalink ( query ) ;
+		// Permalink
+		var query = decodeURIComponent ( $('#querystring').text() ) ;
+		if ( query != '' ) setPermalink ( query ) ;
 	
-	$('#permalink a').each ( function () {
-		var a = $(this) ;
-		var h = a.attr('href') ;
-		var h2 = h.replace ( /\binterface_language=[^&]+/ , 'interface_language='+l ) ;
-		if ( h == h2 ) h2 = h + "&interface_language=" + l ;
-		a.attr ( { href : h2 } ) ;
-	} ) ;
+		$('#permalink a').each ( function () {
+			var a = $(this) ;
+			var h = a.attr('href') ;
+			var h2 = h.replace ( /\binterface_language=[^&]+/ , 'interface_language='+l ) ;
+			if ( h == h2 ) h2 = h + "&interface_language=" + l ;
+			a.attr ( { href : h2 } ) ;
+		} ) ;
+	}
+
+
+	if ( tt.language != l ) {
+		tt.setLanguage ( l , function () {
+			specialUpdates() ;
+		} ) ;
+	} else {
+		specialUpdates() ;
+	}
+	
+	
 
 	return false ;
 }
