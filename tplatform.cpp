@@ -307,6 +307,10 @@ void TPlatform::legacyAutoListParameters () {
 		params["language"] = getParam("lang","") ;
 		query += "&language=" + urlencode ( getParam("language","") ) ;
 	}
+	if ( getParam("language","").empty() && getParam("lang","").empty() && !getParam("interface_language","").empty() ) {
+		params["language"] = getParam("interface_language","") ;
+		query += "&language=" + urlencode ( getParam("interface_language","") ) ;
+	}
 	if ( getParam("categories","").empty() && !getParam("category","").empty() ) {
 		params["categories"] = getParam("category","") ;
 		query += "&categories=" + urlencode ( getParam("category","") ) ;
@@ -768,7 +772,7 @@ void TPlatform::processWikidata ( TPageList &pl ) {
 
 string TPlatform::getWiki () {
 	if ( !wiki.empty() ) return wiki ;
-	string l = getParam ( "language" , "en" ) ;
+	string l = getParam ( "language" , getParam ( "interface_language" , "en" ) ) ;
 	string p = getParam ( "project" , "wikipedia" ) ;
 	if ( l == "wikidata" || p == "wikidata" ) wiki = "wikidatawiki" ;
 	else if ( l == "species" || l == "wikispecies" || p == "wikispecies" ) wiki = "specieswiki" ;
