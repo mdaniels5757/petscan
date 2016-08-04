@@ -374,6 +374,7 @@ string TPlatform::process () {
 
 	// Filter and post-process
 	filterWikidata ( pagelist ) ;
+	processSitelinks ( pagelist , getParam("sitelinks_yes","") , getParam("sitelinks_any","") , getParam("sitelinks_no","") , getParam("min_sitelink_count","") , getParam("max_sitelink_count","") ) ;
 	if ( !common_wiki.empty() && pagelist.wiki != common_wiki ) pagelist.convertToWiki ( common_wiki ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
@@ -390,12 +391,84 @@ string TPlatform::process () {
 
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 	
+	
 	sortResults ( pagelist ) ;
 	processRedlinks ( pagelist ) ; // Supersedes sort
 	params["format"] = getParam ( "format" , "html" , true ) ;
 
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
+}
+
+void TPlatform::processSitelinks ( TPageList &pagelist , string sitelinks_yes , string sitelinks_any , string sitelinks_no , string sitelinks_min , string sitelinks_max ) {
+	if ( trim(sitelinks_min) == "0" ) sitelinks_min.clear() ;
+	if ( sitelinks_yes.empty() && sitelinks_any.empty() && sitelinks_no.empty() && sitelinks_min.empty() && sitelinks_max.empty() ) return ;
+	pagelist.convertToWiki ( "wikidatawiki" ) ;
+	if ( pagelist.pages.empty() ) return ; // No point in filtering...
+	
+	stringReplace ( sitelinks_yes , "\r" , "" ) ;
+	stringReplace ( sitelinks_any , "\r" , "" ) ;
+	stringReplace ( sitelinks_no  , "\r" , "" ) ;
+
+	vector <string> yes , any , no ;
+	split ( trim(sitelinks_yes) , yes , '\n' ) ;
+	split ( trim(sitelinks_any) , any , '\n' ) ;
+	split ( trim(sitelinks_no)  , no  , '\n' ) ;
+	bool use_min_max = !sitelinks_min.empty() || !sitelinks_max.empty() ;
+	
+	TWikidataDB db ( pagelist.wiki , this ) ;
+	
+	// Construct base SQL
+	string sql = "SELECT " ;
+	if ( use_min_max ) sql += "epp_entity_id,(SELECT count(*) FROM wb_items_per_site WHERE ips_item_id=epp_entity_id) AS sitelink_count" ;
+	else sql += "DISTINCT epp_entity_id" ;
+	sql += " FROM wb_entity_per_page WHERE epp_entity_type='item'" ;
+	string having ;
+
+	for ( auto site:yes ) {
+		if ( site.empty() ) continue ;
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+	}
+	if ( any.size() > 0 ) {
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
+	}
+	for ( auto site:no ) {
+		if ( site.empty() ) continue ;
+		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+	}
+	if ( !sitelinks_min.empty() ) {
+		string s = ui2s ( atoi ( sitelinks_min.c_str() ) ) ; // Enforce number
+		if ( !having.empty() ) having += " AND " ;
+		having += "sitelink_count>=" + s ;
+	}
+	if ( !sitelinks_max.empty() ) {
+		string s = ui2s ( atoi ( sitelinks_max.c_str() ) ) ; // Enforce number
+		if ( !having.empty() ) having += " AND " ;
+		having += "sitelink_count<=" + s ;
+	}
+	
+
+	string items ;
+	map <string,TPage> qnum2page ;
+	for ( auto page:pagelist.pages ) {
+		if ( !items.empty() ) items += "," ;
+		string qnum = page.name.substr(1) ;
+		items += qnum ;
+		qnum2page[qnum] = page ;
+	}
+	pagelist.pages.clear() ;
+
+	sql += " AND epp_entity_id IN (" + items + ")" ;
+	
+	if ( use_min_max ) sql += " GROUP BY epp_entity_id" ;
+	if ( !having.empty() ) sql += " HAVING " + having ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		pagelist.pages.push_back ( qnum2page[row[0]] ) ;
+	}
+	
 }
 
 void TPlatform::processRedlinks ( TPageList &pagelist ) {

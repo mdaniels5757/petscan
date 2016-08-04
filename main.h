@@ -339,6 +339,7 @@ protected:
 	void processPages ( TPageList &pl ) ;
 	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates , bool add_defaultsort , bool add_disambiguation , bool add_incoming_links ) ;
 	void processWikidata ( TPageList &pl ) ;
+	void processSitelinks ( TPageList &pagelist , string sitelinks_yes , string sitelinks_any , string sitelinks_no , string sitelinks_min , string sitelinks_max ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
