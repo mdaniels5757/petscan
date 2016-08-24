@@ -338,7 +338,7 @@ bool TSourceDatabase::getPages () {
 	// Negative categories
 	if ( has_neg_cats ) {
 		for ( auto i = cat_neg.begin() ; i != cat_neg.end() ; i++ ) {
-			sql += " AND NOT EXISTS (SELECT * FROM categorylinks WHERE cl_from=p.page_id AND cl_to IN (" ;
+			sql += " AND p.page_id NOT IN (SELECT DISTINCT cl_from FROM categorylinks WHERE cl_to IN (" ;
 			sql += listEscapedStrings ( db , *i ) ;
 			sql += "))" ;
 		}
@@ -436,13 +436,15 @@ bool TSourceDatabase::getPages () {
 		}
 	}
 	
-//cout << sql << endl ;
+cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
 
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+
+cout << "Query is done.\n" ;
 	
 	if ( !result ) {
 		cerr << "On wiki " << wiki << ", SQL query failed: " << sql << endl ;
@@ -472,6 +474,8 @@ bool TSourceDatabase::getPages () {
 		pl1.pages.push_back ( p ) ;
 	}
 	mysql_free_result(result);
+
+cout << "Getting results is done.\n" ;
 
 	pl1.pages.swap ( pages ) ;
 
