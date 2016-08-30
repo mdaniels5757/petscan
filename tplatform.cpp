@@ -387,14 +387,14 @@ string TPlatform::process () {
 	if ( wikidata_label_language.empty() ) wikidata_label_language = getParam("interface_language","en") ;
 	pagelist.loadMissingMetadata ( wikidata_label_language ) ;
 	
-	processCreator ( pagelist ) ;
-
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 	
 	
 	sortResults ( pagelist ) ;
 	processRedlinks ( pagelist ) ; // Supersedes sort
 	params["format"] = getParam ( "format" , "html" , true ) ;
+
+	processCreator ( pagelist ) ;
 
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
@@ -628,7 +628,7 @@ void TPlatform::filterWikidata ( TPageList &pagelist ) {
 
 void TPlatform::processCreator ( TPageList &pagelist ) {
 	if ( pagelist.wiki == "wikidatawiki" ) return ;
-	if ( getParam("wikidata_item","") != "without" ) return ;
+	if ( getParam("wikidata_item","") != "without" && !doOutputRedlinks() ) return ;
 	if ( pagelist.size() == 0 ) return ;
 
 	// This method assumes a "small number" (<DB_PAGE_BATCH_SIZE), so won't do batching. Yes I'm lazy.

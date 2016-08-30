@@ -211,6 +211,10 @@ string TRenderer::renderPageListHTML ( TPageList &pagelist ) {
 	} else if ( pagelist.wiki == "wikidatawiki" ) {
 		ret += "<div id='autolist_box' mode='autolist'></div>" ;
 		use_autolist = true ;
+	} else if ( pagelist.wiki != "wikidatawiki" && platform->doOutputRedlinks() ) {
+		ret += "<div id='autolist_box' mode='creator'></div>" ;
+		use_autolist = true ;
+		autolist_creator_mode = true ;
 	}
 	
 	// Gallery?
