@@ -631,7 +631,9 @@ string TRenderer::getLink ( TPage &page ) {
 		ret += " <small><tt>[" + label + "]</tt></small>" ;
 	} else {
 		url = "https://" + getWikiServer ( wiki ) + "/wiki/" + url ;
-		ret = "<a class='pagelink' target='_blank' href='" + url + "'>" + label + "</a>" ;
+		ret = "<a class='pagelink" ;
+		if ( platform->doOutputRedlinks() ) ret += " redlink" ;
+		ret += "' target='_blank' href='" + url + "'>" + label + "</a>" ;
 	}
 	return ret ;
 }

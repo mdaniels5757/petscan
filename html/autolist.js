@@ -68,13 +68,30 @@ function WiDaR ( callback ) {
 		} , callback ) ;
 	}
 	
-	this.createItemForPage = function ( page , wiki , callback ) {
-		this.abstractCall ( {
-			action:'create_item_from_page',
-			botmode:1,
-			site:wiki,
-			page:page
-		} , callback ) ;
+	this.createNewItem = function ( page , wiki , from_redlink , callback ) {
+		var me = this ;
+		if ( from_redlink ) {
+			this.abstractCall ( {
+				action:'create_blank_item',
+				botmode:1
+			} , function ( d ) {
+				me.abstractCall ( {
+					action:'set_label',
+					q:d.q,
+					lang:wiki.replace(/wik.+$/,'').replace(/commons/,'en'),
+					label:page
+				} , function ( d2 ) {
+					callback ( d ) ;
+				} ) ;
+			} ) ;
+		} else {
+			this.abstractCall ( {
+				action:'create_item_from_page',
+				botmode:1,
+				site:wiki,
+				page:page
+			} , callback ) ;
+		}
 	}
 	
 	this.setClaim = function ( q , prop , target_q , callback ) {
@@ -113,7 +130,9 @@ function AutoList ( callback ) {
 			
 			if ( me.mode == 'creator' ) {
 				var cmd = { q:q , status:'waiting' , mode:'create' } ;
-				cmd.page = decodeURIComponent ( $($(tr.find("td").get(2)).find('a').get(0)).attr('href').replace(/^.+?\/wiki\//,'') ) ;
+				var a = $($(tr.find("td").get(2)).find('a').get(0)) ;
+				if ( a.hasClass('redlink') ) cmd.from_redlink = true ;
+				cmd.page = decodeURIComponent ( a.attr('href').replace(/^.+?\/wiki\//,'') ) ;
 				remove_q = me.commands_todo.length ;
 				me.commands_todo.push ( cmd ) ;
 			}
@@ -181,7 +200,7 @@ function AutoList ( callback ) {
 		
 		if ( cmd.mode == 'create' ) {
 		
-			me.widar.createItemForPage ( cmd.page , output_wiki , function ( d ) {
+			me.widar.createNewItem ( cmd.page , output_wiki , cmd.from_redlink , function ( d ) {
 				// TODO error check: d.error=="OK"
 				if ( typeof d == 'undefined' || d.error != 'OK' ) {
 					if ( typeof d.error == 'object' ) {
