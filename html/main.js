@@ -15,6 +15,7 @@ var default_params = {
 	'output_compatability':'catscan',
 	'active_tab':'tab_categories',
 	'common_wiki':'auto',
+	'subpage_filter':'either',
 	'sortorder':'ascending'
 } ;
 
@@ -519,7 +520,7 @@ function initializeInterface () {
 		var text = o.val() ;
 		var wiki = wo.val() ;
 		var wop = $(wo.parents("div.input-group").get(0)) ;
-		if ( $.trim(text) != '' && !wiki.match(/wiki\s*$/) ) { //$.trim(wiki) == '' ) {
+		if ( $.trim(text) != '' && !wiki.match(/wiki\s*$/) && !wiki.match(/source\s*$/) ) { //$.trim(wiki) == '' ) {
 			wop.addClass ( 'has-danger' ) ;
 			$('#doit').prop('disabled', true)
 		} else {

@@ -379,6 +379,7 @@ string TPlatform::process () {
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
 	processPages ( pagelist ) ;
+	processSubpages ( pagelist ) ;
 
 	gettimeofday(&after , NULL);
 	querytime = time_diff(before , after)/1000000 ;
@@ -648,6 +649,40 @@ void TPlatform::processCreator ( TPageList &pagelist ) {
 	mysql_free_result(result);
 }
 
+void TPlatform::processSubpages ( TPageList &pl ) {
+	bool add_subpages = !getParam("add_subpages","").empty() ;
+	string subpage_filter = getParam("subpage_filter","either") ;
+	if ( !add_subpages && subpage_filter != "subpages" && subpage_filter != "no_subpages" ) return ;
+	
+	if ( add_subpages ) {
+		TPageList nl ( pl.wiki ) ;
+		TWikidataDB db ( pl.wiki , this ) ;
+		for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
+			nl.pages.push_back ( *i ) ; // Original page
+			string sql = "SELECT page_title FROM page WHERE page_namespace=" + ui2s(i->meta.ns) ;
+			sql += " AND page_title LIKE '" + db.escape(space2_(i->getNameWithoutNamespace())) + "/%'" ;
+			MYSQL_RES *result = db.getQueryResults ( sql ) ;
+			MYSQL_ROW row;
+			while ((row = mysql_fetch_row(result))) {
+				TPage p ( row[0] , i->meta.ns ) ;
+				nl.pages.push_back ( p ) ;
+			}
+			mysql_free_result(result);
+		}
+		pl.swap ( nl ) ;
+	}
+	
+	if ( subpage_filter != "subpages" && subpage_filter != "no_subpages" ) return ;
+
+	TPageList nl ( pl.wiki ) ;
+	bool keep_subpages = ( subpage_filter == "subpages" ) ;
+	for ( auto i = pl.pages.begin() ; i != pl.pages.end() ; i++ ) {
+		bool has_slash = ( i->name.find("/") != string::npos ) ;
+		if ( has_slash != keep_subpages ) continue ;
+		nl.pages.push_back ( *i ) ;
+	}
+	pl.swap ( nl ) ;
+}
 
 void TPlatform::processPages ( TPageList &pl ) {
 	bool add_coordinates = !getParam("add_coordinates","").empty() ;
