@@ -20,8 +20,10 @@ bool TSourceSPARQL::runQuery ( string query ) {
 	clear() ;
 	wiki = "wikidatawiki" ;
 	
+	string sparql_tool_note = "#TOOL: PetScan\n" ;
+	
 	json j ;
-	string url = "https://query.wikidata.org/sparql?format=json&query=" + escapeURLcomponent ( sparql_prefixes + query ) ;
+	string url = "https://query.wikidata.org/sparql?format=json&query=" + escapeURLcomponent ( sparql_tool_note + sparql_prefixes + query ) ;
 	if ( !loadJSONfromURL ( url , j ) ) {
 		url = "https://query.wikidata.org/#" + escapeURLcomponent ( sparql_prefixes + query ) ;
 		return error ( "Error while running SPARQL query. <a class='alert-link' href='"+url+"' target='_blank'>Check if the query works</a>." ) ;
