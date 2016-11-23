@@ -401,19 +401,6 @@ bool TSourceDatabase::getPages () {
 	}
 	
 	
-	if ( params.only_new_since ) {
-		if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-		if ( !params.after.empty() )  sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-//		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-//		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_parent_id=0 AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-	} else {
-		if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-		if ( !params.after.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-//		if ( !params.before.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-//		if ( !params.after.empty() ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-	}
-
-
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
@@ -424,6 +411,24 @@ bool TSourceDatabase::getPages () {
 	if ( params.page_wikidata_item == "without" && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0 ) {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
+
+
+	if ( params.before+params.after != "" ) {
+		sql += " INNER JOIN (revision r) on r.rev_page=p.page_id" ;
+		if ( params.only_new_since ) sql += " AND r.rev_parent_id=0" ;
+		if ( !params.before.empty() ) sql += " AND rev_timestamp<='"+db.escape(params.before)+"'" ;
+		if ( !params.after.empty() )  sql += " AND rev_timestamp>='"+db.escape(params.after)+"'" ;
+/*
+		if ( params.only_new_since ) {
+			if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+			if ( !params.after.empty() )  sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+		} else {
+			if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp<='"+db.escape(params.before)+"')" ;
+			if ( !params.after.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp>='"+db.escape(params.after)+"')" ;
+		}
+*/
+	}
+
 	
 
 	vector <string> having ;	
