@@ -468,7 +468,6 @@ function receiveEnglishNamespaceData ( j ) {
 </div>
 </div>
 
-
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"></label>
 <div class="col-sm-4">
@@ -479,6 +478,48 @@ function receiveEnglishNamespaceData ( j ) {
 <div class="input-group"><div class="input-group-addon" tt="max_sitelink_count"></div><input class="form-control" name="max_sitelink_count" value="" type="number"></div>
 </div>
 </div>
+
+
+
+
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label" tt="labels_etc"></label>
+<div class="col-sm-10">
+<div class="col-sm-3">
+<div tt='labels_yes'></div>
+<textarea class="form-control" name='labels_yes' tt_placeholder='ph_labels' rows=4 style="width:100%"></textarea>
+<div>
+<label><input type='checkbox' name='cb_labels_yes_l' value='1' /> <span tt='labels'></span></label>
+<label><input type='checkbox' name='cb_labels_yes_a' value='1' /> <span tt='aliases'></span></label>
+<label><input type='checkbox' name='cb_labels_yes_d' value='1' /> <span tt='descriptions'></span></label>
+</div>
+<div><input class="form-control" type='text' name='langs_labels_yes' tt_placeholder='ph_langs_labels' /></div>
+</div>
+<div class="col-sm-3">
+<div tt='labels_any'></div>
+<textarea class="form-control" name='labels_any' tt_placeholder='ph_labels' rows=4 style="width:100%"></textarea>
+<div>
+<label><input type='checkbox' name='cb_labels_any_l' value='1' /> <span tt='labels'></span></label>
+<label><input type='checkbox' name='cb_labels_any_a' value='1' /> <span tt='aliases'></span></label>
+<label><input type='checkbox' name='cb_labels_any_d' value='1' /> <span tt='descriptions'></span></label>
+</div>
+<div><input class="form-control" type='text' name='langs_labels_any' tt_placeholder='ph_langs_labels' /></div>
+</div>
+<div class="col-sm-3">
+<div tt='labels_no' ></div>
+<textarea class="form-control" name='labels_no'  tt_placeholder='ph_labels' rows=4 style="width:100%"></textarea>
+<div>
+<label><input type='checkbox' name='cb_labels_no_l' value='1' /> <span tt='labels'></span></label>
+<label><input type='checkbox' name='cb_labels_no_a' value='1' /> <span tt='aliases'></span></label>
+<label><input type='checkbox' name='cb_labels_no_d' value='1' /> <span tt='descriptions'></span></label>
+</div>
+<div><input class="form-control" type='text' name='langs_labels_no' tt_placeholder='ph_langs_labels' /></div>
+</div>
+<div class="col-sm-2"></div>
+</div>
+</div>
+
 
 
 </div> <!--tab panel-->

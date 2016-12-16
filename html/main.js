@@ -16,6 +16,9 @@ var default_params = {
 	'active_tab':'tab_categories',
 	'common_wiki':'auto',
 	'subpage_filter':'either',
+	'cb_labels_yes_l':'1',
+	'cb_labels_any_l':'1',
+	'cb_labels_no_l':'1',
 	'sortorder':'ascending'
 } ;
 

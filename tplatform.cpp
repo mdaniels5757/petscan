@@ -374,7 +374,8 @@ string TPlatform::process () {
 
 	// Filter and post-process
 	filterWikidata ( pagelist ) ;
-	processSitelinks ( pagelist , getParam("sitelinks_yes","") , getParam("sitelinks_any","") , getParam("sitelinks_no","") , getParam("min_sitelink_count","") , getParam("max_sitelink_count","") ) ;
+	processSitelinks ( pagelist ) ;
+	processLabels ( pagelist ) ;
 	if ( !common_wiki.empty() && pagelist.wiki != common_wiki ) pagelist.convertToWiki ( common_wiki ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
@@ -401,7 +402,106 @@ string TPlatform::process () {
 	return renderer.renderPageList ( pagelist ) ;
 }
 
-void TPlatform::processSitelinks ( TPageList &pagelist , string sitelinks_yes , string sitelinks_any , string sitelinks_no , string sitelinks_min , string sitelinks_max ) {
+void TPlatform::getParameterAsStringArray ( string s , vector <string> &vs ) {
+	vs.clear() ;
+	stringReplace ( s  , "\r" , "" ) ;
+	split ( trim(s) , vs , '\n' ) ;
+}
+
+void TPlatform::processLabels ( TPageList &pagelist ) {
+	vector <string> yes , any , no ;
+	getParameterAsStringArray ( getParam("labels_yes","") , yes ) ;
+	getParameterAsStringArray ( getParam("labels_any","") , any ) ;
+	getParameterAsStringArray ( getParam("labels_no","")  , no  ) ;
+	if ( yes.size()+any.size()+no.size() == 0 ) return ; // No point in filtering...
+
+	pagelist.convertToWiki ( "wikidatawiki" ) ;
+	if ( pagelist.pages.empty() ) return ; // No point in filtering...
+	
+	string langs_yes = getParam("langs_labels_yes","") ;
+	string langs_any = getParam("langs_labels_any","") ;
+	string langs_no  = getParam("langs_labels_no" ,"") ;
+	langs_yes = trim ( regex_replace ( langs_yes , regex("[^a-z,]") , string("") ) ) ;
+	langs_any = trim ( regex_replace ( langs_any , regex("[^a-z,]") , string("") ) ) ;
+	langs_no  = trim ( regex_replace ( langs_no  , regex("[^a-z,]") , string("") ) ) ;
+	
+	TWikidataDB db ( pagelist.wiki , this ) ;
+	string sql = "SELECT DISTINCT term_entity_id FROM wb_terms t1 where term_entity_type='item'" ;
+	string field = "term_text" ; // term_search_key case-sensitive; term_text case-insensitive?
+	
+	if ( yes.size() > 0 ) {
+		for ( auto s:yes ) {
+			sql += " AND " + field + " LIKE \"" + db.escape(s) + "\"" ;
+			if ( !langs_yes.empty() ) sql += " AND term_language IN ('" + regex_replace ( langs_yes , regex(",") , string("','") ) + "')" ;
+			vector <string> types ;
+			if ( !getParam("cb_labels_yes_l","").empty() ) types.push_back ( "label" ) ;
+			if ( !getParam("cb_labels_yes_a","").empty() ) types.push_back ( "alias" ) ;
+			if ( !getParam("cb_labels_yes_d","").empty() ) types.push_back ( "description" ) ;
+			if ( types.size() > 0 ) sql += " AND term_type IN (" + TSourceDatabase::listEscapedStrings ( db , types , true ) + ")" ;
+		}
+	}
+
+	if ( any.size() > 0 ) {
+		sql += " AND (" ;
+		bool first = true ;
+		for ( auto s:any ) {
+			if ( first ) first = false ;
+			else sql += " OR " ;
+			sql += " (" + field + " LIKE \"" + db.escape(s) + "\"" ;
+			if ( !langs_any.empty() ) sql += " AND term_language IN ('" + regex_replace ( langs_any , regex(",") , string("','") ) + "')" ;
+			vector <string> types ;
+			if ( !getParam("cb_labels_any_l","").empty() ) types.push_back ( "label" ) ;
+			if ( !getParam("cb_labels_any_a","").empty() ) types.push_back ( "alias" ) ;
+			if ( !getParam("cb_labels_any_d","").empty() ) types.push_back ( "description" ) ;
+			if ( types.size() > 0 ) sql += " AND term_type IN (" + TSourceDatabase::listEscapedStrings ( db , types , true ) + ")" ;
+			sql += ")" ;
+		}
+		sql += ")" ;
+	}
+	
+	if ( no.size() > 0 ) {
+		for ( auto s:no ) {
+			sql += " AND NOT EXISTS (SELECT t2.term_entity_id FROM wb_terms t2 WHERE" ;
+			sql += " t2.term_entity_id=t1.term_entity_id AND t2.term_entity_type='item'" ;
+			sql += " AND t2." + field + " LIKE \"" + db.escape(s) + "\"" ;
+			if ( !langs_no.empty() ) sql += " AND t2.term_language IN ('" + regex_replace ( langs_no , regex(",") , string("','") ) + "')" ;
+			vector <string> types ;
+			if ( !getParam("cb_labels_no_l","").empty() ) types.push_back ( "label" ) ;
+			if ( !getParam("cb_labels_no_a","").empty() ) types.push_back ( "alias" ) ;
+			if ( !getParam("cb_labels_no_d","").empty() ) types.push_back ( "description" ) ;
+			if ( types.size() > 0 ) sql += " AND t2.term_type IN (" + TSourceDatabase::listEscapedStrings ( db , types , true ) + ")" ;
+			sql += ")" ;
+		}
+	}
+	
+	
+	// Adding items; maybe do in batches?
+	string items ;
+	map <string,TPage> qnum2page ;
+	for ( auto page:pagelist.pages ) {
+		if ( !items.empty() ) items += "," ;
+		string qnum = page.name.substr(1) ;
+		items += qnum ;
+		qnum2page[qnum] = page ;
+	}
+	pagelist.pages.clear() ;
+
+	sql += " AND term_entity_id IN (" + items + ")" ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		pagelist.pages.push_back ( qnum2page[row[0]] ) ;
+	}
+}
+
+void TPlatform::processSitelinks ( TPageList &pagelist ) {
+	string sitelinks_yes = getParam("sitelinks_yes","") ;
+	string sitelinks_any = getParam("sitelinks_any","") ;
+	string sitelinks_no = getParam("sitelinks_no","") ;
+	string sitelinks_min = getParam("min_sitelink_count","") ;
+	string sitelinks_max = getParam("max_sitelink_count","") ;
+
 	if ( trim(sitelinks_min) == "0" ) sitelinks_min.clear() ;
 	if ( sitelinks_yes.empty() && sitelinks_any.empty() && sitelinks_no.empty() && sitelinks_min.empty() && sitelinks_max.empty() ) return ;
 	pagelist.convertToWiki ( "wikidatawiki" ) ;

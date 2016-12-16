@@ -340,7 +340,8 @@ protected:
 	void processSubpages ( TPageList &pl ) ;
 	void annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> > &ns_pages , bool add_image , bool add_coordinates , bool add_defaultsort , bool add_disambiguation , bool add_incoming_links ) ;
 	void processWikidata ( TPageList &pl ) ;
-	void processSitelinks ( TPageList &pagelist , string sitelinks_yes , string sitelinks_any , string sitelinks_no , string sitelinks_min , string sitelinks_max ) ;
+	void processSitelinks ( TPageList &pagelist ) ;
+	void processLabels ( TPageList &pagelist ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
@@ -348,6 +349,7 @@ protected:
 	void sortResults ( TPageList &pagelist ) ;
 	void processRedlinks ( TPageList &pagelist ) ;
 	void legacyAutoListParameters () ;
+	void getParameterAsStringArray ( string s , vector <string> &vs ) ;
 	string legacyCombinationParameters ( map <string,TSource *> &sources ) ;
 	
 	float querytime = 0 ; // seconds
