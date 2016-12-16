@@ -199,6 +199,7 @@ void TPlatform::getCommonWikiAuto ( map <string,TSource *> &sources ) {
 	wikis["cats"] = getWiki() ;
 	wikis["manual"] = getParam("manual_list_wiki","") ;
 	wikis["wikidata"] = "wikidatawiki" ;
+	wikis["labels"] = "wikidatawiki" ;
 	
 	string param = getParam("common_wiki","auto") ;
 
@@ -213,7 +214,7 @@ void TPlatform::getCommonWikiAuto ( map <string,TSource *> &sources ) {
 	} else {
 		common_wiki = wikis[param] ;
 	}
-	
+
 	if ( common_wiki.empty() ) return ; // Paranoia
 	
 	// Convert to common wiki
@@ -366,6 +367,21 @@ string TPlatform::process () {
 	for ( auto source:candidate_sources ) {
 		threads.push_back ( new std::thread ( &runSource , source , &sources ) ) ;
 	}
+	
+	if ( sources.size() == 0 ) { // Try fallbacks!
+		// Reset previous
+		for ( auto t:threads ) t->join() ;
+		candidate_sources.clear() ;
+		threads.clear() ;
+		
+		// Add fallback(s)
+		label_filter_used_as_primary = true ;
+		candidate_sources.push_back ( new TSourceLabels ( this ) ) ;
+		for ( auto source:candidate_sources ) {
+			threads.push_back ( new std::thread ( &runSource , source , &sources ) ) ;
+		}
+	}
+	
 	for ( auto t:threads ) t->join() ;
 
 	// Combine sources
@@ -408,16 +424,13 @@ void TPlatform::getParameterAsStringArray ( string s , vector <string> &vs ) {
 	split ( trim(s) , vs , '\n' ) ;
 }
 
-void TPlatform::processLabels ( TPageList &pagelist ) {
+string TPlatform::getLabelBaseSQL ( TWikidataDB &db ) {
 	vector <string> yes , any , no ;
 	getParameterAsStringArray ( getParam("labels_yes","") , yes ) ;
 	getParameterAsStringArray ( getParam("labels_any","") , any ) ;
 	getParameterAsStringArray ( getParam("labels_no","")  , no  ) ;
-	if ( yes.size()+any.size()+no.size() == 0 ) return ; // No point in filtering...
+	if ( yes.size()+any.size()+no.size() == 0 ) return "" ; // No point in filtering...
 
-	pagelist.convertToWiki ( "wikidatawiki" ) ;
-	if ( pagelist.pages.empty() ) return ; // No point in filtering...
-	
 	string langs_yes = getParam("langs_labels_yes","") ;
 	string langs_any = getParam("langs_labels_any","") ;
 	string langs_no  = getParam("langs_labels_no" ,"") ;
@@ -425,7 +438,6 @@ void TPlatform::processLabels ( TPageList &pagelist ) {
 	langs_any = trim ( regex_replace ( langs_any , regex("[^a-z,]") , string("") ) ) ;
 	langs_no  = trim ( regex_replace ( langs_no  , regex("[^a-z,]") , string("") ) ) ;
 	
-	TWikidataDB db ( pagelist.wiki , this ) ;
 	string sql = "SELECT DISTINCT term_entity_id FROM wb_terms t1 where term_entity_type='item'" ;
 	string field = "term_text" ; // term_search_key case-sensitive; term_text case-insensitive?
 	
@@ -474,6 +486,18 @@ void TPlatform::processLabels ( TPageList &pagelist ) {
 		}
 	}
 	
+	return sql ;
+}
+	
+void TPlatform::processLabels ( TPageList &pagelist ) {
+	if ( label_filter_used_as_primary ) return ; // Been there, done that...
+	
+	TWikidataDB db ( pagelist.wiki , this ) ;
+	string sql = getLabelBaseSQL ( db ) ;
+	if ( sql.empty() ) return ;
+
+	pagelist.convertToWiki ( "wikidatawiki" ) ;
+	if ( pagelist.pages.empty() ) return ; // No point in filtering...
 	
 	// Adding items; maybe do in batches?
 	string items ;

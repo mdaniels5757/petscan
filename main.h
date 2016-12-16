@@ -234,6 +234,12 @@ protected:
 	string sparql_prefixes = "PREFIX v: <http://www.wikidata.org/prop/statement/>\nPREFIX q: <http://www.wikidata.org/prop/qualifier/>\nPREFIX ps: <http://www.wikidata.org/prop/statement/>\nPREFIX pq: <http://www.wikidata.org/prop/qualifier/>\n" ;
 } ;
 
+class TSourceLabels : public TSource {
+public:
+	TSourceLabels ( TPlatform *p = NULL ) { platform = p ; source_name = "labels" ; } ;
+	virtual bool run () ;
+} ;
+
 class TSourcePagePile : public TSource {
 public:
 	TSourcePagePile ( TPlatform *p = NULL ) { platform = p ; source_name = "pagepile" ; } ;
@@ -324,6 +330,7 @@ public:
 	string getExistingLabel ( string name ) ;
 	bool doOutputRedlinks() { return output_redlinks ; }
 	void setDatabaseParameters ( TSourceDatabaseParams &db_params ) ;
+	string getLabelBaseSQL ( TWikidataDB &db ) ;
 	
 	map <string,string> config , params ;
 	string content_type , query ;
@@ -356,6 +363,7 @@ protected:
 	string wiki , common_wiki ;
 	map <string,bool> existing_labels ;
 	bool output_redlinks = false ;
+	bool label_filter_used_as_primary = false ;
 } ;
 
 class TRenderer {

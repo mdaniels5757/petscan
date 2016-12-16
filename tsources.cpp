@@ -15,6 +15,25 @@ bool TSource::error ( string s ) {
 //________________________________________________________________________________________________________________________
 
 
+
+bool TSourceLabels::run () {
+	clear() ;
+	wiki = "wikidatawiki" ;
+	TWikidataDB db ( wiki , platform ) ;
+	string sql = platform->getLabelBaseSQL ( db ) ;
+	if ( sql.empty() ) return false ;
+
+	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_ROW row;
+	while ((row = mysql_fetch_row(result))) {
+		pages.push_back ( TPage ( string("Q")+row[0] , 0 ) ) ;
+	}
+	return true ;
+}
+
+//________________________________________________________________________________________________________________________
+
+
 bool TSourceSPARQL::runQuery ( string query ) {
 	if ( query.empty() ) return false ;
 	clear() ;
