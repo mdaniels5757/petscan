@@ -6,6 +6,7 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 
 	bool file_data = !platform->getParam("ext_image_data","").empty() ;
 	bool file_usage = !platform->getParam("file_usage_data","").empty() ;
+	bool thumbnails_in_wiki_output = !platform->getParam("thumbnails_in_wiki_output","").empty() ;
 
 	string wdi = platform->getParam("wikidata_item","no") ;
 	bool show_wikidata_item = (wdi=="any"||wdi=="with") ;
@@ -31,13 +32,17 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 	
 	for ( auto i = pagelist.pages.begin() ; i != pagelist.pages.end() ; i++ ) {
 		ret += "|-\n" ;
-		string pre = i->meta.ns == 0 ? "" : ":" ; // This should really involve the namespace name...
-		if ( is_wikidata ) {
-			string label = i->meta.getMisc("label","") ;
-			if ( label.empty() ) ret += "| [[" + pre + _2space(i->name) + "|]]" ;
-			else ret += "| [[" + pre + i->name + "|"+label+"]]" ;
+		if ( i->meta.ns == 6 && thumbnails_in_wiki_output ) {
+			ret += "| [[" + _2space(i->name) + "|120px|]]" ;
 		} else {
-			ret += "| [[" + pre + _2space(i->name) + "|]]" ;
+			string pre = i->meta.ns == 0 ? "" : ":" ; // This should really involve the namespace name...
+			if ( is_wikidata ) {
+				string label = i->meta.getMisc("label","") ;
+				if ( label.empty() ) ret += "| [[" + pre + _2space(i->name) + "|]]" ;
+				else ret += "| [[" + pre + i->name + "|"+label+"]]" ;
+			} else {
+				ret += "| [[" + pre + _2space(i->name) + "|]]" ;
+			}
 		}
 		ret += " || " + ui2s(i->meta.id) ;
 		ret += " || " + ui2s(i->meta.ns) ;

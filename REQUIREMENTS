@@ -1,8 +1,7 @@
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get install g++
-sudo apt-get install libcurl4-gnutls-dev
-sudo apt-get install libmysqlclient-dev
+sudo apt-get install -y g++-5 libcurl4-gnutls-dev libmysqlclient-dev
+git clone https://magnusmanske@bitbucket.org/magnusmanske/petscan.git
 
 Create config.json
 
