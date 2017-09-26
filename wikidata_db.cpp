@@ -27,7 +27,8 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 	
 	if ( 0 ) { // Future special cases
 	} else {
-		_host = wiki+".labsdb" ;
+//		_host = wiki+".labsdb" ; // Old host
+		_host = wiki+".analytics.db.svc.eqiad.wmflabs" ; // New, long-query server
 		_database = wiki+"_p" ;
 	}
 }
