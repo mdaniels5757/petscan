@@ -118,11 +118,11 @@ bool TSourceWikidata::getData ( string sites ) {
 	split ( sites , v , ',' ) ;
 	if ( v.empty() ) return false ;
 	string sql = "SELECT ips_item_id FROM wb_items_per_site" ;
-	if ( no_statements ) sql += ",page_props,wb_entity_per_page" ;
+	if ( no_statements ) sql += ",page_props,page" ;
 	sql += " WHERE ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , v ) + ")" ;
 	
 	if ( no_statements ) {
-		sql += " AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND epp_page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
+		sql += " AND page_namespace=0 AND page_title=concat('Q',ips_item_id) AND page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
 	}
 	
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;

@@ -545,21 +545,21 @@ void TPlatform::processSitelinks ( TPageList &pagelist ) {
 	
 	// Construct base SQL
 	string sql = "SELECT " ;
-	if ( use_min_max ) sql += "epp_entity_id,(SELECT count(*) FROM wb_items_per_site WHERE ips_item_id=epp_entity_id) AS sitelink_count" ;
-	else sql += "DISTINCT epp_entity_id" ;
-	sql += " FROM wb_entity_per_page WHERE epp_entity_type='item'" ;
+	if ( use_min_max ) sql += "page_title,(SELECT count(*) FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title) AS sitelink_count" ;
+	else sql += "DISTINCT page_title" ;
+	sql += " FROM page WHERE page_namespace=0" ;
 	string having ;
 
 	for ( auto site:yes ) {
 		if ( site.empty() ) continue ;
-		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( any.size() > 0 ) {
-		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
 	}
 	for ( auto site:no ) {
 		if ( site.empty() ) continue ;
-		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=epp_entity_id AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( !sitelinks_min.empty() ) {
 		string s = ui2s ( atoi ( sitelinks_min.c_str() ) ) ; // Enforce number
@@ -577,15 +577,15 @@ void TPlatform::processSitelinks ( TPageList &pagelist ) {
 	map <string,TPage> qnum2page ;
 	for ( auto page:pagelist.pages ) {
 		if ( !items.empty() ) items += "," ;
-		string qnum = page.name.substr(1) ;
+		string qnum = page.name ;
 		items += qnum ;
 		qnum2page[qnum] = page ;
 	}
 	pagelist.pages.clear() ;
 
-	sql += " AND epp_entity_id IN (" + items + ")" ;
+	sql += " AND page_title IN (" + items + ")" ;
 	
-	if ( use_min_max ) sql += " GROUP BY epp_entity_id" ;
+	if ( use_min_max ) sql += " GROUP BY page_title" ;
 	if ( !having.empty() ) sql += " HAVING " + having ;
 
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
