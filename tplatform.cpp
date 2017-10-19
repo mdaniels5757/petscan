@@ -438,7 +438,7 @@ string TPlatform::getLabelBaseSQL ( TWikidataDB &db ) {
 	langs_any = trim ( regex_replace ( langs_any , regex("[^a-z,]") , string("") ) ) ;
 	langs_no  = trim ( regex_replace ( langs_no  , regex("[^a-z,]") , string("") ) ) ;
 	
-	string sql = "SELECT DISTINCT term_entity_id FROM wb_terms t1 where term_entity_type='item'" ;
+	string sql = "SELECT DISTINCT term_full_entity_id FROM wb_terms t1 where term_entity_type='item'" ;
 	string field = "term_text" ; // term_search_key case-sensitive; term_text case-insensitive?
 	
 	if ( yes.size() > 0 ) {
@@ -473,8 +473,8 @@ string TPlatform::getLabelBaseSQL ( TWikidataDB &db ) {
 	
 	if ( no.size() > 0 ) {
 		for ( auto s:no ) {
-			sql += " AND NOT EXISTS (SELECT t2.term_entity_id FROM wb_terms t2 WHERE" ;
-			sql += " t2.term_entity_id=t1.term_entity_id AND t2.term_entity_type='item'" ;
+			sql += " AND NOT EXISTS (SELECT t2.term_full_entity_id FROM wb_terms t2 WHERE" ;
+			sql += " t2.term_full_entity_id=t1.term_full_entity_id AND t2.term_entity_type='item'" ;
 			sql += " AND t2." + field + " LIKE \"" + db.escape(s) + "\"" ;
 			if ( !langs_no.empty() ) sql += " AND t2.term_language IN ('" + regex_replace ( langs_no , regex(",") , string("','") ) + "')" ;
 			vector <string> types ;
@@ -504,13 +504,12 @@ void TPlatform::processLabels ( TPageList &pagelist ) {
 	map <string,TPage> qnum2page ;
 	for ( auto page:pagelist.pages ) {
 		if ( !items.empty() ) items += "," ;
-		string qnum = page.name.substr(1) ;
-		items += qnum ;
-		qnum2page[qnum] = page ;
+		items += "'" + page.name + "'" ;
+		qnum2page[page.name] = page ;
 	}
 	pagelist.pages.clear() ;
 
-	sql += " AND term_entity_id IN (" + items + ")" ;
+	sql += " AND term_full_entity_id IN (" + items + ")" ;
 
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	MYSQL_ROW row;
@@ -578,7 +577,7 @@ void TPlatform::processSitelinks ( TPageList &pagelist ) {
 	for ( auto page:pagelist.pages ) {
 		if ( !items.empty() ) items += "," ;
 		string qnum = page.name ;
-		items += qnum ;
+		items += "'" + qnum + "'" ;
 		qnum2page[qnum] = page ;
 	}
 	pagelist.pages.clear() ;

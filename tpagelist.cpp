@@ -368,12 +368,12 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	// Getting labels and descriptions for items (ns0)
 	map <string,TPage*> item2page ;
 	vector <string> sqls ;
-	string base_sql = "select term_entity_id,term_text,term_type from wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_entity_id IN (0" ;
+	string base_sql = "SELECT term_full_entity_id,term_text,term_type FROM wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_full_entity_id IN (''" ;
 	sqls.push_back ( base_sql ) ;
 	uint32_t cnt = 0 ;
 	for ( auto i = ns_page[0].begin() ; i != ns_page[0].end() ; i++ ) {
-		item2page[(*i)->name.substr(1)] = *i ;
-		sqls[sqls.size()-1] += "," + (*i)->name.substr(1) ;
+		item2page[(*i)->name] = *i ;
+		sqls[sqls.size()-1] += ",'" + (*i)->name + "'" ;
 		if ( cnt++ < LABEL_BATCH_SIZE ) continue ;
 		sqls[sqls.size()-1] += ")" ;
 		sqls.push_back ( base_sql ) ;
