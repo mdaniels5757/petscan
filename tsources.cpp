@@ -122,7 +122,7 @@ bool TSourceWikidata::getData ( string sites ) {
 	sql += " WHERE ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , v ) + ")" ;
 	
 	if ( no_statements ) {
-		sql += " AND page_namespace=0 AND page_title=concat('Q',ips_item_id) AND page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
+		sql += " AND page_namespace=0 AND ips_item_id=substr(page_title,2)*1 AND page_id=pp_page AND pp_propname='wb-claims' AND pp_sortkey=0" ;
 	}
 	
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;

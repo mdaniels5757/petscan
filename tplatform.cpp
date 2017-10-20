@@ -551,16 +551,13 @@ void TPlatform::processSitelinks ( TPageList &pagelist ) {
 
 	for ( auto site:yes ) {
 		if ( site.empty() ) continue ;
-//		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( any.size() > 0 ) {
-//		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
 		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
 	}
 	for ( auto site:no ) {
 		if ( site.empty() ) continue ;
-//		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( !sitelinks_min.empty() ) {
