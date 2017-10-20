@@ -544,21 +544,24 @@ void TPlatform::processSitelinks ( TPageList &pagelist ) {
 	
 	// Construct base SQL
 	string sql = "SELECT " ;
-	if ( use_min_max ) sql += "page_title,(SELECT count(*) FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title) AS sitelink_count" ;
+	if ( use_min_max ) sql += "page_title,(SELECT count(*) FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1) AS sitelink_count" ;
 	else sql += "DISTINCT page_title" ;
 	sql += " FROM page WHERE page_namespace=0" ;
 	string having ;
 
 	for ( auto site:yes ) {
 		if ( site.empty() ) continue ;
-		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+//		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( any.size() > 0 ) {
-		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
+//		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
+		sql += " AND EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id IN (" + TSourceDatabase::listEscapedStrings ( db , any , true ) + ") LIMIT 1)" ;
 	}
 	for ( auto site:no ) {
 		if ( site.empty() ) continue ;
-		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+//		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE concat('Q',ips_item_id)=page_title AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
+		sql += " AND NOT EXISTS (SELECT * FROM wb_items_per_site WHERE ips_item_id=substr(page_title,2)*1 AND ips_site_id='" + db.escape(site) + "' LIMIT 1)" ;
 	}
 	if ( !sitelinks_min.empty() ) {
 		string s = ui2s ( atoi ( sitelinks_min.c_str() ) ) ; // Enforce number
