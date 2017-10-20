@@ -38,6 +38,9 @@ void TWikidataDB::doConnect ( bool first ) {
 	if ( !first ) {
 		int i = mysql_ping ( &mysql ) ;
 		if ( i == 0 ) return ; // Connection is already up
+
+		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) return doConnect(true) ;
+
 //		if ( i != CR_SERVER_GONE_ERROR ) {
 			finishWithError() ;
 //			cerr << "MySQL PING says: " << i << endl ;
@@ -81,13 +84,26 @@ string TWikidataDB::escape ( string s ) {
 
 void TWikidataDB::runQuery ( string sql ) {
 	doConnect() ;
-	if ( mysql_query ( &mysql , sql.c_str() ) ) finishWithError() ;
+	if ( mysql_query ( &mysql , sql.c_str() ) ) {
+		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) {
+			doConnect(true) ;
+			return runQuery ( sql ) ;
+		}
+		finishWithError() ;
+	}
 }
 
 MYSQL_RES *TWikidataDB::getQueryResults ( string sql ) {
 	runQuery ( sql ) ;
 	MYSQL_RES *result = mysql_store_result(&mysql);
-	if ( result == NULL ) finishWithError("SQL problem:"+sql) ;
+	if ( result == NULL ) {
+		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) {
+			doConnect(true) ;
+			return getQueryResults ( sql ) ;
+		}
+		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
+		finishWithError("SQL problem:"+sql) ;
+	}
 	return result ;
 }
 
