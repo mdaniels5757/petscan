@@ -485,7 +485,7 @@ string TPlatform::getLabelBaseSQL ( TWikidataDB &db ) {
 			sql += ")" ;
 		}
 	}
-	
+
 	return sql ;
 }
 	

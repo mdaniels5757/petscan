@@ -26,7 +26,7 @@ bool TSourceLabels::run () {
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(result))) {
-		pages.push_back ( TPage ( string("Q")+row[0] , 0 ) ) ;
+		pages.push_back ( TPage ( row[0] , 0 ) ) ;
 	}
 	return true ;
 }
@@ -462,7 +462,7 @@ bool TSourceDatabase::getPages () {
 		}
 	}
 	
-cout << sql << endl ;
+//	cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
@@ -470,7 +470,7 @@ cout << sql << endl ;
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result = db.getQueryResults ( sql ) ;
 
-cout << "Query is done.\n" ;
+//	cout << "Query is done.\n" ;
 	
 	if ( !result ) {
 		cerr << "On wiki " << wiki << ", SQL query failed: " << sql << endl ;
