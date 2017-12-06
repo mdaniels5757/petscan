@@ -336,14 +336,14 @@ console.log ( me.concurrent , me.running.length ) ;
 			}
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
-			h += "<button id='al_do_check_all' class='btn btn-secondary btn-sm' tt='al_all' style='width:100%'></button><br/>" ;
-			h += "<button id='al_do_check_none' class='btn btn-secondary btn-sm' tt='al_none' style='width:100%'></button><br/>" ;
-			h += "<button id='al_do_check_toggle' class='btn btn-secondary btn-sm' tt='al_toggle' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_all' class='btn btn-outline-secondary btn-sm' tt='al_all' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_none' class='btn btn-outline-secondary btn-sm' tt='al_none' style='width:100%'></button><br/>" ;
+			h += "<button id='al_do_check_toggle' class='btn btn-outline-secondary btn-sm' tt='al_toggle' style='width:100%'></button><br/>" ;
 			h += "</div>" ;
 			h += "<div class='autolist_subbox'>" ;
 			h += "<textarea id='al_commands' tt_placeholder='al_commands_ph' rows=3 style='padding:2px;width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
-			h += "<button id='al_do_process' class='btn btn-success btn-sm' tt='al_process'></button>" ;
-			h += "<button id='al_do_stop' class='btn btn-danger btn-sm' tt='al_stop' style='display:none'></button>" ;
+			h += "<button id='al_do_process' class='btn btn-outline-success btn-sm' tt='al_process'></button>" ;
+			h += "<button id='al_do_stop' class='btn btn-outline-danger btn-sm' tt='al_stop' style='display:none'></button>" ;
 			h += "<div id='al_status'></div>" ;
 			h += "</div>" ;
 		} else {
@@ -351,7 +351,6 @@ console.log ( me.concurrent , me.running.length ) ;
 		}
 		$('#autolist_box').html ( h ) ;
 		tt.updateInterface ( $('#autolist_box') ) ;
-		
 		function updateConcurrency () {
 			var v = Math.floor ( $('#bot_concurrent').val() * 1 ) ;
 			if ( v < 1 || v > me.max_concurrent ) return ;

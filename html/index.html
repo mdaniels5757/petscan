@@ -9,11 +9,14 @@
 
 <!--<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/PET-image.jpg/32px-PET-image.jpg">-->
 
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/tether/1.1.1/css/tether.min.css">
+<link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+<!--<link rel="stylesheet" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/tether/1.1.1/css/tether.min.css">-->
 <link rel="stylesheet" href="https://tools-static.wmflabs.org/magnustools/resources/html/wikimedia.css">
 
 <style>
+.radio-inline {
+	display:inline-block !important;
+}
 textarea, input[type=text], input[type=number], div.input-group-addon {
 	box-shadow:3px 3px 2px #DDD;
 }
@@ -103,56 +106,39 @@ function receiveEnglishNamespaceData ( j ) {
 </script>
 <!--<script src='https://meta.wikimedia.org/w/api.php?action=parse&prop=wikitext&page=PetScan/Interface&format=json&callback=receiveRawInterfaceText'></script>-->
 <script src='https://en.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json&callback=receiveEnglishNamespaceData'></script>
-
-<script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/1.12.1/jquery.min.js'></script>
-<script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/tether/1.1.1/js/tether.min.js'></script>
-<script src='//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0-alpha.2/js/bootstrap.min.js'></script>
-<script src="//tools-static.wmflabs.org/tooltranslate/tt.js"></script>
+<script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0-beta.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://tools-static.wmflabs.org/tooltranslate/tt.js"></script>
 <script src='main.js'></script>
 </head>
 <body style='display:none'>
 
-<header class="navbar navbar-light navbar-static-top bd-navbar" role="banner">
-  <div class="clearfix">
-    <button class="navbar-toggler pull-xs-right hidden-sm-up" type="button" data-toggle="collapse" data-target="#bd-main-nav">
-      ☰
-    </button>
-    <a class="navbar-brand hidden-sm-up" href="/">
-      PetScan
-    </a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+	<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+	<span class="navbar-toggler-icon"></span>
+	</button>
+
+	<div class="collapse navbar-collapse" id="bd-main-nav">
+	<ul class="navbar-nav mr-auto">
+		<li class="nav-item"><a class="nav-item nav-link active" tt="toolname" href="/"></a></li>
+		<li class="nav-item"><a target='_blank' class="nav-item nav-link" tt="manual" href="#"></a></li>
+		<li class="nav-item"><a target='_blank' class="nav-item nav-link" tt="issues" href="https://bitbucket.org/magnusmanske/petscan/issues?status=new&status=open"></a></li>
+		<li class="nav-item"><div class="btn-group nav-item nav-link" id='interface_languages_wrapper'></div></li>
+	</ul>
+
+	<div class="btn-group nav-item nav-link"><a target='_blank' class="btn btn-outline-warning" tt="examples" href="#"></a></div>
+	<div class="btn-group nav-item nav-link"><button class='btn btn-outline-default' tt='toggle_list' id='tab-list'></button></div>
+    <a style="margin:0px;padding:0px;margin-top:4px;margin-left:10px;" href="https://tools.wmflabs.org" target='_blank'><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Toolforge_logo.svg/32px-Toolforge_logo.svg.png" tt_title="wmf_powered" border="0" width="32px"></a>
+
   </div>
-  <div class="collapse navbar-toggleable-xs" id="bd-main-nav">
-    <nav class="nav navbar-nav">
-      <a class="nav-item nav-link active" tt="toolname" href="/"></a>
-      <a target='_blank' class="nav-item nav-link" tt="manual" href="#"></a>
-<!--      <a target='_blank' class="nav-item nav-link" tt="interface_text" href="#"></a>-->
-      <a target='_blank' class="nav-item nav-link" tt="issues" href="https://bitbucket.org/magnusmanske/petscan/issues?status=new&status=open"></a>
-	  <div class="btn-group nav-item nav-link" id='interface_languages_wrapper'></div>
-<!--      <a class="nav-item nav-link" href="http://themes.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Themes');">Themes</a>
-      <a class="nav-item nav-link" href="http://expo.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Expo');">Expo</a>
-      <a class="nav-item nav-link" href="http://blog.getbootstrap.com" onclick="ga('send', 'event', 'Navbar', 'Community links', 'Blog');">Blog</a>-->
+</nav>
 
-	  <div class='pull-sm-right'>
-		  <div class="btn-group nav-item nav-link">
-		      <a target='_blank' class="nav-item nav-link btn btn-warning-outline" tt="examples" href="#"></a>
-		  </div>
-
-		  <div class="btn-group nav-item nav-link">
-			  <button class='btn btn-secondary' tt='toggle_list' id='tab-list'></button>
-		  </div>
-	  </div>
-	  
-    </nav>
-
-
-</header>
-
-
-<div class="container">
+<div class="container mt-2">
 <div class="row">
 <div class="col-md-12">
 
-<form id='main_form' method='post' action='/'>
+<form id='main_form' method='post' action='/' class='form'>
 
 <ul class="nav nav-tabs" role="tablist">
 	<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab_categories" role="tab"><span tt='categories'></span></a></li>
@@ -463,9 +449,11 @@ function receiveEnglishNamespaceData ( j ) {
 <div class="form-group row">
 <label class="col-sm-2 form-control-label"></label>
 <div class="col-sm-10">
+<div class="row">
 <div class="col-sm-3"><div tt='sitelinks_yes'></div><textarea class="form-control" name='sitelinks_yes' tt_placeholder='ph_sites' rows=4 style="width:100%"></textarea></div>
 <div class="col-sm-3"><div tt='sitelinks_any'></div><textarea class="form-control" name='sitelinks_any' tt_placeholder='ph_sites' rows=4 style="width:100%"></textarea></div>
 <div class="col-sm-3"><div tt='sitelinks_no' ></div><textarea class="form-control" name='sitelinks_no'  tt_placeholder='ph_sites' rows=4 style="width:100%"></textarea></div>
+</div>
 </div>
 </div>
 
