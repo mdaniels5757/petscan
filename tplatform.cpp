@@ -355,7 +355,7 @@ string TPlatform::process () {
 
 	// Potential sources
 	vector <TSource *> candidate_sources ;
-	candidate_sources.push_back ( new TSourceDatabase ( this ) ) ; // DB needs to be first
+	candidate_sources.push_back ( new TSourceDatabase ( this ) ) ;
 	candidate_sources.push_back ( new TSourceSPARQL ( this ) ) ;
 	candidate_sources.push_back ( new TSourcePagePile ( this ) ) ;
 	candidate_sources.push_back ( new TSourceManual ( this ) ) ;
@@ -419,7 +419,16 @@ string TPlatform::process () {
 	return renderer.renderPageList ( pagelist ) ;
 }
 
+// Runs page filters from the "Page properties" tab if (and only if) no category/template/links_from primary query has occurred
 void TPlatform::processMissingDatabaseFilters ( TPageList &pagelist ) {
+	if ( pagelist.pages.size() == 0 ) return ;
+	TSourceDatabase db ( this ) ;
+	db.setPageList ( &pagelist ) ;
+	if ( db.run() ) {
+		db.swap ( pagelist ) ;
+	} else {
+		error ( "processMissingDatabaseFilters fail" ) ;
+	}
 }
 
 void TPlatform::getParameterAsStringArray ( string s , vector <string> &vs ) {

@@ -304,6 +304,7 @@ class TSourceDatabase : public TSource {
 public:
 	TSourceDatabase ( TPlatform *p = NULL ) { platform = p ; source_name = "categories" ; } ;
 	static string listEscapedStrings ( TWikidataDB &db , vector <string> &s , bool fix_spaces = true ) ;
+	virtual void setPageList ( TPageList *pagelist ) { primary_pagelist = pagelist ; }
 	virtual bool run () ;
 
 protected:
@@ -317,6 +318,7 @@ protected:
 	void groupLinkListByNamespace ( vector <string> &input , map <int32_t,vector <string> > &nslist ) ;
 
 	TSourceDatabaseParams params ;
+	TPageList *primary_pagelist = NULL ;
 } ;
 
 

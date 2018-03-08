@@ -277,12 +277,11 @@ string TSourceDatabase::linksToSubquery ( TWikidataDB &db , vector <string> inpu
 bool TSourceDatabase::run () {
 	platform->setDatabaseParameters ( params ) ;
 	run_result = getPages() ;
-cout << "DB RUN RESULT: " << (getLastRunResult()?1:0) << endl ;
 	return run_result ;
 }
 
 bool TSourceDatabase::getPages () {
-	wiki = params.wiki ;
+	wiki = (primary_pagelist) ? primary_pagelist->wiki : params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( wiki , platform ) ;
 
@@ -296,6 +295,7 @@ bool TSourceDatabase::getPages () {
 	if ( has_pos_cats ) primary = "categories" ;
 	else if ( has_pos_templates ) primary = "templates" ;
 	else if ( has_pos_linked_from ) primary = "links_from" ;
+	else if ( primary_pagelist ) primary = "pagelist" ;
 	else {
 //		if(DEBUG_OUTPUT) cout << "No starting point for DB\n" ;
 		return false ;
@@ -348,6 +348,29 @@ bool TSourceDatabase::getPages () {
 	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 		sql += " FROM page p WHERE 1=1" ;
+	} else if ( primary == "pagelist" ) {
+		if ( primary_pagelist->pages.size() == 0 ) return true ; // Nothing to do, but that's OK
+//		cout << "DB USING PAGELIST ON " << wiki << endl ;
+		map <int32_t,vector <string> > nslist ;
+		auto p = primary_pagelist->pages.begin() ;
+		do {
+			nslist[p->meta.ns].push_back ( p->name ) ;
+			p++ ;
+		} while ( p != primary_pagelist->pages.end() ) ;
+
+		vector <string> parts ;
+		for ( auto li:nslist ) {
+			string part = "(p.page_namespace=" + ui2s(li.first) + " AND p.page_title IN (" + listEscapedStrings ( db , li.second , true ) + "))" ;
+			parts.push_back ( part ) ;
+		}
+
+		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len " ;
+		sql += "FROM page p WHERE " ;
+		for ( uint32_t cnt = 0 ; cnt < parts.size() ; cnt++ ) {
+			if ( cnt > 0 ) sql += " OR " ;
+			sql += parts[cnt] ;
+		}
+//		cout << sql << endl ;
 	}
 
 	// Namespaces
@@ -508,7 +531,7 @@ bool TSourceDatabase::getPages () {
 	}
 	mysql_free_result(result);
 
-cout << "Getting results is done.\n" ;
+//cout << "Getting results is done.\n" ;
 
 	pl1.pages.swap ( pages ) ;
 
