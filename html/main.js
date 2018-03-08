@@ -1,10 +1,14 @@
 var tt = {} ; // Translations from tools-static.wmflabs.org/tooltranslate/tt.js
 var params = {} ;
+var ores_data = {} ;
 var default_params = {
 	'show_redirects':'both',
 	'edits[bots]':'both',
 	'edits[anons]':'both',
 	'edits[flagged]':'both',
+	'page_image':'any',
+	'ores_type':'any',
+	'ores_prediction':'any',
 	'combination':'subset',
 	'wpiu':'any',
 	'format':'html',
@@ -214,6 +218,25 @@ function loadNamespaces ( callback ) {
 	if ( l == 'wikidata' ) { l = 'www' ; p = 'wikidata' ; }
 	var lp = l+'.'+p ;
 	if ( lp == last_namespace_project ) return false ;
+
+	// ORES
+	var wiki = l + 'wiki' ;
+	if ( p == 'wikidata' ) wiki = 'wikidatawiki' ;
+	else if ( p != 'wikipedia' && l != 'species' && l != 'commons' ) wiki = l + p ;
+	if ( typeof ores_data[wiki] == 'undefined' || typeof ores_data[wiki].models == 'undefined' ) {
+		$('#ores_options').hide() ;
+	} else {
+		var current = $('#ores_model_select').val() ;
+		var h = "<option value='any' tt='ores_any'></option>" ;
+		$.each ( ores_data[wiki].models , function ( model , content ) {
+			h += "<option value='" + model + "'>" + model + "</option>" ;
+		} ) ;
+		$('#ores_model_select').html ( h ) ;
+		$('#ores_model_select').val(current) ;
+		$('#ores_options').show() ;
+		tt.updateInterface ( $('#ores_options') ) ;
+	}
+
 	
 	function namespaceDataLoaded ( d ) {
 		namespaces_loading = false ;
@@ -465,11 +488,11 @@ function initializeInterface () {
 	if ( typeof p.wikidata_no_item != 'undefined' ) p.wikidata_item = 'without' ;
 	if ( typeof p.giu != 'undefined' ) p.file_usage_data = 'on' ;
 	
-	
 
 	params = $.extend ( {} , default_params , p ) ;
 	params.sortby = params.sortby.replace ( / /g , '_' ) ;
-	
+	$('#ores_model_select').val(params.ores_type) ;
+
 	var l = 'en' ;
 	if ( typeof params.interface_language != 'undefined' ) l = params.interface_language ;
 	
@@ -559,17 +582,29 @@ function initializeInterface () {
 }
 
 $(document).ready ( function () {
+	var running = 2 ;
+	function fin () {
+		running-- ;
+		if ( running > 0 ) return ;
+		tt.addILdropdown ( '#interface_languages_wrapper' ) ;
+		initializeInterface() ;
+	}
 	tt = new ToolTranslation ( {
 		tool:'petscan',
 		language:'en',
 		fallback:'en',
 		highlight_missing:true,
 		callback:function () {
-			tt.addILdropdown ( '#interface_languages_wrapper' ) ;
-			initializeInterface() ;
+			fin() ;
 		} , 
 		onUpdateInterface : function () {
 			setInterfaceLanguage ( tt.language ) ;
 		}
 	} ) ;
+
+
+	$.get ( 'https://ores.wikimedia.org/v3/scores/' , function ( d ) {
+		ores_data = d ;
+		fin() ;
+	} , 'json' ) ;
 } ) ;

@@ -429,6 +429,21 @@ bool TSourceDatabase::getPages () {
 	if ( !params.links_to_any.empty() ) sql += " AND page_id IN " + linksToSubquery ( db , params.links_to_any ) ; // " AND EXISTS "
 	if ( !params.links_to_none.empty() ) sql += " AND page_id NOT IN " + linksToSubquery ( db , params.links_to_none ) ; // " AND NOT EXISTS "
 
+	// Lead image
+	if ( params.page_image == "yes" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
+	if ( params.page_image == "free" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname='page_image_free')" ;
+	if ( params.page_image == "nonfree" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname='page_image')" ;
+	if ( params.page_image == "no" ) sql += " AND NOT EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
+
+	// ORES
+	if ( params.ores_type != "any" && (params.ores_prediction!="any"||params.ores_prob_from!=0||params.ores_prob_to!=0) ) {
+		sql += " AND EXISTS (SELECT * FROM ores_classification WHERE p.page_latest=oresc_rev AND oresc_model IN (SELECT oresm_id FROM ores_model WHERE oresm_is_current=1 AND oresm_name='"+db.escape(params.ores_type)+"')" ;
+		if ( params.ores_prediction == "yes" ) sql += " AND oresc_is_predicted=1" ;
+		if ( params.ores_prediction == "no" ) sql += " AND oresc_is_predicted=0" ;
+		if ( params.ores_prob_from != 0 ) sql += " AND oresc_probability>=" + f2s(params.ores_prob_from) ;
+		if ( params.ores_prob_to != 1 ) sql += " AND oresc_probability<=" + f2s(params.ores_prob_to) ;
+		sql += ")" ;
+	}
 
 	// Last edit
 	if ( params.last_edit_anon == "yes" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=0)" ;

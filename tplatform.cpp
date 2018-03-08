@@ -69,6 +69,15 @@ void TPlatform::setDatabaseParameters ( TSourceDatabaseParams &db_params ) {
 	db_params.last_edit_bot = getParam("edits[bots]","both") ;
 	db_params.last_edit_anon = getParam("edits[anons]","both") ;
 	db_params.last_edit_flagged = getParam("edits[flagged]","both") ;
+
+	// Page image
+	db_params.page_image = getParam("page_image","any") ;
+
+	// ORES
+	db_params.ores_type = getParam("ores_type","any") ;
+	db_params.ores_prediction = getParam("ores_prediction","any") ;
+	db_params.ores_prob_from = atof ( (getParam("ores_prob_from","0",true)).c_str() ) ;
+	db_params.ores_prob_to = atof ( (getParam("ores_prob_to","1.0",true)).c_str() ) ;
 	
 	// Add misc
 	db_params.redirects = getParam("show_redirects","both") ;

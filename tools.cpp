@@ -305,6 +305,12 @@ string ui2s ( uint32_t i ) {
 	return string(tmp) ;
 }
 
+string f2s ( float f ) {
+	char tmp[50] ;
+	sprintf ( tmp , "%f" , f ) ;
+	return string(tmp) ;
+}
+
 //________________________________________________________________________________________________________________________
 
 
