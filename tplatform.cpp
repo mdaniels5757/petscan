@@ -355,7 +355,7 @@ string TPlatform::process () {
 
 	// Potential sources
 	vector <TSource *> candidate_sources ;
-	candidate_sources.push_back ( new TSourceDatabase ( this ) ) ;
+	candidate_sources.push_back ( new TSourceDatabase ( this ) ) ; // DB needs to be first
 	candidate_sources.push_back ( new TSourceSPARQL ( this ) ) ;
 	candidate_sources.push_back ( new TSourcePagePile ( this ) ) ;
 	candidate_sources.push_back ( new TSourceManual ( this ) ) ;
@@ -393,6 +393,7 @@ string TPlatform::process () {
 	processSitelinks ( pagelist ) ;
 	processLabels ( pagelist ) ;
 	if ( !common_wiki.empty() && pagelist.wiki != common_wiki ) pagelist.convertToWiki ( common_wiki ) ;
+	if ( sources.find("categories") == sources.end() ) processMissingDatabaseFilters ( pagelist ) ;
 	processWikidata ( pagelist ) ;
 	processFiles ( pagelist ) ;
 	processPages ( pagelist ) ;
@@ -416,6 +417,9 @@ string TPlatform::process () {
 
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
+}
+
+void TPlatform::processMissingDatabaseFilters ( TPageList &pagelist ) {
 }
 
 void TPlatform::getParameterAsStringArray ( string s , vector <string> &vs ) {

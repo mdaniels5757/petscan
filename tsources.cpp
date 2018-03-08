@@ -28,7 +28,8 @@ bool TSourceLabels::run () {
 	while ((row = mysql_fetch_row(result))) {
 		pages.push_back ( TPage ( row[0] , 0 ) ) ;
 	}
-	return true ;
+	run_result = true ;
+	return run_result ;
 }
 
 //________________________________________________________________________________________________________________________
@@ -68,7 +69,8 @@ bool TSourceSPARQL::runQuery ( string query ) {
 bool TSourceSPARQL::run () {
 	string query = platform->getParam("sparql","" ) ;
 	if ( query.empty() ) return false ;
-	return runQuery ( query ) ;
+	run_result = runQuery ( query ) ;
+	return run_result ;
 }
 
 //________________________________________________________________________________________________________________________
@@ -98,7 +100,8 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 bool TSourcePagePile::run () {
 	string pile = platform->getParam("pagepile","") ;
 	if ( pile.empty() ) return false ;
-	return getPile ( atoi ( pile.c_str() ) ) ;
+	run_result = getPile ( atoi ( pile.c_str() ) ) ;
+	return run_result ;
 }
 
 
@@ -139,7 +142,8 @@ bool TSourceWikidata::getData ( string sites ) {
 }
 
 bool TSourceWikidata::run () {
-	return getData ( platform->getParam("wikidata_source_sites","") ) ;
+	run_result = getData ( platform->getParam("wikidata_source_sites","") ) ;
+	return run_result ;
 }
 
 //________________________________________________________________________________________________________________________
@@ -163,7 +167,8 @@ bool TSourceManual::run () {
 	string text = platform->getParam("manual_list","") ;
 	string wiki = platform->getParam("manual_list_wiki","") ;
 	if ( text.empty() || wiki.empty() ) return false ;
-	return parseList ( text , wiki ) ;
+	run_result = parseList ( text , wiki ) ;
+	return run_result ;
 }
 
 //________________________________________________________________________________________________________________________
@@ -271,7 +276,9 @@ string TSourceDatabase::linksToSubquery ( TWikidataDB &db , vector <string> inpu
 
 bool TSourceDatabase::run () {
 	platform->setDatabaseParameters ( params ) ;
-	return getPages() ;
+	run_result = getPages() ;
+cout << "DB RUN RESULT: " << (getLastRunResult()?1:0) << endl ;
+	return run_result ;
 }
 
 bool TSourceDatabase::getPages () {

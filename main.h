@@ -212,14 +212,16 @@ protected:
 
 class TSource : public TPageList {
 public:
-	TSource ( TPlatform *p = NULL ) { platform = p ; }
+	TSource ( TPlatform *p = NULL ) { platform = p ; run_result = false ; }
 	string getSourceName() { return source_name ; }
 	virtual bool error ( string s ) ;
 	virtual bool run () {} ;
+	virtual bool getLastRunResult() { return run_result ; }
 
 protected:
 	TPlatform *platform ;
 	string source_name ;
+	bool run_result ;
 } ;
 
 
@@ -351,6 +353,7 @@ protected:
 	void processLabels ( TPageList &pagelist ) ;
 	void processCreator ( TPageList &pagelist ) ;
 	void filterWikidata ( TPageList &pagelist ) ;
+	void processMissingDatabaseFilters ( TPageList &pagelist ) ;
 	void getCommonWikiAuto ( map <string,TSource *> &sources ) ;
 	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
 	void sortResults ( TPageList &pagelist ) ;
