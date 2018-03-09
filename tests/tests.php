@@ -132,7 +132,7 @@ function testNegativeCategories () {
 
 function testWikidataSitelink () {
 	$db = openDBwiki ( 'wikidatawiki' ) ;
-	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=120 AND pl_title='P1415' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	$sql = "SELECT page_title AS q FROM wb_items_per_site,pagelinks,page WHERE pl_from=page_id AND pl_namespace=120 AND pl_title='P1415' AND page_namespace=0 AND page_title=concat('Q',ips_item_id) AND ips_site_id='aywiki'" ;
 	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
 	$results = array() ;
 	while($o = $result->fetch_object()) $results[] = $o->q ;
@@ -143,12 +143,12 @@ function testWikidataSitelink () {
 function testWikidataUses () {
 	$db = openDBwiki ( 'wikidatawiki' ) ;
 
-	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=120 AND pl_title='P1415' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	$sql = "SELECT page_title AS q FROM wb_items_per_site,pagelinks,page WHERE pl_from=page_id AND pl_namespace=120 AND pl_title='P1415' AND page_namespace=0 AND page_title=concat('Q',ips_item_id) AND ips_site_id='aywiki'" ;
 	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
 	$pages1 = array() ;
 	while($o = $result->fetch_object()) $pages1[] = $o->q ;
 
-	$sql = "SELECT concat('Q',epp_entity_id) AS q FROM wb_entity_per_page,wb_items_per_site,pagelinks WHERE pl_from=epp_page_id AND pl_namespace=0 AND pl_title='Q1860' AND epp_entity_type='item' AND epp_entity_id=ips_item_id AND ips_site_id='aywiki'" ;
+	$sql = "SELECT page_title AS q FROM wb_items_per_site,pagelinks,page WHERE pl_from=page_id AND pl_namespace=0 AND pl_title='Q1860' AND page_namespace=0 AND page_title=concat('Q',ips_item_id) AND ips_site_id='aywiki'" ;
 	if(!$result = $db->query($sql)) die('There was an error running the query [' . $db->error . ']');
 	$pages2 = array() ;
 	while($o = $result->fetch_object()) $pages2[] = $o->q ;
@@ -161,7 +161,7 @@ function testWikidataUses () {
 
 // TEST CALLS
 
-$tests = array ( 'PagePile' , 'SPARQL' , 'CategoryUnion' , 'NegativeCategories' , 'CategorySubset' , 'WikidataSitelink' , 'WikidataUses' ) ;
+$tests = array ( 'CategoryUnion' , 'NegativeCategories' , 'CategorySubset' , 'WikidataSitelink' , 'WikidataUses' ) ; // 'PagePile' and 'SPARQL'  deactivated, piles are missing...
 //$tests = array ( array_pop ( $tests ) ) ; // Run last test only; useful for testing a new test
 
 $total = 0 ;

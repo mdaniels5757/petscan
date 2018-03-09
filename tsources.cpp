@@ -81,9 +81,7 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
 	json j ;
-cout << "1" << endl ;
 	if ( !loadJSONfromURL ( url , j , false ) ) return error ( "PagePile retrieval error. PagePile "+ui2s(id)+" might not exists." ) ;
-cout << "2" << endl ;
 	clear() ;
 	wiki = j["wiki"] ;
 	for ( auto &p: j["pages"] ) {
@@ -514,7 +512,7 @@ bool TSourceDatabase::getPages () {
 		}
 	}
 	
-	cout << sql << endl ;
+//	cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
