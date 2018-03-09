@@ -3,7 +3,7 @@
 
 require_once ( './shared.php' ) ;
 
-$petscan = 'https://petscan.wmflabs.org' ;
+$petscan = 'https://petscan-dev.wmflabs.org' ;
 
 function getFromPSID ( $psid ) {
 	global $petscan ;

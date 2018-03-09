@@ -3,6 +3,8 @@
 #include <regex>
 #include <thread>
 
+using json = nlohmann::json;
+
 vector <string> file_data_keys = { "img_size","img_width","img_height","img_media_type","img_major_mime","img_minor_mime","img_user_text","img_timestamp","img_sha1" } ;
 
 
@@ -1050,8 +1052,18 @@ void TPlatform::setConfig ( TPlatform &p ) {
 
 bool TPlatform::readConfigFile ( string filename ) {
 	ifstream in ( filename.c_str() ) ;
-	json j ( in ) ;
-	for ( auto i = j.begin() ; i != j.end() ; i++ ) config[i.key()] = i.value() ;
+	json j ;
+	try {
+		in >> j ;
+	} catch ( json::exception& e ) {
+		cout << "message: " << e.what() << "\n" << "exception id: " << e.id << std::endl;
+		return false ;
+	}
+
+	for ( auto i = j.begin() ; i != j.end() ; i++ ) {
+		config[i.key()] = i.value() ;
+	}
+	
 	return true ;
 }
 

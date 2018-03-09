@@ -1,5 +1,5 @@
-CC=gcc
-CXX=g++
+CC=gcc-5
+CXX=g++-5
 CFLAGS=-DMG_ENABLE_THREADS -pthread -O3
 CPPFLAGS=-std=c++14 -O3 -g `mysql_config --include` -pthread
 
@@ -8,7 +8,8 @@ SRCS_CXX=tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp tpagelist.cpp tren
 
 OBJS=$(subst .c,.o,$(SRCS_C)) $(subst .cpp,.o,$(SRCS_CXX))
 
-all: testing server
+all: server
+# testing
 
 server: $(OBJS)
 	${CXX} main.cpp $(OBJS) -o petscan -O3 $(CPPFLAGS) -ldl `mysql_config --libs` -l curl

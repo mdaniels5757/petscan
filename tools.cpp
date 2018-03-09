@@ -3,6 +3,8 @@
 #include <streambuf>
 #include <regex>
 
+using json = nlohmann::json;
+
 // trim from start
 string ltrim(string s) {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
@@ -203,6 +205,41 @@ string loadTextfromURL ( string url ) {
 	return ret ;
 }
 
+bool loadJSONfromCURL ( json &j , CURL *curl , string cache_key = "" ) {
+	struct CURLMemoryStruct chunk;
+	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
+	chunk.size = 0;    /* no data at this point */ 
+
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "petscan-agent/1.0"); // fake agent
+
+
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) return false ;
+	if ( chunk.size == 0 || !chunk.memory ) return false ;
+	
+	char *text = chunk.memory ;
+	curl_easy_cleanup(curl);
+
+	try {
+		j = json::parse ( text ) ;
+	} catch ( json::exception& e ) {
+		free ( text ) ;
+ 		cout << "message: " << e.what() << "\n" << "exception id: " << e.id << std::endl;
+  		return false ;
+	}
+	
+	if ( !cache_key.empty() ) {
+		std::lock_guard<std::mutex> guard(g_file_cache_mutex);
+		url_json_cache[cache_key] = string ( text ) ;
+	}
+	
+	free ( text ) ;
+	return true ;
+}
+
 
 bool loadJSONfromURL ( string url , json &j , bool use_cache ) {
 	if ( use_cache && url_json_cache.find(url) != url_json_cache.end() ) {
@@ -214,37 +251,9 @@ bool loadJSONfromURL ( string url , json &j , bool use_cache ) {
 	curl = curl_easy_init();
 	if ( !curl ) return false ;
 
-	struct CURLMemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
-
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "petscan-agent/1.0"); // fake agent
-	
-	CURLcode res = curl_easy_perform(curl);
-	if (res != CURLE_OK) return false ;
-	if ( chunk.size == 0 || !chunk.memory ) return false ;
-	
-	char *text = chunk.memory ;
-	curl_easy_cleanup(curl);
 
-	if ( *text != '{' ) {
-		free ( text ) ;
-		return false ;
-	}
-	
-	j = json::parse ( text ) ;
-	
-	if ( use_cache ) {
-		std::lock_guard<std::mutex> guard(g_file_cache_mutex);
-		url_json_cache[url] = string ( text ) ;
-	}
-	
-	free ( text ) ;
-	return true ;
+	return loadJSONfromCURL ( j , curl , use_cache?url:"" ) ;
 }
 
 
@@ -254,33 +263,10 @@ bool loadJSONfromPOST ( string url , const string &post , json &j ) {
 	curl = curl_easy_init();
 	if ( !curl ) return false ;
 
-	struct CURLMemoryStruct chunk;
-	chunk.memory = (char*) malloc(1);  /* will be grown as needed by the realloc above */ 
-	chunk.size = 0;    /* no data at this point */ 
-
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.c_str());
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirect; paranoia
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "petscan-agent/1.0"); // fake agent
-	
-	CURLcode res = curl_easy_perform(curl);
-	if (res != CURLE_OK) return false ;
-	if ( chunk.size == 0 || !chunk.memory ) return false ;
-	
-	char *text = chunk.memory ;
-	curl_easy_cleanup(curl);
 
-	if ( *text != '{' ) {
-		free ( text ) ;
-		return false ;
-	}
-	
-	j = json::parse ( text ) ;
-	
-	free ( text ) ;
-	return true ;
+	return loadJSONfromCURL ( j , curl ) ;
 }
 
 

@@ -81,9 +81,9 @@ bool TSourcePagePile::getPile ( uint32_t id ) {
 	sprintf ( s , "https://tools.wmflabs.org/pagepile/api.php?id=%d&action=get_data&format=json&doit" , id ) ;
 	string url = s ;
 	json j ;
-
+cout << "1" << endl ;
 	if ( !loadJSONfromURL ( url , j , false ) ) return error ( "PagePile retrieval error. PagePile "+ui2s(id)+" might not exists." ) ;
-
+cout << "2" << endl ;
 	clear() ;
 	wiki = j["wiki"] ;
 	for ( auto &p: j["pages"] ) {
@@ -306,12 +306,25 @@ bool TSourceDatabase::getPages () {
 	if ( params.minlinks > -1 || params.maxlinks > -1 ) {
 		lc = ",(SELECT count(*) FROM pagelinks WHERE pl_from=p.page_id) AS link_count" ;
 	}
+
+	string sql_before_after ;
+	bool is_before_after_done = false ;
+	if ( params.before+params.after == "" ) {
+		is_before_after_done = true ;
+	} else {
+		sql_before_after = " INNER JOIN (revision r) on r.rev_page=p.page_id" ;
+		if ( params.only_new_since ) sql_before_after += " AND r.rev_parent_id=0" ;
+		if ( !params.before.empty() ) sql_before_after += " AND rev_timestamp<='"+db.escape(params.before)+"'" ;
+		if ( !params.after.empty() ) sql_before_after += " AND rev_timestamp>='"+db.escape(params.after)+"'" ;
+		sql_before_after += " " ;
+	}
+
 	
 	string sql ;
 	
 	if ( primary == "categories" ) {
 		if ( params.combine == "subset" ) {
-			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+			sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 			sql += lc ;
 			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
 			sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
@@ -334,23 +347,27 @@ bool TSourceDatabase::getPages () {
 			set <string> s ( tmp.begin() , tmp.end() ) ;
 			tmp.assign ( s.begin() , s.end() ) ;
 			
-			sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+			sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 			sql += lc ;
-			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
+			sql += " FROM ( SELECT * FROM categorylinks WHERE cl_to IN (" ;
 			sql += listEscapedStrings ( db , tmp ) ;
 			sql += ")) cl0" ;
 			if(DEBUG_OUTPUT) cout << sql << endl ;
 		}
 
 		sql += " INNER JOIN (page p" ;
-		sql += ") on p.page_id=cl0.cl_from" ;
+		sql += ") ON p.page_id=cl0.cl_from" ;
 	
 	} else if ( primary == "templates" || primary == "links_from" ) {
-		sql = "select distinct p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
-		sql += " FROM page p WHERE 1=1" ;
+		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+		sql += " FROM page p" ;
+		if ( !is_before_after_done ) {
+			is_before_after_done = true ;
+			sql += sql_before_after ;
+		}
+		sql += " WHERE 1=1" ;
 	} else if ( primary == "pagelist" ) {
 		if ( primary_pagelist->pages.size() == 0 ) return true ; // Nothing to do, but that's OK
-//		cout << "DB USING PAGELIST ON " << wiki << endl ;
 		map <int32_t,vector <string> > nslist ;
 		auto p = primary_pagelist->pages.begin() ;
 		do {
@@ -364,13 +381,17 @@ bool TSourceDatabase::getPages () {
 			parts.push_back ( part ) ;
 		}
 
-		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len " ;
-		sql += "FROM page p WHERE " ;
+		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+		sql += " FROM page p" ;
+		if ( !is_before_after_done ) {
+			is_before_after_done = true ;
+			sql += sql_before_after ;
+		}
+		sql += " WHERE " ;
 		for ( uint32_t cnt = 0 ; cnt < parts.size() ; cnt++ ) {
 			if ( cnt > 0 ) sql += " OR " ;
 			sql += parts[cnt] ;
 		}
-//		cout << sql << endl ;
 	}
 
 	// Namespaces
@@ -416,24 +437,24 @@ bool TSourceDatabase::getPages () {
 	
 	// Links from
 	for ( auto i = params.linked_from_all.begin() ; i != params.linked_from_all.end() ; i++ ) {
-		sql += " AND page_id IN " + linksFromSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
+		sql += " AND p.page_id IN " + linksFromSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
 	}
-	if ( !params.linked_from_any.empty() ) sql += " AND page_id IN " + linksFromSubquery ( db , params.linked_from_any ) ; // " AND EXISTS "
-	if ( !params.linked_from_none.empty() ) sql += " AND page_id NOT IN " + linksFromSubquery ( db , params.linked_from_none ) ; // " AND NOT EXISTS "
+	if ( !params.linked_from_any.empty() ) sql += " AND p.page_id IN " + linksFromSubquery ( db , params.linked_from_any ) ; // " AND EXISTS "
+	if ( !params.linked_from_none.empty() ) sql += " AND p.page_id NOT IN " + linksFromSubquery ( db , params.linked_from_none ) ; // " AND NOT EXISTS "
 	
 	
 	// Links to
 	for ( auto i = params.links_to_all.begin() ; i != params.links_to_all.end() ; i++ ) {
-		sql += " AND page_id IN " + linksToSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
+		sql += " AND p.page_id IN " + linksToSubquery ( db , { db.escape(*i) } ) ; // " AND EXISTS "
 	}
-	if ( !params.links_to_any.empty() ) sql += " AND page_id IN " + linksToSubquery ( db , params.links_to_any ) ; // " AND EXISTS "
-	if ( !params.links_to_none.empty() ) sql += " AND page_id NOT IN " + linksToSubquery ( db , params.links_to_none ) ; // " AND NOT EXISTS "
+	if ( !params.links_to_any.empty() ) sql += " AND p.page_id IN " + linksToSubquery ( db , params.links_to_any ) ; // " AND EXISTS "
+	if ( !params.links_to_none.empty() ) sql += " AND p.page_id NOT IN " + linksToSubquery ( db , params.links_to_none ) ; // " AND NOT EXISTS "
 
 	// Lead image
-	if ( params.page_image == "yes" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
-	if ( params.page_image == "free" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname='page_image_free')" ;
-	if ( params.page_image == "nonfree" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname='page_image')" ;
-	if ( params.page_image == "no" ) sql += " AND NOT EXISTS (SELECT * FROM page_props WHERE page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
+	if ( params.page_image == "yes" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE p.page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
+	if ( params.page_image == "free" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE p.page_id=pp_page AND pp_propname='page_image_free')" ;
+	if ( params.page_image == "nonfree" ) sql += " AND EXISTS (SELECT * FROM page_props WHERE p.page_id=pp_page AND pp_propname='page_image')" ;
+	if ( params.page_image == "no" ) sql += " AND NOT EXISTS (SELECT * FROM page_props WHERE p.page_id=pp_page AND pp_propname IN ('page_image','page_image_free'))" ;
 
 	// ORES
 	if ( params.ores_type != "any" && (params.ores_prediction!="any"||params.ores_prob_from!=0||params.ores_prob_to!=0) ) {
@@ -450,8 +471,8 @@ bool TSourceDatabase::getPages () {
 	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user!=0)" ;
 	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
 	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
-	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
-	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
+	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
+	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
 	
 	
 	if ( !params.max_age.empty() ) {
@@ -476,24 +497,10 @@ bool TSourceDatabase::getPages () {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 
-
-	if ( params.before+params.after != "" ) {
-		sql += " INNER JOIN (revision r) on r.rev_page=p.page_id" ;
-		if ( params.only_new_since ) sql += " AND r.rev_parent_id=0" ;
-		if ( !params.before.empty() ) sql += " AND rev_timestamp<='"+db.escape(params.before)+"'" ;
-		if ( !params.after.empty() )  sql += " AND rev_timestamp>='"+db.escape(params.after)+"'" ;
-/*
-		if ( params.only_new_since ) {
-			if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-			if ( !params.after.empty() )  sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_parent_id=0 AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-		} else {
-			if ( !params.before.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp<='"+db.escape(params.before)+"')" ;
-			if ( !params.after.empty() ) sql += " AND p.page_id IN (SELECT rev_page FROM revision WHERE rev_id=page_latest AND rev_timestamp>='"+db.escape(params.after)+"')" ;
-		}
-*/
+	if ( !is_before_after_done ) {
+		sql += sql_before_after ;
+		is_before_after_done = true ;
 	}
-
-	
 
 	vector <string> having ;	
 	if ( params.minlinks > -1 ) having.push_back ( "link_count>=" + ui2s(params.minlinks) ) ;
@@ -507,7 +514,7 @@ bool TSourceDatabase::getPages () {
 		}
 	}
 	
-//	cout << sql << endl ;
+	cout << sql << endl ;
 
 	struct timeval before , after;
 	gettimeofday(&before , NULL);
@@ -551,7 +558,7 @@ bool TSourceDatabase::getPages () {
 	pl1.pages.swap ( pages ) ;
 
 	if(DEBUG_OUTPUT) cout << "Got " << pages.size() << " pages\n" ;	
-	
+
 	data_loaded = true ;
 	return true ;
 }
