@@ -307,6 +307,17 @@ bool TSourceDatabase::getPages () {
 
 	string sql_before_after ;
 	bool is_before_after_done = false ;
+
+	if ( !params.max_age.empty() ) {
+		time_t now = time(0) ; // Seconds
+		int hours = atoi ( params.max_age.c_str() ) ; // Hours
+		now -= hours*60*60 ;
+		struct tm *utc = gmtime ( &now ) ; // Will apparently be deleted by system later on
+		string after = ui2s(utc->tm_year+1900) + pad(ui2s(utc->tm_mon+1),2,'0') + pad(ui2s(utc->tm_mday),2,'0') + pad(ui2s(utc->tm_hour),2,'0') + pad(ui2s(utc->tm_min),2,'0') + pad(ui2s(utc->tm_sec),2,'0') ;
+		params.before = "" ;
+		params.after = after ;
+	}
+	
 	if ( params.before+params.after == "" ) {
 		is_before_after_done = true ;
 	} else {
@@ -472,18 +483,7 @@ bool TSourceDatabase::getPages () {
 	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
 	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
 	
-	
-	if ( !params.max_age.empty() ) {
-		time_t now = time(0) ; // Seconds
-		int hours = atoi ( params.max_age.c_str() ) ; // Hours
-		now -= hours*60*60 ;
-		struct tm *utc = gmtime ( &now ) ; // Will apparently be deleted by system later on
-		string after = ui2s(utc->tm_year+1900) + pad(ui2s(utc->tm_mon+1),2,'0') + pad(ui2s(utc->tm_mday),2,'0') + pad(ui2s(utc->tm_hour),2,'0') + pad(ui2s(utc->tm_min),2,'0') + pad(ui2s(utc->tm_sec),2,'0') ;
-		params.before = "" ;
-		params.after = after ;
-	}
-	
-	
+		
 	// Misc
 	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
