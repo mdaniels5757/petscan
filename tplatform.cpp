@@ -929,6 +929,7 @@ void TPlatform::processFiles ( TPageList &pl ) {
 	bool file_data = !getParam("ext_image_data","").empty() ;
 	bool file_usage = giu || !getParam("file_usage_data","").empty() ;
 	bool file_usage_data_ns0 = !getParam("file_usage_data_ns0","").empty() ;
+	if ( getParam("sortby") == "filesize" || getParam("sortby") == "uploaddate" ) file_data = true ;
 	if ( !file_data && !file_usage ) return ; // Nothing to do
 
 	TWikidataDB db ( pl.wiki , this ) ;

@@ -85,6 +85,8 @@ void TPageList::customSort ( uint8_t mode , bool ascending ) {
 		case PAGE_SORT_DATE : std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.timestamp<b.meta.timestamp;} ) ; break ;
 		case PAGE_SORT_REDLINKS_COUNT : std::sort ( pages.begin() , pages.end() , []( TPage a, TPage b){return atoi((a.meta.getMisc("count","0")).c_str())<atoi((b.meta.getMisc("count","0")).c_str());} ) ; break ;
 		case PAGE_SORT_INCOMING_LINKS : std::sort ( pages.begin() , pages.end() , []( TPage a,TPage b){return atoi((a.meta.getMisc("incoming_links","0")).c_str())<atoi((b.meta.getMisc("incoming_links","0")).c_str());} ) ; break ;
+		case PAGE_SORT_FILE_SIZE : std::sort ( pages.begin() , pages.end() , []( TPage a,TPage b){return atoi((a.meta.getMisc("img_size","0")).c_str())<atoi((b.meta.getMisc("img_size","0")).c_str());} ) ; break ;
+		case PAGE_SORT_UPLOAD_DATE : std::sort ( pages.begin() , pages.end() , []( TPage a,TPage b){return (a.meta.getMisc("img_timestamp",""))<(b.meta.getMisc("img_timestamp",""));} ) ; break ;
 		case PAGE_SORT_RANDOM : {
 			for ( auto page:pages ) page.meta.random = rand() ;
 			std::sort ( pages.begin() , pages.end() , [](const TPage &a,const TPage &b){return a.meta.random<b.meta.random;} ) ;
