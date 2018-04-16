@@ -519,7 +519,6 @@ void TPlatform::processLabels ( TPageList &pagelist ) {
 	TWikidataDB db ( pagelist.wiki , this ) ;
 	string sql = getLabelBaseSQL ( db ) ;
 	if ( sql.empty() ) return ;
-
 	pagelist.convertToWiki ( "wikidatawiki" ) ;
 	if ( pagelist.pages.empty() ) return ; // No point in filtering...
 	

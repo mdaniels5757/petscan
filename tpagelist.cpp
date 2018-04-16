@@ -310,6 +310,7 @@ void addLabels ( string &sql , map <string,TPage*> &item2page ) {
 	result = db.getQueryResults ( sql ) ;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(result))) {
+		if ( string(row[2]) == "alias" ) continue ; // Paranoia
 		string name ( row[0] ) ;
 		if ( item2page.find(name) == item2page.end() ) continue ; // Say what?
 		TPage *p = item2page[name] ;
@@ -323,19 +324,20 @@ void addLabels ( string &sql , map <string,TPage*> &item2page ) {
 void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto &p: pages ) {
-		if ( p.meta.id != 0 ) continue ;
 		ns_page[p.meta.ns].push_back ( &p ) ;
 	}
 	if ( ns_page.empty() ) return ;
-	
+
 	TWikidataDB db ( wiki ) ;
 	for ( auto i = ns_page.begin() ; i != ns_page.end() ; i++ ) {
 		vector < vector<TPage *> > ml ;
 		ml.push_back ( vector<TPage *> () ) ;
 		for ( auto &j: i->second ) {
+			if ( !j->meta.timestamp.empty() ) continue ;
 			if ( ml[ml.size()-1].size() >= DB_PAGE_BATCH_SIZE ) ml.push_back ( vector<TPage *> () ) ;
 			ml[ml.size()-1].push_back ( j ) ;
 		}
+		if ( ml.size() == 1 && ml[0].size() == 0 ) continue ; // No need for metadata for any page in this namespace
 		for ( auto &batch: ml ) {
 			map <string,TPage *> name2page ;
 			string sql = "SELECT page_title,page_id,page_len,page_touched FROM page WHERE page_namespace=" + ui2s(i->first) + " AND page_title IN (" ;
@@ -360,16 +362,16 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 			mysql_free_result(result);
 		}
 	}
-
 	if ( wiki != "wikidatawiki" ) return ;
 	if ( wikidata_language.empty() ) return ;
-	if ( ns_page.find(0) == ns_page.end() ) return ; // Huh?
+	if ( ns_page.find(0) == ns_page.end() ) return ; // No NS0 pages=no items
 	if ( ns_page[0].size() == 0 ) return ;
 
 	// Getting labels and descriptions for items (ns0)
 	map <string,TPage*> item2page ;
 	vector <string> sqls ;
-	string base_sql = "SELECT term_full_entity_id,term_text,term_type FROM wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_type IN ('label','description') AND term_full_entity_id IN (''" ;
+	// term_type IN ('label','description')
+	string base_sql = "SELECT term_full_entity_id,term_text,term_type FROM wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_full_entity_id IN (''" ;
 	sqls.push_back ( base_sql ) ;
 	uint32_t cnt = 0 ;
 	for ( auto i = ns_page[0].begin() ; i != ns_page[0].end() ; i++ ) {
@@ -387,7 +389,6 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 		threads.push_back ( new std::thread ( &addLabels , std::ref(sql) , std::ref(item2page) ) ) ;
 	}
 	for ( auto t:threads ) t->join() ;
-	
 }
 
 void TPageList::regexpFilter ( string regexp ) {
