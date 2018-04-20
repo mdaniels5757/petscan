@@ -520,7 +520,12 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 					}
 				}
 				
-				ret += o.dump();
+				try {
+					ret += o.dump();
+				} catch ( ... ) {
+					o["gil"] = "" ;
+					ret += o.dump();
+				}
 			}
 		}
 		ret += json_array_close ;

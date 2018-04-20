@@ -965,7 +965,7 @@ void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , 
 				cerr << "TPlatform::annotateFile: File not found(1): " << filename << endl ;
 				continue ;
 			}
-			name2f[filename]->meta.misc["gil"] = row[1] ;
+			name2f[filename]->meta.misc["gil"] = row[1] ; // This can throw a "incomplete UTF-8 string" in trenderer:516 for some reason...
 		}
 		mysql_free_result(result);
 		
