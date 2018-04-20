@@ -520,7 +520,7 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 					}
 				}
 				
-				try {
+				try { // HACK
 					ret += o.dump();
 				} catch ( ... ) {
 					o["gil"] = "" ;
@@ -588,7 +588,13 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 					}
 					o["giu"] = giu ;
 				}
-				ret += o.dump() ;
+				try { // HACK
+					ret += o.dump() ;
+				} catch ( ... ) {
+					json giu = {} ;
+					o["giu"] = giu ;
+					ret += o.dump() ;
+				}
 			}
 		}
 		
