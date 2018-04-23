@@ -144,7 +144,6 @@ public:
 	uint32_t q = 0 ;
 	string timestamp ;
 	map <string,string> misc ;
-	int random = 0 ;
 } ;
 
 class TPage {

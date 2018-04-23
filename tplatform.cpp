@@ -281,7 +281,8 @@ void TPlatform::sortResults ( TPageList &pagelist ) {
 	else if ( getParam("sortby") == "date" ) pagelist.customSort ( PAGE_SORT_DATE , asc ) ;
 	else if ( getParam("sortby") == "filesize" ) pagelist.customSort ( PAGE_SORT_FILE_SIZE , asc ) ;
 	else if ( getParam("sortby") == "uploaddate" ) pagelist.customSort ( PAGE_SORT_UPLOAD_DATE , asc ) ;
-	else if ( getParam("sortby") == "incoming_links" ) pagelist.customSort ( PAGE_SORT_INCOMING_LINKS , asc ) ;
+	else if ( getParam("sortby") == "uploaddate" ) pagelist.customSort ( PAGE_SORT_UPLOAD_DATE , asc ) ;
+	else if ( getParam("sortby") == "random" ) pagelist.customSort ( PAGE_SORT_RANDOM , asc ) ;
 	else pagelist.customSort ( PAGE_SORT_DEFAULT , asc ) ;
 }
 
