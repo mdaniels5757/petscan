@@ -480,8 +480,8 @@ bool TSourceDatabase::getPages () {
 	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user!=0)" ;
 	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
 	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
-	if ( params.last_edit_flagged == "yes" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed=1)" ;
-	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpages WHERE p.page_id=fp_page_id AND fp_stable=page_latest AND fp_reviewed!=1)" ;
+	if ( params.last_edit_flagged == "yes" ) sql += " AND NOT EXISTS (SELECT * FROM flaggedpage_pending WHERE p.page_id=fpp_page_id)" ;
+	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpage_pending WHERE p.page_id=fpp_page_id)" ;
 	
 		
 	// Misc
