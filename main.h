@@ -251,6 +251,14 @@ protected:
 	bool getPile ( uint32_t id ) ;
 } ;
 
+class TSourceSearch : public TSource {
+public:
+	TSourceSearch ( TPlatform *p = NULL ) { platform = p ; source_name = "search" ; } ;
+	virtual bool run () ;
+
+protected:
+} ;
+
 class TSourceManual : public TSource {
 public:
 	TSourceManual ( TPlatform *p = NULL ) { platform = p ; source_name = "manual" ; } ;

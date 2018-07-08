@@ -105,6 +105,47 @@ bool TSourcePagePile::run () {
 
 //________________________________________________________________________________________________________________________
 
+bool TSourceSearch::run () {
+	string search_query = platform->getParam("search_query","") ;
+	if ( search_query.empty() ) return false ;
+	string search_wiki = platform->getParam("search_wiki","") ;
+	int search_max_results = atoi ( platform->getParam("search_max_results","500").c_str() ) ;
+
+	string server = getWikiServer ( search_wiki ) ;
+	if ( server == "NO_SERVER_FOUND" ) return false ;
+	wiki = search_wiki ;
+
+	clear() ;
+	int srstart = 0 ;
+	while ( pages.size() < search_max_results ) {
+		string url = "https://" + server + "/w/api.php?action=query&list=search&srnamespace=0&srlimit=500&format=json&srsearch=" + urlencode(search_query) ;
+		if ( srstart > 0 ) {
+			char s[200] ;
+			sprintf ( s , "&sroffset=%d" , srstart ) ;
+			url += s ;
+		}
+		json j ;
+//cout << url << endl ;
+		if ( !loadJSONfromURL ( url , j , false ) ) return error ( "Search retrieval error for " + url ) ;
+		int pages_found = 0 ;
+		for ( auto &p: j["query"]["search"] ) {
+			TPage np ( p["title"] , p["ns"] ) ;
+			np.determineNamespace ( this ) ;
+			pages.push_back ( np ) ;
+			pages_found++ ;
+			if ( pages.size() >= search_max_results ) break ;
+		}
+		if ( pages_found < 500 ) break ; // This is the end, my friend, the end
+		srstart += pages_found ;
+	}
+
+	data_loaded = true ;
+	return true ;
+}
+
+
+//________________________________________________________________________________________________________________________
+
 bool TSourceWikidata::getData ( string sites ) {
 	clear() ;
 	sites = trim ( sites ) ;

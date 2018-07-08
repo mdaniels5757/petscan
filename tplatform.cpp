@@ -373,6 +373,7 @@ string TPlatform::process () {
 	candidate_sources.push_back ( new TSourcePagePile ( this ) ) ;
 	candidate_sources.push_back ( new TSourceManual ( this ) ) ;
 	candidate_sources.push_back ( new TSourceWikidata ( this ) ) ;
+	candidate_sources.push_back ( new TSourceSearch ( this ) ) ;
 	
 	// Check and run sources
 	map <string,TSource *> sources ;
