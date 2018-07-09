@@ -261,6 +261,7 @@ function AutoList ( callback ) {
 	this.allDone = function () {
 		$('#al_do_stop').hide() ;
 		$('#al_do_process').show() ;
+		$('#al_start_qs').show() ;
 		$('#al_status').html ( "<span style='color:green'>"+_t('al_done')+"</span>" ) ;
 	}
 
@@ -343,7 +344,9 @@ console.log ( me.concurrent , me.running.length ) ;
 			h += "<div class='autolist_subbox'>" ;
 			h += "<textarea id='al_commands' tt_placeholder='al_commands_ph' rows=3 style='padding:2px;width:200px'>" + (p.statementlist||'') + "</textarea><br/>" ;
 			h += "<button id='al_do_process' class='btn btn-outline-success btn-sm' tt='al_process'></button>" ;
+			h += "<button id='al_start_qs' class='btn btn-outline-success btn-sm' tt='al_start_qs'></button>" ;
 			h += "<button id='al_do_stop' class='btn btn-outline-danger btn-sm' tt='al_stop' style='display:none'></button>" ;
+			h += "<form style='display:none' id='qs_form' action='//tools.wmflabs.org/quickstatements/api.php' method='post' target='_blank'><input type='hidden' name='action' value='import' /><input type='hidden' name='format' value='v1' /><input type='hidden' name='temporary' value='1' /><input type='hidden' name='openpage' value='1' /><input type='hidden' id='qs_commands' name='data'/><button name='yup'></button></form>" ;
 			h += "<div id='al_status'></div>" ;
 			h += "</div>" ;
 		} else {
@@ -367,6 +370,29 @@ console.log ( me.concurrent , me.running.length ) ;
 		
 		me.setInterfaceLanguage ( interface_language ) ;
 	
+		$('#al_start_qs').click ( function (e) {
+			e.preventDefault() ;
+			me.setupCommands() ;
+			let qs_commands = [] ;
+			$.each ( me.commands_todo , function ( dummy , cmd ) {
+				let qs = '' ;
+				if ( cmd.mode == 'create' ) {
+					qs = 'CREATE' ;
+				} else {
+					if ( cmd.mode == 'delete' ) qs = '-' ;
+					if ( cmd.q != 'LAST' ) qs += 'Q' ;
+					qs += cmd.q + "|" + cmd.prop ;
+					if ( typeof cmd.value != 'undefined' ) qs += "|" + cmd.value ;
+				}
+
+				qs_commands.push ( qs ) ;
+			} ) ;
+			console.log ( me.commands_todo ) ;
+			console.log ( qs_commands ) ;
+			$('#qs_commands').val ( qs_commands.join("||") ) ;
+			$('#qs_form').submit() ;
+		} ) ;
+
 		$('#al_do_process').click ( function (e) {
 			e.preventDefault() ;
 			me.emergency_stop = false ;
