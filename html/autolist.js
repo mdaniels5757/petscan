@@ -346,7 +346,7 @@ console.log ( me.concurrent , me.running.length ) ;
 			h += "<button id='al_do_process' class='btn btn-outline-success btn-sm' tt='al_process'></button>" ;
 			h += "<button id='al_start_qs' class='btn btn-outline-success btn-sm' tt='al_start_qs'></button>" ;
 			h += "<button id='al_do_stop' class='btn btn-outline-danger btn-sm' tt='al_stop' style='display:none'></button>" ;
-			h += "<form style='display:none' id='qs_form' action='//tools.wmflabs.org/quickstatements/api.php' method='post' target='_blank'><input type='hidden' name='action' value='import' /><input type='hidden' name='format' value='v1' /><input type='hidden' name='temporary' value='1' /><input type='hidden' name='openpage' value='1' /><input type='hidden' id='qs_commands' name='data'/><button name='yup'></button></form>" ;
+			h += "<form style='display:none' id='qs_form' action='//tools.wmflabs.org/quickstatements/api.php' method='post' target='_blank'><input type='hidden' name='action' value='import' /><input type='hidden' name='format' value='v1' /><input type='hidden' name='temporary' value='1' /><input type='hidden' name='openpage' value='1' /><textarea type='hidden' id='qs_commands' name='data'></textarea><button name='yup'></button></form>" ;
 			h += "<div id='al_status'></div>" ;
 			h += "</div>" ;
 		} else {
@@ -378,10 +378,14 @@ console.log ( me.concurrent , me.running.length ) ;
 				let qs = '' ;
 				if ( cmd.mode == 'create' ) {
 					qs = 'CREATE' ;
+					qs += "||LAST|S" + output_wiki + "|\"" + cmd.page + "\"" ;
+					let m = output_wiki.match ( /^([a-z-]+)wiki$/ ) ;
+					if ( m !== null ) qs += "||LAST|L" + m[1] + "|\"" + $.trim(cmd.page.replace(/_/g,' ').replace(/\s*\(.+?\)\s*/,' ')) + '"' ;
 				} else {
 					if ( cmd.mode == 'delete' ) qs = '-' ;
-					if ( cmd.q != 'LAST' ) qs += 'Q' ;
-					qs += cmd.q + "|" + cmd.prop ;
+					if ( /^create_item_/.test(cmd.q) ) qs += 'LAST' ;
+					else qs += 'Q' + cmd.q ;
+					qs += "|" + cmd.prop ;
 					if ( typeof cmd.value != 'undefined' ) qs += "|" + cmd.value ;
 				}
 
@@ -389,7 +393,8 @@ console.log ( me.concurrent , me.running.length ) ;
 			} ) ;
 			console.log ( me.commands_todo ) ;
 			console.log ( qs_commands ) ;
-			$('#qs_commands').val ( qs_commands.join("||") ) ;
+			let s = qs_commands.join("||") ;
+			$('#qs_commands').val ( s ) ;
 			$('#qs_form').submit() ;
 		} ) ;
 
