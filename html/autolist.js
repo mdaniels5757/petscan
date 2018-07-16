@@ -391,8 +391,6 @@ console.log ( me.concurrent , me.running.length ) ;
 
 				qs_commands.push ( qs ) ;
 			} ) ;
-			console.log ( me.commands_todo ) ;
-			console.log ( qs_commands ) ;
 			let s = qs_commands.join("||") ;
 			$('#qs_commands').val ( s ) ;
 			$('#qs_form').submit() ;

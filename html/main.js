@@ -540,9 +540,9 @@ function initializeInterface () {
 		$(window).scroll() ;
 	} ) ;
 	
-	function highlightMissingWiki () {
-		var o = $('textarea[name="manual_list"]') ;
-		var wo = $('input[name="manual_list_wiki"]') ;
+	function highlightMissingWiki ( n1 , n2 ) {
+		var o = $('textarea[name="'+n1+'"]') ;
+		var wo = $('input[name="'+n1+'"]') ;
 		var text = o.val() ;
 		var wiki = wo.val() ;
 		var wop = $(wo.parents("div.input-group").get(0)) ;
@@ -554,9 +554,9 @@ function initializeInterface () {
 			$('#doit').prop('disabled', false)
 		}
 	}
-	$('textarea[name="manual_list"]').keyup ( highlightMissingWiki ) ;
-	$('input[name="manual_list_wiki"]').keyup ( highlightMissingWiki ) ;
-	highlightMissingWiki() ;
+	$('textarea[name="manual_list"]').keyup ( function () {highlightMissingWiki('manual_list','manual_list_wiki')} ) ;
+	$('input[name="manual_list_wiki"]').keyup ( function () {highlightMissingWiki('search_query','search_wiki')} ) ;
+	highlightMissingWiki('manual_list','manual_list_wiki') ;
 	
 	$('#tab-list').click ( function () {
 		if ( $('#main_form div.tab-pane').length > 0 ) {
