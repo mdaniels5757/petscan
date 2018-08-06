@@ -335,8 +335,9 @@ bool TSourceDatabase::getPages () {
 	else if ( has_pos_templates ) primary = "templates" ;
 	else if ( has_pos_linked_from ) primary = "links_from" ;
 	else if ( primary_pagelist ) primary = "pagelist" ;
+	else if ( params.page_wikidata_item == "without" ) primary = "no_wikidata" ;
 	else {
-//		if(DEBUG_OUTPUT) cout << "No starting point for DB\n" ;
+		cout << "No starting point for DB\n" ;
 		return false ;
 	}
 	
@@ -408,6 +409,17 @@ bool TSourceDatabase::getPages () {
 		sql += " INNER JOIN (page p" ;
 		sql += ") ON p.page_id=cl0.cl_from" ;
 	
+	} else if ( primary == "no_wikidata" ) {
+
+		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+		sql += lc ;
+		sql += " FROM page p" ;
+		if ( !is_before_after_done ) {
+			is_before_after_done = true ;
+			sql += sql_before_after ;
+		}
+		sql += " WHERE p.page_id NOT IN (SELECT pp_page FROM page_props WHERE pp_propname='wikibase_item')" ;
+
 	} else if ( primary == "templates" || primary == "links_from" ) {
 		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 		sql += " FROM page p" ;
@@ -416,6 +428,7 @@ bool TSourceDatabase::getPages () {
 			sql += sql_before_after ;
 		}
 		sql += " WHERE 1=1" ;
+
 	} else if ( primary == "pagelist" ) {
 		if ( primary_pagelist->pages.size() == 0 ) return true ; // Nothing to do, but that's OK
 		map <int32_t,vector <string> > nslist ;
@@ -532,7 +545,7 @@ bool TSourceDatabase::getPages () {
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
 	
 	// Speed up "Only pages without Wikidata items" for NS0 pages
-	if ( params.page_wikidata_item == "without" && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0 ) {
+	if ( primary != "no_wikidata" && params.page_wikidata_item == "without" && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0 ) {
 		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 
