@@ -374,7 +374,6 @@ console.log ( me.concurrent , me.running.length ) ;
 			e.preventDefault() ;
 			me.setupCommands() ;
 			let qs_commands = [] ;
-			console.log ( me.commands_todo ) ;
 			$.each ( me.commands_todo , function ( dummy , cmd ) {
 				let qs = '' ;
 				if ( cmd.mode == 'create' ) {
