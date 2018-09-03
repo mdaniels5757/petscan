@@ -374,6 +374,7 @@ console.log ( me.concurrent , me.running.length ) ;
 			e.preventDefault() ;
 			me.setupCommands() ;
 			let qs_commands = [] ;
+			console.log ( me.commands_todo ) ;
 			$.each ( me.commands_todo , function ( dummy , cmd ) {
 				let qs = '' ;
 				if ( cmd.mode == 'create' ) {
@@ -386,7 +387,7 @@ console.log ( me.concurrent , me.running.length ) ;
 					if ( /^create_item_/.test(cmd.q) ) qs += 'LAST' ;
 					else qs += 'Q' + cmd.q ;
 					qs += "|" + cmd.prop ;
-					if ( typeof cmd.value != 'undefined' ) qs += "|" + cmd.value ;
+					if ( typeof cmd.value != 'undefined' ) qs += "|" + 'Q' + cmd.value ;
 				}
 
 				qs_commands.push ( qs ) ;
