@@ -1,5 +1,5 @@
-CC=gcc
-CXX=g++
+CC=gcc-6
+CXX=g++-6
 CFLAGS=-DMG_ENABLE_THREADS -pthread -O3
 CPPFLAGS=-std=c++14 -O3 -g `mysql_config --include` -pthread
 
