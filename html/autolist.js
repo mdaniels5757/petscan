@@ -386,7 +386,10 @@ console.log ( me.concurrent , me.running.length ) ;
 					if ( /^create_item_/.test(cmd.q) ) qs += 'LAST' ;
 					else qs += 'Q' + cmd.q ;
 					qs += "|" + cmd.prop ;
-					if ( typeof cmd.value != 'undefined' ) qs += "|" + 'Q' + cmd.value ;
+					if ( typeof cmd.value != 'undefined' ) {
+						if ( /^[PpQq]\d+$/.test(cmd.value) ) qs += "|" + cmd.value ;
+						else qs += "|" + cmd.value ;
+					}
 				}
 
 				qs_commands.push ( qs ) ;
