@@ -150,7 +150,7 @@ function AutoList ( callback ) {
 				} else { // Delete property
 					cmd.mode = 'delete' ;
 					cmd.prop = m[1] ;
-					m = row.match ( /^\s*-(P\d+)\s*:\s*Q(\d+)/i ) ;
+					m = row.match ( /^\s*-(P\d+)\s*:\s*(Q\d+)/i ) ;
 					if ( m != null ) cmd.value = m[2] ;
 				}
 				remove_q = me.commands_todo.length ;
