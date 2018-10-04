@@ -301,7 +301,7 @@ int main(void) {
 	int timeout = atoi(root_platform->config["timeout"].c_str()) ;
 
 	// Set up query-logging DB
-	mysql_logging.setHostDB ( "tools.labsdb" , "s51434__petscan" ) ;
+	mysql_logging.setHostDB ( "tools.labsdb" , root_platform->config["schema"].c_str() ) ;
 	mysql_logging.doConnect ( true ) ;
 
 
