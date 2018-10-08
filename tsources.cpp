@@ -115,10 +115,12 @@ bool TSourceSearch::run () {
 	if ( server == "NO_SERVER_FOUND" ) return false ;
 	wiki = search_wiki ;
 
+	string search_namespace = search_wiki == "commonswiki" ? "6" : "0"; // search for files on Commons
+
 	clear() ;
 	int srstart = 0 ;
 	while ( pages.size() < search_max_results ) {
-		string url = "https://" + server + "/w/api.php?action=query&list=search&srnamespace=0&srlimit=500&format=json&srsearch=" + urlencode(search_query) ;
+		string url = "https://" + server + "/w/api.php?action=query&list=search&srnamespace=" + search_namespace + "&srlimit=500&format=json&srsearch=" + urlencode(search_query) ;
 		if ( srstart > 0 ) {
 			char s[200] ;
 			sprintf ( s , "&sroffset=%d" , srstart ) ;
