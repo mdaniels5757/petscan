@@ -307,6 +307,10 @@ int main(void) {
 
 	mg_mgr_init(&mgr, NULL);
 	nc = mg_bind(&mgr, root_platform->config["port"].c_str() , ev_handler); // s_http_port
+	if ( !nc ) {
+		cerr << "Unable to bind port" << endl;
+		return 1;
+	}
 	mg_set_protocol_http_websocket(nc);
 
 	/* For each new connection, execute ev_handler in a separate thread */
