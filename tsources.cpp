@@ -432,11 +432,9 @@ bool TSourceDatabase::getPages () {
 	} else if ( primary == "pagelist" ) {
 		if ( primary_pagelist->pages.size() == 0 ) return true ; // Nothing to do, but that's OK
 		map <int32_t,vector <string> > nslist ;
-		auto p = primary_pagelist->pages.begin() ;
-		do {
-			nslist[p->meta.ns].push_back ( p->name ) ;
-			p++ ;
-		} while ( p != primary_pagelist->pages.end() ) ;
+		for ( auto &p: primary_pagelist->pages ) {
+			nslist[p.meta.ns].push_back ( p.getNameWithoutNamespace() ) ;
+		}
 
 		vector <string> parts ;
 		for ( auto li:nslist ) {
