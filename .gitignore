@@ -1,0 +1,5 @@
+*.o
+*.log
+/config.json
+/petscan
+/testing

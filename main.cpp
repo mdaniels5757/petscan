@@ -301,12 +301,16 @@ int main(void) {
 	int timeout = atoi(root_platform->config["timeout"].c_str()) ;
 
 	// Set up query-logging DB
-	mysql_logging.setHostDB ( "tools.labsdb" , root_platform->config["schema"].c_str() ) ;
+	mysql_logging.setHostDB ( root_platform->config["host"].c_str() , root_platform->config["schema"].c_str() ) ;
 	mysql_logging.doConnect ( true ) ;
 
 
 	mg_mgr_init(&mgr, NULL);
 	nc = mg_bind(&mgr, root_platform->config["port"].c_str() , ev_handler); // s_http_port
+	if ( !nc ) {
+		cerr << "Unable to bind port" << endl;
+		return 1;
+	}
 	mg_set_protocol_http_websocket(nc);
 
 	/* For each new connection, execute ev_handler in a separate thread */

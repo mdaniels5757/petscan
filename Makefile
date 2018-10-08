@@ -8,17 +8,21 @@ SRCS_CXX=tsources.cpp wikidata_db.cpp tools.cpp tplatform.cpp tpagelist.cpp tren
 
 OBJS=$(subst .c,.o,$(SRCS_C)) $(subst .cpp,.o,$(SRCS_CXX))
 
+TARGET=petscan
+
 all: server
 # testing
 
-server: $(OBJS)
-	${CXX} main.cpp $(OBJS) -o petscan -O3 $(CPPFLAGS) -ldl `mysql_config --libs` -l curl
+server: $(TARGET)
+
+$(TARGET): $(OBJS)
+	${CXX} main.cpp $(OBJS) -o $(TARGET) -O3 $(CPPFLAGS) -ldl `mysql_config --libs` -l curl
 
 testing: $(OBJS)
 	${CXX} testing.cpp $(OBJS) -o testing -O3 $(CPPFLAGS) -ldl `mysql_config --libs` -l curl
 
 clean:
-	\rm -f $(OBJS) petscan testing
+	\rm -f $(OBJS) $(TARGET) testing
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $<
