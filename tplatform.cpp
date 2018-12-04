@@ -866,7 +866,7 @@ void TPlatform::annotatePage ( TWikidataDB &db , map <uint32_t,vector <TPage *> 
 			title2page[page->name] = page ;
 		}
 		string sql = "SELECT page_title" ;
-		if ( add_image ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='page_image' LIMIT 1) AS image" ;
+		if ( add_image ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname IN ('page_image','page_image_free') LIMIT 1) AS image" ;
 		if ( add_coordinates ) sql += ",(SELECT concat(gt_lat,',',gt_lon) FROM geo_tags WHERE gt_primary=1 AND gt_globe='earth' AND gt_page_id=page_id LIMIT 1) AS coord" ;
 		if ( add_defaultsort ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='defaultsort' LIMIT 1) AS defaultsort" ;
 		if ( add_disambiguation ) sql += ",(SELECT pp_value FROM page_props WHERE pp_page=page_id AND pp_propname='disambiguation' LIMIT 1) AS disambiguation" ;
