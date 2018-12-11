@@ -21,10 +21,12 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 	for ( auto p: parts ) {
 		stringReplace ( wiki , "wiki"+p+"wiki" , "wiki"+p ) ;
 	}
+	stringReplace ( wiki , "-" , "_" ) ;
 	stringReplace ( wiki , "wikispecieswiki" , "specieswiki" ) ;
 	stringReplace ( wiki , "specieswikimedia" , "specieswiki" ) ;
 	stringReplace ( wiki , "wiktionarywiki" , "wiktionary" ) ;
-	
+	stringReplace ( wiki , "be_taraskwiki" , "be_x_oldwiki" ) ;
+
 	if ( 0 ) { // Future special cases
 	} else {
 //		_host = wiki+".web.db.svc.eqiad.wmflabs" ; // Fast ones

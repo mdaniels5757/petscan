@@ -349,6 +349,8 @@ void TPlatform::legacyAutoListParameters () {
 			errors.push_back ( "Could not automatically convert from WDQ to SPARQL. Your results will be different than in AutoList 2." ) ;
 		}
 	}
+	stringReplace ( params["language"]  , "_" , "-" ) ;
+	stringReplace ( params["language"]  , " " , "-" ) ;
 }
 
 std::mutex source_mutex ;

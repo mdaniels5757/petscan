@@ -65,7 +65,9 @@ function getUrlVars () {
 	$.each ( hashes , function ( i , j ) {
 		var hash = j.split('=');
 		hash[1] += '' ;
-		vars[decodeURIComponent(hash[0])] = decodeURIComponent(hash[1]).replace(/_/g,' ');
+		let value = decodeURIComponent(hash[1]) ;
+		if ( hash[0] != 'language' ) value.replace(/_/g,' ') ;
+		vars[decodeURIComponent(hash[0])] = value;
 	} ) ;
 	return vars;
 }
