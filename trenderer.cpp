@@ -515,7 +515,7 @@ void TRenderer::addPageMetadataToJSON ( vector <TPage>::iterator i , json &o ) {
 			out = i->meta.getMisc(col,"") ;
 		}
 		
-		o["metadata"][col] = out ;
+		if ( !out.empty() ) o["metadata"][col] = out ;
 	}
 }
 
