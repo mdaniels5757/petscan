@@ -2,6 +2,7 @@
 
 
 string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
+	initializeColumns() ;
 	platform->content_type = "text/plain; charset=utf-8" ;
 
 	bool file_data = !platform->getParam("ext_image_data","").empty() ;
@@ -26,6 +27,11 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 
 	if ( file_data ) {
 		for ( auto k = file_data_keys.begin() ; k != file_data_keys.end() ; k++ ) ret += " !! " + (*k) ;
+	}
+
+	for ( auto col:columns ) {
+		if ( col == "checkbox" || col == "number" || col == "pageid" || col == "title" || col == "namespace" || col == "length" || col == "touched" ) continue ;
+		ret += " !! " + col ;
 	}
 	
 	ret += "\n" ;
@@ -63,6 +69,38 @@ string TRenderer::renderPageListWiki ( TPageList &pagelist ) {
 			}
 		}
 //		if ( file_usage ) ret += json_comma + "\"gil\":\"" + ...
+
+		for ( auto col:columns ) {
+		
+			string out ;
+
+			if ( col == "checkbox" || col == "number" || col == "pageid" || col == "title" || col == "namespace" || col == "length" || col == "touched" ) {
+				continue ;
+			} else if ( col == "image" ) {
+				string file = i->meta.ns == 6 ? i->getNameWithoutNamespace() : i->meta.getMisc("image","") ;
+				if ( !file.empty() ) out = "[[File:" + file + "|thumb|]]" ;
+			} else if ( col == "linknumber" ) {
+				out = string(i->meta.getMisc("count","?")) ;
+			} else if ( col == "wikidata" ) {
+				if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) {
+					out = "Q" + ui2s ( i->meta.q ) ;
+				}
+			} else if ( col == "defaultsort" || col == "disambiguation" || col == "incoming_links" ) {
+				out = string(i->meta.getMisc(col,"")) ;
+			} else if ( col == "coordinates" ) {
+				string lat = i->meta.getMisc("latitude","") ;
+				string lon = i->meta.getMisc("longitude","") ;
+				if ( !lat.empty() && !lon.empty() ) {
+					out = lat + "/" + lon ;
+				}
+			} else if ( col == "fileusage" ) {
+				out = i->meta.getMisc("gil","") ;
+			} else { // File data etc.
+				out = i->meta.getMisc(col,"") ;
+			}
+			
+			ret += " || " + out ;
+		}
 
 		ret += "\n" ;
 	}
@@ -449,7 +487,40 @@ string TRenderer::getTableHeaderHTML() {
 	return ret ;
 }
 
+void TRenderer::addPageMetadataToJSON ( vector <TPage>::iterator i , json &o ) {
+	for ( auto col:columns ) {
+		string out ;
+
+		if ( col == "checkbox" || col == "number" || col == "pageid" || col == "title" || col == "namespace" || col == "length" || col == "touched" ) {
+			continue ;
+		} else if ( col == "image" ) {
+			out = i->meta.ns == 6 ? i->getNameWithoutNamespace() : i->meta.getMisc("image","") ;
+		} else if ( col == "linknumber" ) {
+			out = string(i->meta.getMisc("count","?")) ;
+		} else if ( col == "wikidata" ) {
+			if ( i->meta.q != UNKNOWN_WIKIDATA_ITEM ) {
+				out = "Q" + ui2s ( i->meta.q ) ;
+			}
+		} else if ( col == "defaultsort" || col == "disambiguation" || col == "incoming_links" ) {
+			out = string(i->meta.getMisc(col,"")) ;
+		} else if ( col == "coordinates" ) {
+			string lat = i->meta.getMisc("latitude","") ;
+			string lon = i->meta.getMisc("longitude","") ;
+			if ( !lat.empty() && !lon.empty() ) {
+				out = lat + "/" + lon ;
+			}
+		} else if ( col == "fileusage" ) {
+			out = i->meta.getMisc("gil","") ;
+		} else { // File data etc.
+			out = i->meta.getMisc(col,"") ;
+		}
+		
+		o["metadata"][col] = out ;
+	}
+}
+
 string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
+	initializeColumns() ;
 	string ret ;
 	string mode = platform->getParam("output_compatability","catscan") ;
 	string callback = platform->getParam("callback","") ;
@@ -519,6 +590,7 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 						o[*k] = i->meta.getMisc(*k,"") ;
 					}
 				}
+				addPageMetadataToJSON ( i , o ) ;
 				
 				try { // HACK
 					ret += o.dump();
@@ -588,6 +660,8 @@ string TRenderer::renderPageListJSON ( TPageList &pagelist ) {
 					}
 					o["giu"] = giu ;
 				}
+				addPageMetadataToJSON ( i , o ) ;
+
 				try { // HACK
 					ret += o.dump() ;
 				} catch ( ... ) {

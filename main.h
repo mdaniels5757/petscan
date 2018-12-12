@@ -402,6 +402,7 @@ private:
 	string getTableRowHTML ( uint32_t cnt , TPage &page , TPageList &pagelist ) ;
 	string getTableRowCTSV ( uint32_t cnt , TPage &page , TPageList &pagelist , string &mode ) ;
 	void escapeCSV ( string &out ) ;
+	void addPageMetadataToJSON ( vector <TPage>::iterator i , json &o ) ;
 
 	vector <string> columns ;
 	TPlatform *platform = NULL ;
