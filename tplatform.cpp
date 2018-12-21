@@ -431,6 +431,12 @@ string TPlatform::process () {
 
 	processCreator ( pagelist ) ;
 
+	string output_limit = getParam("output_limit","") ;
+	if ( !output_limit.empty() ) {
+		uint32_t limit = atoi ( output_limit.c_str() ) ;
+		while ( pagelist.pages.size() > limit ) pagelist.pages.pop_back() ;
+	}
+
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
 }
