@@ -36,6 +36,10 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 	}
 }
 
+bool TWikidataDB::isConnected() {
+	return did_connect ;
+}
+
 void TWikidataDB::doConnect ( bool first ) {
 	if ( !first ) {
 		int i = mysql_ping ( &mysql ) ;
@@ -61,7 +65,14 @@ void TWikidataDB::doConnect ( bool first ) {
 	string user = root_platform->config["user"] ;
 	string password = root_platform->config["password"] ;
 	mysql_init(&mysql);
-	mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ;
+	if ( mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ) {
+		did_connect = true ;
+	} else {
+//		string error = mysql_error(&mysql) ;
+//		if ( error.find("Unknown MySQL server host ") == 0 ) 
+		did_connect = false ;
+		finishWithError() ;
+	}
 //	printf("MySQL Server Version is %s\n",mysql_get_server_info(&mysql));
 }
 

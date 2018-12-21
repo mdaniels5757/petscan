@@ -68,6 +68,7 @@ public:
 	void setHostDB ( string host , string db ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
+	bool isConnected() ;
 	MYSQL_RES *getQueryResults ( string sql ) ;
 	string escape ( string s ) ;
 	string space2_ ( string s ) ;
@@ -78,6 +79,7 @@ protected:
 	MYSQL mysql;
 	string _host , _config_file , _database , _wiki ;
 	TPlatform *platform = NULL ;
+	bool did_connect = false ;
 	
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;

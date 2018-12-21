@@ -20,6 +20,7 @@ bool TSourceLabels::run () {
 	clear() ;
 	wiki = "wikidatawiki" ;
 	TWikidataDB db ( wiki , platform ) ;
+	if ( !db.isConnected() ) return false ;
 	string sql = platform->getLabelBaseSQL ( db ) ;
 	if ( sql.empty() ) return false ;
 
@@ -155,6 +156,7 @@ bool TSourceWikidata::getData ( string sites ) {
 	
 	wiki = "wikidatawiki" ;
 	TWikidataDB db ( wiki , platform ) ;
+	if ( !db.isConnected() ) return false ;
 
 	bool no_statements = !platform->getParam("wpiu_no_statements","").empty() ;
 	
@@ -325,6 +327,7 @@ bool TSourceDatabase::getPages () {
 	wiki = (primary_pagelist) ? primary_pagelist->wiki : params.wiki ;
 	pages.clear() ;
 	TWikidataDB db ( wiki , platform ) ;
+	if ( !db.isConnected() ) return false ;
 
 	vector <vector<string> > cat_pos , cat_neg ;
 	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
