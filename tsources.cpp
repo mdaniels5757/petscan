@@ -539,7 +539,7 @@ bool TSourceDatabase::getPages () {
 	
 		
 	// Misc
-	if ( params.redirects == "only" ) sql += " AND p.page_is_redirect=1" ;
+	if ( params.redirects == "yes" ) sql += " AND p.page_is_redirect=1" ;
 	if ( params.redirects == "no" ) sql += " AND p.page_is_redirect=0" ;
 	if ( params.larger > -1 ) sql += " AND p.page_len>=" + ui2s(params.larger) ;
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
