@@ -342,7 +342,7 @@ bool TSourceDatabase::getPages () {
 	else if ( primary_pagelist ) primary = "pagelist" ;
 	else if ( params.page_wikidata_item == "without" ) primary = "no_wikidata" ;
 	else {
-		cout << "No starting point for DB\n" ;
+//		cout << "No starting point for DB\n" ;
 		return false ;
 	}
 	
