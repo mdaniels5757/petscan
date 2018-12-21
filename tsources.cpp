@@ -60,7 +60,13 @@ bool TSourceSPARQL::runQuery ( string query ) {
 			if ( *c == '/' ) last = c+1 ;
 		}
 		if ( !last ) continue ;
-		pages.push_back ( TPage ( last , 0 ) ) ;
+		switch ( *last ) {
+			case 'Q' : pages.push_back ( TPage ( last , 0 ) ) ; break ;
+			case 'P' : pages.push_back ( TPage ( last , 120 ) ) ; break ;
+			case 'L' : pages.push_back ( TPage ( last , 146 ) ) ; break ;
+			default:
+				cout << "Unknown namespace for: " << last << endl ;
+		}
 	}
 
 	data_loaded = true ;
