@@ -189,7 +189,7 @@ public:
 	void swap ( TPageList &pl ) ;
 	void customSort ( uint8_t mode , bool ascending ) ;
 	virtual bool error ( string s ) { return false ; }
-	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki , map <string,TPage *> &name2o ) ;
+	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki ,  map <string,TPage *> &name2o ) ;
 	void join ( string cmd , TPageList &pl ) ;
 	void loadMissingMetadata ( string wikidata_language ) ;
 	inline bool hasDataLoaded() { return data_loaded ; }
@@ -202,6 +202,7 @@ public:
 protected:
 	void loadNamespaces () ;
 	void convertToWikidata () ;
+	void addWikidataLabelsForNamespace ( uint32_t namespace_id , string entity_type , string wikidata_language , TWikidataDB &db , map <int16_t,vector <TPage *> > &ns_page ) ;
 	bool is_sorted = false ;
 	bool namespaces_loaded = false ;
 	void sort() ;

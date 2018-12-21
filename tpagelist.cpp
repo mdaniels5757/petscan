@@ -360,17 +360,23 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	}
 	if ( wiki != "wikidatawiki" ) return ;
 	if ( wikidata_language.empty() ) return ;
-	if ( ns_page.find(0) == ns_page.end() ) return ; // No NS0 pages=no items
-	if ( ns_page[0].size() == 0 ) return ;
+
+	addWikidataLabelsForNamespace ( 0 , "item" , wikidata_language , db , ns_page ) ;
+	addWikidataLabelsForNamespace ( 120 , "property" , wikidata_language , db , ns_page ) ;
+}
+
+void TPageList::addWikidataLabelsForNamespace ( uint32_t namespace_id , string entity_type , string wikidata_language , TWikidataDB &db , map <int16_t,vector <TPage *> > &ns_page ) {
+	if ( ns_page.find(namespace_id) == ns_page.end() ) return ; // No NS0 pages=no items
+	if ( ns_page[namespace_id].size() == 0 ) return ;
 
 	// Getting labels and descriptions for items (ns0)
 	map <string,TPage*> item2page ;
 	vector <string> sqls ;
 	// term_type IN ('label','description')
-	string base_sql = "SELECT term_full_entity_id,term_text,term_type FROM wb_terms WHERE term_entity_type='item' AND term_language='" + db.escape(wikidata_language) + "' AND term_full_entity_id IN (''" ;
+	string base_sql = "SELECT term_full_entity_id,term_text,term_type FROM wb_terms WHERE term_entity_type='"+entity_type+"' AND term_language='" + db.escape(wikidata_language) + "' AND term_full_entity_id IN (''" ;
 	sqls.push_back ( base_sql ) ;
 	uint32_t cnt = 0 ;
-	for ( auto i = ns_page[0].begin() ; i != ns_page[0].end() ; i++ ) {
+	for ( auto i = ns_page[namespace_id].begin() ; i != ns_page[namespace_id].end() ; i++ ) {
 		item2page[(*i)->name] = *i ;
 		sqls[sqls.size()-1] += ",'" + (*i)->name + "'" ;
 		if ( cnt++ < LABEL_BATCH_SIZE ) continue ;
