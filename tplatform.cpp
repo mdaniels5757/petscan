@@ -424,18 +424,12 @@ string TPlatform::process () {
 	
 	pagelist.regexpFilter ( getParam("regexp_filter","") ) ;
 	
-	
 	sortResults ( pagelist ) ;
 	processRedlinks ( pagelist ) ; // Supersedes sort
 	params["format"] = getParam ( "format" , "html" , true ) ;
 
 	processCreator ( pagelist ) ;
-
-	string output_limit = getParam("output_limit","") ;
-	if ( !output_limit.empty() ) {
-		uint32_t limit = atoi ( output_limit.c_str() ) ;
-		while ( pagelist.pages.size() > limit ) pagelist.pages.pop_back() ;
-	}
+	applyResultsLimit ( pagelist ) ;
 
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
@@ -451,6 +445,13 @@ void TPlatform::processMissingDatabaseFilters ( TPageList &pagelist ) {
 	} else {
 		error ( "processMissingDatabaseFilters fail" ) ;
 	}
+}
+
+void TPlatform::applyResultsLimit ( TPageList &pagelist ) {
+	string output_limit = getParam("output_limit","") ;
+	if ( output_limit.empty() ) return ;
+	uint32_t limit = atoi ( output_limit.c_str() ) ;
+	while ( pagelist.pages.size() > limit ) pagelist.pages.pop_back() ;
 }
 
 void TPlatform::getParameterAsStringArray ( string s , vector <string> &vs ) {

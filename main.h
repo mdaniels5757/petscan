@@ -375,6 +375,7 @@ protected:
 	void combine ( TPageList &pagelist , map <string,TSource *> &sources ) ;
 	void sortResults ( TPageList &pagelist ) ;
 	void processRedlinks ( TPageList &pagelist ) ;
+	void applyResultsLimit ( TPageList &pagelist ) ;
 	void legacyAutoListParameters () ;
 	void getParameterAsStringArray ( string s , vector <string> &vs ) ;
 	string legacyCombinationParameters ( map <string,TSource *> &sources ) ;
