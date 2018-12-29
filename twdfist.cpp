@@ -31,6 +31,63 @@ void TWDFIST::filterItems () {
 	items.swap ( new_items ) ;
 }
 
+void TWDFIST::filterFiles () {
+	map <string,uint8_t> remove_files ;
+
+	// Get distinct files and their usage count
+	map <string,uint64_t> file2count ;
+	for ( auto qi = q2image.begin() ; qi != q2image.end() ; qi++ ) {
+		for ( auto fc = qi->second.begin() ; fc != qi->second.end() ; fc++ ) {
+			if ( file2count.find(fc->first) == file2count.end() ) file2count[fc->first] = 1 ;
+			else file2count[fc->first]++ ;
+		}
+	}
+
+	if ( file2count.size() == 0 ) return ; // No files, no problem
+
+	// Remove files that are already used on Wikidata
+	if ( wdf_only_files_not_on_wd ) {
+		TWikidataDB wd_db ( "wikidatawiki" , platform );
+		vector <string> parts ;
+		parts.push_back ( "" ) ;
+		for ( auto fc = file2count.begin() ; fc != file2count.end() ; fc++ ) {
+			if ( parts[parts.size()-1].size() > 500000 ) parts.push_back ( "" ) ; // String length limit
+			if ( !parts[parts.size()-1].empty() ) parts[parts.size()-1] += "," ;
+			parts[parts.size()-1] += "\"" + wd_db.escape(fc->first) + "\"" ;
+		}
+		for ( auto part = parts.begin() ; part != parts.end() ; part++ ) {
+			if ( part->empty() ) continue ;
+			string sql = "SELECT il_to FROM imagelinks WHERE il_from_namespace=0 AND il_to IN (" + *part + ")" ;
+			MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
+			MYSQL_ROW row;
+			while ((row = mysql_fetch_row(result))) {
+				remove_files[row[0]] = 1 ;
+			}
+			mysql_free_result(result);
+		}
+	}
+
+	// Remove files that are in at least five items
+	if ( wdf_max_five_results ) {
+		for ( auto fc = file2count.begin() ; fc != file2count.end() ; fc++ ) {
+			if ( fc->second < 5 ) continue ;
+			remove_files[fc->first] = 1 ;
+		}
+	}
+
+	if ( remove_files.size() == 0 ) return ; // Nothing to remove
+
+	// Remove files
+	for ( auto qi = q2image.begin() ; qi != q2image.end() ; qi++ ) {
+		string2int32 new_files ;
+		for ( auto fc = qi->second.begin() ; fc != qi->second.end() ; fc++ ) {
+			if ( remove_files.find(fc->first) != remove_files.end() ) continue ;
+			new_files[fc->first] = fc->second ;
+		}
+		qi->second.swap ( new_files ) ;
+	}
+}
+
 string TWDFIST::normalizeFilename ( string filename ) {
 	string ret = trim ( filename ) ;
 	replace ( ret.begin(), ret.end(), ' ', '_' ) ;
@@ -225,12 +282,12 @@ string TWDFIST::run () {
 	wdf_commons_cats = !(platform->getParam("wdf_commons_cats","").empty()) ;
 
 	// Options
-	wdf_only_items_without_p18 = !(platform->getParam("wdf_only_items_without_p18","").empty()) ; // DONE
+	wdf_only_items_without_p18 = !(platform->getParam("wdf_only_items_without_p18","").empty()) ;
 	wdf_only_files_not_on_wd = !(platform->getParam("wdf_only_files_not_on_wd","").empty()) ;
-	wdf_only_jpeg = !(platform->getParam("wdf_only_jpeg","").empty()) ; // DONE
+	wdf_only_jpeg = !(platform->getParam("wdf_only_jpeg","").empty()) ;
 	wdf_max_five_results = !(platform->getParam("wdf_max_five_results","").empty()) ;
-	wdf_only_page_images = !(platform->getParam("wdf_only_page_images","").empty()) ; // DONE
-	wdf_allow_svg = !(platform->getParam("wdf_allow_svg","").empty()) ; // DONE
+	wdf_only_page_images = !(platform->getParam("wdf_only_page_images","").empty()) ;
+	wdf_allow_svg = !(platform->getParam("wdf_allow_svg","").empty()) ;
 
 	// Prepare
 	seedIgnoreFiles() ;
@@ -245,6 +302,8 @@ string TWDFIST::run () {
 	if ( wdf_coords ) followCoordinates() ;
 	if ( wdf_search_commons ) followSearchCommons() ;
 	if ( wdf_commons_cats ) followCommonsCats() ;
+
+	filterFiles() ;
 
 	j["data"] = q2image ;
 	return j.dump() ;

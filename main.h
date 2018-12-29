@@ -428,6 +428,7 @@ protected :
 	string normalizeFilename ( string filename ) ;
 	void seedIgnoreFiles () ;
 	void filterItems() ;
+	void filterFiles () ;
 	void followLanguageLinks () ;
 	void followCoordinates () ;
 	void followSearchCommons () ;
