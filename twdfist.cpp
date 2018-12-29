@@ -353,7 +353,7 @@ string TWDFIST::run () {
 	}
 	pagelist->clear() ;
 	if ( items.empty() ) { // No items
-		j["status"] = "No items from original query1" ;
+		j["status"] = "No items from original query" ;
 		return j.dump() ;
 	}
 
@@ -375,7 +375,7 @@ string TWDFIST::run () {
 	seedIgnoreFiles() ;
 	filterItems() ;
 	if ( items.size() == 0 ) {
-		j["status"] = "No items from original query2" ;
+		j["status"] = "No items from original query" ;
 		return j.dump() ;
 	}
 
