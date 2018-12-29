@@ -278,6 +278,7 @@ void TWDFIST::followCoordinates () {
 		mysql_free_result(result);
 	}
 
+	// Run queries
 	string radius = "100" ; // meters
 	for ( auto qc = q2coord.begin() ; qc != q2coord.end() ; qc++ ) {
 		string q = qc->first ;
@@ -295,7 +296,44 @@ void TWDFIST::followCoordinates () {
 	}
 }
 
-void TWDFIST::followSearchCommons () {} // TODO
+void TWDFIST::followSearchCommons () {
+	// Chunk item list
+	vector <string> item_batches ;
+	for ( uint64_t cnt = 0 ; cnt < items.size() ; cnt++ ) {
+		if ( cnt % ITEM_BATCH_SIZE == 0 ) item_batches.push_back ( "" ) ;
+		if ( !item_batches[item_batches.size()-1].empty() ) item_batches[item_batches.size()-1] += "," ;
+		item_batches[item_batches.size()-1] += "\"" + items[cnt] + "\"" ;
+	}
+
+	// Get strings
+	map <string,string> q2label ;
+	TWikidataDB wd_db ( "wikidatawiki" , platform );
+	for ( auto batch = item_batches.begin() ; batch != item_batches.end() ; batch++ ) {
+		string sql = "SELECT term_entity_id,term_text FROM wb_terms WHERE term_entity_type='item' AND term_language='en' AND term_type='label' AND term_full_entity_id IN (" + *batch + ")" ;
+		MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			q2label[row[0]] = row[1] ;
+		}
+		mysql_free_result(result);
+	}
+
+	// Run search
+	for ( auto ql = q2label.begin() ; ql != q2label.end() ; ql++ ) {
+		string q = ql->first ;
+		string label = ql->second ;
+		string url = "https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&format=json&srsearch=" + urlencode(label) ;
+		json j ;
+		loadJSONfromURL ( url , j ) ;
+		for ( uint32_t i = 0 ; i < j["query"]["search"].size() ; i++ ) {
+			string file = j["query"]["search"][i]["title"] ;
+			file = file.substr ( 5 ) ;
+			file = normalizeFilename ( file ) ;
+			addFileToQ ( q , file ) ;
+		}
+	}
+}
+
 void TWDFIST::followCommonsCats () {} // TODO
 
 string TWDFIST::run () {
@@ -332,6 +370,12 @@ string TWDFIST::run () {
 	wdf_max_five_results = !(platform->getParam("wdf_max_five_results","").empty()) ;
 	wdf_only_page_images = !(platform->getParam("wdf_only_page_images","").empty()) ;
 	wdf_allow_svg = !(platform->getParam("wdf_allow_svg","").empty()) ;
+
+// TESTING
+items = { "Q350" } ;
+wdf_only_items_without_p18 = false ;
+wdf_langlinks = false ;
+wdf_search_commons = true ;
 
 	// Prepare
 	seedIgnoreFiles() ;
