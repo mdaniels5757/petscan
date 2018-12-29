@@ -78,13 +78,21 @@ void TWDFIST::filterFiles () {
 	if ( remove_files.size() == 0 ) return ; // Nothing to remove
 
 	// Remove files
+	vector <string> remove_q ;
 	for ( auto qi = q2image.begin() ; qi != q2image.end() ; qi++ ) {
+		string q = qi->first ;
 		string2int32 new_files ;
 		for ( auto fc = qi->second.begin() ; fc != qi->second.end() ; fc++ ) {
 			if ( remove_files.find(fc->first) != remove_files.end() ) continue ;
 			new_files[fc->first] = fc->second ;
 		}
-		qi->second.swap ( new_files ) ;
+		if ( new_files.empty() ) remove_q.push_back ( q ) ;
+		else qi->second.swap ( new_files ) ;
+	}
+
+	// Remove items with no files
+	for ( auto q = remove_q.begin() ; q != remove_q.end() ; q++ ) {
+		q2image.erase ( q2image.find(*q) ) ;
 	}
 }
 
