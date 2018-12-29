@@ -433,6 +433,7 @@ protected :
 	void followCoordinates () ;
 	void followSearchCommons () ;
 	void followCommonsCats () ;
+	void addFileToQ ( string q , string file ) ;
 
 	TPageList *pagelist ;
 	TPlatform *platform ;

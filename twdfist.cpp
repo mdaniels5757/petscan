@@ -154,6 +154,15 @@ void TWDFIST::seedIgnoreFiles () {
 	mysql_free_result(result);
 }
 
+void TWDFIST::addFileToQ ( string q , string file ) {
+	if ( !isValidFile ( file ) ) return ;
+	if ( q2image.find(q) == q2image.end() ) q2image[q] = string2int32 () ;
+	if ( q2image[q].find(file) == q2image[q].end() ) q2image[q][file] = 1 ;
+	else q2image[q][file]++ ;
+}
+
+
+
 void TWDFIST::followLanguageLinks () {
 	// Chunk item list
 	vector <string> item_batches ;
@@ -232,15 +241,12 @@ void TWDFIST::followLanguageLinks () {
 						if ( title2file.find(title) == title2file.end() ) continue ; // Page has no page image
 						if ( title2file[title] != file ) continue ;
 					}
-					if ( !isValidFile ( file ) ) continue ;
 					if ( title2q.find(title) == title2q.end() ) {
 						cout << "Not found : " << title << endl ;
 						continue ;
 					}
 					string q = title2q[title] ;
-					if ( q2image.find(q) == q2image.end() ) q2image[q] = string2int32 () ;
-					if ( q2image[q].find(file) == q2image[q].end() ) q2image[q][file] = 1 ;
-					else q2image[q][file]++ ;
+					addFileToQ ( q , file ) ;
 				}
 				mysql_free_result(result);
 			}
@@ -250,7 +256,45 @@ void TWDFIST::followLanguageLinks () {
 
 }
 
-void TWDFIST::followCoordinates () {} // TODO
+void TWDFIST::followCoordinates () {
+	// Chunk item list
+	vector <string> item_batches ;
+	for ( uint64_t cnt = 0 ; cnt < items.size() ; cnt++ ) {
+		if ( cnt % ITEM_BATCH_SIZE == 0 ) item_batches.push_back ( "" ) ;
+		if ( !item_batches[item_batches.size()-1].empty() ) item_batches[item_batches.size()-1] += "," ;
+		item_batches[item_batches.size()-1] += "\"" + items[cnt] + "\"" ;
+	}
+
+	// Get coordinates
+	map <string,pair <string,string>> q2coord ;
+	TWikidataDB wd_db ( "wikidatawiki" , platform );
+	for ( auto batch = item_batches.begin() ; batch != item_batches.end() ; batch++ ) {
+		string sql = "SELECT page_title,gt_lat,gt_lon FROM geo_tags,page WHERE page_namespace=0 AND page_id=gt_page_id AND gt_globe='earth' AND gt_primary=1 AND page_title IN (" + *batch + ")" ;
+		MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			q2coord[row[0]] = pair <string,string> ( row[1] , row[2] ) ;
+		}
+		mysql_free_result(result);
+	}
+
+	string radius = "100" ; // meters
+	for ( auto qc = q2coord.begin() ; qc != q2coord.end() ; qc++ ) {
+		string q = qc->first ;
+		string lat = qc->second.first ;
+		string lon = qc->second.second ;
+		string url = "https://commons.wikimedia.org/w/api.php?action=query&list=geosearch&gscoord="+lat+"|"+lon+"&gsradius="+radius+"&gslimit=50&gsnamespace=6&format=json" ;
+		json j ;
+		loadJSONfromURL ( url , j ) ;
+		for ( uint32_t i = 0 ; i < j["query"]["geosearch"].size() ; i++ ) {
+			string file = j["query"]["geosearch"][i]["title"] ;
+			file = file.substr ( 5 ) ;
+			file = normalizeFilename ( file ) ;
+			addFileToQ ( q , file ) ;
+		}
+	}
+}
+
 void TWDFIST::followSearchCommons () {} // TODO
 void TWDFIST::followCommonsCats () {} // TODO
 
@@ -262,10 +306,6 @@ string TWDFIST::run () {
 
 	platform->content_type = "application/json; charset=utf-8" ; // Output is always JSON
 	pagelist->convertToWiki ( "wikidatawiki" ) ; // Making sure
-	if ( pagelist->size() == 0 ) { // No items
-		j["status"] = "No items from original query" ;
-		return j.dump() ;
-	}
 
 	// Convert pagelist into item list, then save space by clearing pagelist
 	items.reserve ( pagelist->size() ) ;
@@ -274,6 +314,10 @@ string TWDFIST::run () {
 		items.push_back ( i->getNameWithoutNamespace() ) ;
 	}
 	pagelist->clear() ;
+	if ( items.empty() ) { // No items
+		j["status"] = "No items from original query1" ;
+		return j.dump() ;
+	}
 
 	// Follow
 	wdf_langlinks = !(platform->getParam("wdf_langlinks","").empty()) ;
@@ -293,7 +337,7 @@ string TWDFIST::run () {
 	seedIgnoreFiles() ;
 	filterItems() ;
 	if ( items.size() == 0 ) {
-		j["status"] = "No items from original query" ;
+		j["status"] = "No items from original query2" ;
 		return j.dump() ;
 	}
 
