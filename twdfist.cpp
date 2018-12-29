@@ -371,12 +371,6 @@ string TWDFIST::run () {
 	wdf_only_page_images = !(platform->getParam("wdf_only_page_images","").empty()) ;
 	wdf_allow_svg = !(platform->getParam("wdf_allow_svg","").empty()) ;
 
-// TESTING
-items = { "Q350" } ;
-wdf_only_items_without_p18 = false ;
-wdf_langlinks = false ;
-wdf_search_commons = true ;
-
 	// Prepare
 	seedIgnoreFiles() ;
 	filterItems() ;
