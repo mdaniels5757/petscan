@@ -416,4 +416,30 @@ private:
 	struct timeval now_ish ;
 } ;
 
+typedef map <string,int32_t> string2int32 ;
+
+class TWDFIST {
+public:
+	TWDFIST ( TPageList *pagelist , TPlatform *platform ) : pagelist(pagelist) , platform(platform) {} ;
+	string run () ;
+
+protected :
+	bool isValidFile ( string file ) ;
+	string normalizeFilename ( string filename ) ;
+	void seedIgnoreFiles () ;
+	void filterItems() ;
+	void followLanguageLinks () ;
+	void followCoordinates () ;
+	void followSearchCommons () ;
+	void followCommonsCats () ;
+
+	TPageList *pagelist ;
+	TPlatform *platform ;
+	vector <string> items ;
+	bool wdf_langlinks , wdf_coords , wdf_search_commons , wdf_commons_cats ;
+	bool wdf_only_items_without_p18 , wdf_only_files_not_on_wd , wdf_only_jpeg , wdf_max_five_results , wdf_only_page_images , wdf_allow_svg ;
+	map <string,uint8_t> files2ignore ;
+	map <string,string2int32 > q2image ;
+} ;
+
 #endif

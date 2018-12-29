@@ -431,6 +431,12 @@ string TPlatform::process () {
 	processCreator ( pagelist ) ;
 	applyResultsLimit ( pagelist ) ;
 
+	string wdf_main = getParam ( "wdf_main" , "" ) ;
+	if ( !wdf_main.empty() ) {
+		TWDFIST wdfist ( &pagelist , this ) ;
+		return wdfist.run() ;
+	}
+
 	TRenderer renderer ( this ) ;
 	return renderer.renderPageList ( pagelist ) ;
 }

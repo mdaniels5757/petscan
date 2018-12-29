@@ -146,6 +146,7 @@ function receiveEnglishNamespaceData ( j ) {
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_templates_n_links" role="tab"><span tt='templates_links'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_other_sources" role="tab"><span tt='other_sources'></span></a></li>
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_wikidata" role="tab"><span tt='wikidata'></span></a></li>
+<!--	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_wdfist" role="tab"><span>WDFIST</span></a></li>-->
 	<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab_output" role="tab"><span tt='output'></span></a></li>
 </ul>
 
@@ -564,9 +565,51 @@ function receiveEnglishNamespaceData ( j ) {
 <div class="col-sm-2"></div>
 </div>
 
-
-
 </div> <!--tab panel-->
+
+
+
+<!--
+<div class="tab-pane" id="tab_wdfist" role="tabpanel">
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label"></label>
+<div class="col-sm-10">
+<div>
+	THIS WILL RUN WDFIST AFTER NOTMAL OPERATIONS AND RETURN DIFFERENT OUTPUT
+</div>
+<label><input type='checkbox' name='wdf_main' /> <span>USE WDFIST</span></label>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label">FOLLOW</label>
+<div class="col-sm-10">
+<label><input type='checkbox' name='wdf_langlinks' /> <span>LANGLINKS</span></label>
+<label><input type='checkbox' name='wdf_coords' /> <span>COORDINATES</span></label>
+<label><input type='checkbox' name='wdf_search_commons' /> <span>SEARCH COMMONS</span></label>
+<label><input type='checkbox' name='wdf_commons_cats' /> <span>COMMONS CATEGORIES</span></label>
+</div>
+</div>
+
+<div class="form-group row">
+<label class="col-sm-2 form-control-label">OPTIONS</label>
+<div class="col-sm-10">
+<label><input type='checkbox' name='wdf_only_items_without_p18' /> <span>ONLY WITHOUT P18</span></label>
+<label><input type='checkbox' name='wdf_only_files_not_on_wd' /> <span>ONLY FILES NOT USED ON WIKIDATA</span></label>
+<label><input type='checkbox' name='wdf_only_jpeg' /> <span>ONLY JPEG</span></label>
+<label><input type='checkbox' name='wdf_max_five_results' /> <span>MAX 5 RESULTS</span></label>
+<label><input type='checkbox' name='wdf_only_page_images' /> <span>PAGE IMAGES ONLY</span></label>
+<label><input type='checkbox' name='wdf_allow_svg' /> <span>SHOW SVG</span></label>
+</div>
+</div>
+
+</div>-->
+<!--tab panel-->
+
+
+
+
 <div class="tab-pane" id="tab_output" role="tabpanel">
 
 <div class="form-group row">
