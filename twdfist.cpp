@@ -129,7 +129,7 @@ bool TWDFIST::isValidFile ( string file ) { // Requires normalized filename
 	if ( file.find("Kit_") == 0 ) return false ;
 
 // 	if ( preg_match ( '/\bribbon.jpe{0,1}g/i' , $i ) ) // TODO
-//	if ( preg_match ( '/^600px_.+\.png/i' , $i ) ) // TODO
+	if ( file.find("600px_") == 0 && type == "png" ) return false ;
 	
 	return true ;
 }
