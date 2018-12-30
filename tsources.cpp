@@ -332,6 +332,7 @@ bool TSourceDatabase::run () {
 bool TSourceDatabase::getPages () {
 	wiki = (primary_pagelist) ? primary_pagelist->wiki : params.wiki ;
 	pages.clear() ;
+	if ( wiki == "wiki" ) return false ; // Paranoia
 	TWikidataDB db ( wiki , platform ) ;
 	if ( !db.isConnected() ) return false ;
 

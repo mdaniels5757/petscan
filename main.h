@@ -191,7 +191,7 @@ public:
 	virtual bool error ( string s ) { return false ; }
 	uint32_t annotateWikidataItem ( TWikidataDB &db , string wiki ,  map <string,TPage *> &name2o ) ;
 	void join ( string cmd , TPageList &pl ) ;
-	void loadMissingMetadata ( string wikidata_language ) ;
+	void loadMissingMetadata ( string wikidata_language , TPlatform *platform = NULL ) ;
 	inline bool hasDataLoaded() { return data_loaded ; }
 	void regexpFilter ( string regexp ) ;
 	

@@ -36,10 +36,10 @@ void TWDFIST::filterFiles () {
 
 	// Get distinct files and their usage count
 	map <string,uint64_t> file2count ;
-	for ( auto qi = q2image.begin() ; qi != q2image.end() ; qi++ ) {
-		for ( auto fc = qi->second.begin() ; fc != qi->second.end() ; fc++ ) {
-			if ( file2count.find(fc->first) == file2count.end() ) file2count[fc->first] = 1 ;
-			else file2count[fc->first]++ ;
+	for ( auto& qi:q2image ) {
+		for ( auto& fc:qi.second ) {
+			if ( file2count.find(fc.first) == file2count.end() ) file2count[fc.first] = 1 ;
+			else file2count[fc.first]++ ;
 		}
 	}
 
@@ -50,14 +50,14 @@ void TWDFIST::filterFiles () {
 		TWikidataDB wd_db ( "wikidatawiki" , platform );
 		vector <string> parts ;
 		parts.push_back ( "" ) ;
-		for ( auto fc = file2count.begin() ; fc != file2count.end() ; fc++ ) {
+		for ( auto& fc:file2count ) {
 			if ( parts[parts.size()-1].size() > 500000 ) parts.push_back ( "" ) ; // String length limit
 			if ( !parts[parts.size()-1].empty() ) parts[parts.size()-1] += "," ;
-			parts[parts.size()-1] += "\"" + wd_db.escape(fc->first) + "\"" ;
+			parts[parts.size()-1] += "\"" + wd_db.escape(fc.first) + "\"" ;
 		}
-		for ( auto part = parts.begin() ; part != parts.end() ; part++ ) {
-			if ( part->empty() ) continue ;
-			string sql = "SELECT il_to FROM imagelinks WHERE il_from_namespace=0 AND il_to IN (" + *part + ")" ;
+		for ( auto& part:parts ) {
+			if ( part.empty() ) continue ;
+			string sql = "SELECT il_to FROM imagelinks WHERE il_from_namespace=0 AND il_to IN (" + part + ")" ;
 			MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
 			MYSQL_ROW row;
 			while ((row = mysql_fetch_row(result))) {
@@ -69,9 +69,9 @@ void TWDFIST::filterFiles () {
 
 	// Remove files that are in at least five items
 	if ( wdf_max_five_results ) {
-		for ( auto fc = file2count.begin() ; fc != file2count.end() ; fc++ ) {
-			if ( fc->second < 5 ) continue ;
-			remove_files[fc->first] = 1 ;
+		for ( auto& fc:file2count ) {
+			if ( fc.second < 5 ) continue ;
+			remove_files[fc.first] = 1 ;
 		}
 	}
 
@@ -79,20 +79,20 @@ void TWDFIST::filterFiles () {
 
 	// Remove files
 	vector <string> remove_q ;
-	for ( auto qi = q2image.begin() ; qi != q2image.end() ; qi++ ) {
-		string q = qi->first ;
+	for ( auto& qi:q2image ) {
+		string q = qi.first ;
 		string2int32 new_files ;
-		for ( auto fc = qi->second.begin() ; fc != qi->second.end() ; fc++ ) {
-			if ( remove_files.find(fc->first) != remove_files.end() ) continue ;
-			new_files[fc->first] = fc->second ;
+		for ( auto& fc:qi.second ) {
+			if ( remove_files.find(fc.first) != remove_files.end() ) continue ;
+			new_files[fc.first] = fc.second ;
 		}
 		if ( new_files.empty() ) remove_q.push_back ( q ) ;
-		else qi->second.swap ( new_files ) ;
+		else qi.second.swap ( new_files ) ;
 	}
 
 	// Remove items with no files
-	for ( auto q = remove_q.begin() ; q != remove_q.end() ; q++ ) {
-		q2image.erase ( q2image.find(*q) ) ;
+	for ( auto& q:remove_q ) {
+		q2image.erase ( q2image.find(q) ) ;
 	}
 }
 
@@ -205,27 +205,28 @@ void TWDFIST::followLanguageLinks () {
 
 	// Get images for sitelinks from globalimagelinks
 	TWikidataDB commons_db ( "commonswiki" , platform );
-	for ( auto wp = titles_by_wiki.begin() ; wp != titles_by_wiki.end() ; wp++ ) {
-		string wiki = wp->first ;
+	for ( auto& wp:titles_by_wiki ) {
+		string wiki = wp.first ;
 		vector <string> parts ;
 		map <string,string> title2q ;
 		parts.push_back ( "" ) ;
-		for ( auto tq = wp->second.begin() ; tq != wp->second.end() ; tq++ ) {
+		for ( auto& tq:wp.second ) {
 			if ( parts[parts.size()-1].size() > 500000 ) parts.push_back ( "" ) ; // String length limit
 			if ( !parts[parts.size()-1].empty() ) parts[parts.size()-1] += "," ;
-			parts[parts.size()-1] += "\"" + commons_db.escape(tq->first) + "\"" ;
-			title2q[tq->first] = tq->second ;
+			parts[parts.size()-1] += "\"" + commons_db.escape(tq.first) + "\"" ;
+			title2q[tq.first] = tq.second ;
 		}
 
-		for ( auto part = parts.begin() ; part != parts.end() ; part++ ) {
-			if ( part->empty() ) continue ;
+//		TWikidataDB *local_wiki ;
+//		if ( wdf_only_page_images ) local_wiki = new TWikidataDB ( wiki , platform ) ;
+		for ( auto& part:parts ) {
+			if ( part.empty() ) continue ;
 
 			// Page images
 			map <string,string> title2file ;
-			if ( wdf_only_page_images ) {
-				TWikidataDB local_wiki ( wiki , platform ) ;
-				string sql = "SELECT page_title,pp_value FROM page,page_props WHERE page_id=pp_page AND page_namespace=0 AND pp_propname='page_image_free' AND page_title IN (" + *part + ")" ;
-				MYSQL_RES *result = local_wiki.getQueryResults ( sql ) ;
+/*			if ( wdf_only_page_images ) {
+				string sql = "SELECT page_title,pp_value FROM page,page_props WHERE page_id=pp_page AND page_namespace=0 AND pp_propname='page_image_free' AND page_title IN (" + part + ")" ;
+				MYSQL_RES *result = local_wiki->getQueryResults ( sql ) ;
 				MYSQL_ROW row;
 				while ((row = mysql_fetch_row(result))) {
 					string title = row[0] ;
@@ -235,10 +236,10 @@ void TWDFIST::followLanguageLinks () {
 				}
 				mysql_free_result(result);
 			}
-
+*/
 			if ( 1 ) {
 				string sql = "SELECT DISTINCT gil_page_title AS page,gil_to AS image FROM page,globalimagelinks WHERE gil_wiki='" + wiki + "' AND gil_page_namespace_id=0" ;
-				sql += " AND gil_page_title IN (" + *part + ") AND page_namespace=6 and page_title=gil_to AND page_is_redirect=0" ;
+				sql += " AND gil_page_title IN (" + part + ") AND page_namespace=6 and page_title=gil_to AND page_is_redirect=0" ;
 				sql += " AND NOT EXISTS (SELECT * FROM categorylinks where page_id=cl_from and cl_to='Crop_for_Wikidata')" ; // To-be-cropped
 				MYSQL_RES *result = commons_db.getQueryResults ( sql ) ;
 				MYSQL_ROW row;
@@ -260,6 +261,8 @@ void TWDFIST::followLanguageLinks () {
 			}
 		}
 
+//		if ( wdf_only_page_images ) delete local_wiki ;
+
 	}
 
 }
@@ -276,8 +279,8 @@ void TWDFIST::followCoordinates () {
 	// Get coordinates
 	map <string,pair <string,string>> q2coord ;
 	TWikidataDB wd_db ( "wikidatawiki" , platform );
-	for ( auto batch = item_batches.begin() ; batch != item_batches.end() ; batch++ ) {
-		string sql = "SELECT page_title,gt_lat,gt_lon FROM geo_tags,page WHERE page_namespace=0 AND page_id=gt_page_id AND gt_globe='earth' AND gt_primary=1 AND page_title IN (" + *batch + ")" ;
+	for ( auto& batch:item_batches ) {
+		string sql = "SELECT page_title,gt_lat,gt_lon FROM geo_tags,page WHERE page_namespace=0 AND page_id=gt_page_id AND gt_globe='earth' AND gt_primary=1 AND page_title IN (" + batch + ")" ;
 		MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
 		MYSQL_ROW row;
 		while ((row = mysql_fetch_row(result))) {
@@ -288,10 +291,10 @@ void TWDFIST::followCoordinates () {
 
 	// Run queries
 	string radius = "100" ; // meters
-	for ( auto qc = q2coord.begin() ; qc != q2coord.end() ; qc++ ) {
-		string q = qc->first ;
-		string lat = qc->second.first ;
-		string lon = qc->second.second ;
+	for ( auto& qc:q2coord ) {
+		string q = qc.first ;
+		string lat = qc.second.first ;
+		string lon = qc.second.second ;
 		string url = "https://commons.wikimedia.org/w/api.php?action=query&list=geosearch&gscoord="+lat+"|"+lon+"&gsradius="+radius+"&gslimit=50&gsnamespace=6&format=json" ;
 		json j ;
 		loadJSONfromURL ( url , j ) ;
@@ -316,8 +319,8 @@ void TWDFIST::followSearchCommons () {
 	// Get strings
 	map <string,string> q2label ;
 	TWikidataDB wd_db ( "wikidatawiki" , platform );
-	for ( auto batch = item_batches.begin() ; batch != item_batches.end() ; batch++ ) {
-		string sql = "SELECT term_entity_id,term_text FROM wb_terms WHERE term_entity_type='item' AND term_language='en' AND term_type='label' AND term_full_entity_id IN (" + *batch + ")" ;
+	for ( auto& batch:item_batches ) {
+		string sql = "SELECT term_entity_id,term_text FROM wb_terms WHERE term_entity_type='item' AND term_language='en' AND term_type='label' AND term_full_entity_id IN (" + batch + ")" ;
 		MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
 		MYSQL_ROW row;
 		while ((row = mysql_fetch_row(result))) {
@@ -327,9 +330,9 @@ void TWDFIST::followSearchCommons () {
 	}
 
 	// Run search
-	for ( auto ql = q2label.begin() ; ql != q2label.end() ; ql++ ) {
-		string q = ql->first ;
-		string label = ql->second ;
+	for ( auto& ql:q2label ) {
+		string q = ql.first ;
+		string label = ql.second ;
 		string url = "https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&format=json&srsearch=" + urlencode(label) ;
 		json j ;
 		loadJSONfromURL ( url , j ) ;
@@ -355,9 +358,9 @@ string TWDFIST::run () {
 
 	// Convert pagelist into item list, then save space by clearing pagelist
 	items.reserve ( pagelist->size() ) ;
-	for ( auto i = pagelist->pages.begin() ; i != pagelist->pages.end() ; i++ ) {
-		if ( i->meta.ns != 0 ) continue ;
-		items.push_back ( i->getNameWithoutNamespace() ) ;
+	for ( auto& i:pagelist->pages ) {
+		if ( i.meta.ns != 0 ) continue ;
+		items.push_back ( i.getNameWithoutNamespace() ) ;
 	}
 	pagelist->clear() ;
 	if ( items.empty() ) { // No items

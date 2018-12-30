@@ -300,10 +300,15 @@ void TPageList::swap ( TPageList &pl ) {
 
 #define LABEL_BATCH_SIZE 10000
 
-void addLabels ( string &sql , map <string,TPage*> &item2page ) {
-	TWikidataDB db ( "wikidatawiki" ) ;
+std::mutex g_add_labels_mutex ;
+
+void addLabels ( string &sql , map <string,TPage*> &item2page , TWikidataDB &db ) {
+//	TWikidataDB db ( "wikidatawiki" ) ;
 	MYSQL_RES *result ;
-	result = db.getQueryResults ( sql ) ;
+	{
+		std::lock_guard<std::mutex> lock(g_add_labels_mutex);
+		result = db.getQueryResults ( sql ) ;
+	}
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(result))) {
 		if ( string(row[2]) == "alias" ) continue ; // Paranoia
@@ -317,7 +322,7 @@ void addLabels ( string &sql , map <string,TPage*> &item2page ) {
 
 
 
-void TPageList::loadMissingMetadata ( string wikidata_language ) {
+void TPageList::loadMissingMetadata ( string wikidata_language , TPlatform *platform ) {
 	map <int16_t,vector <TPage *> > ns_page ;
 	for ( auto &p: pages ) {
 		ns_page[p.meta.ns].push_back ( &p ) ;
@@ -361,6 +366,8 @@ void TPageList::loadMissingMetadata ( string wikidata_language ) {
 	if ( wiki != "wikidatawiki" ) return ;
 	if ( wikidata_language.empty() ) return ;
 
+	if ( platform && platform->getParam("regexp_filter","").empty() && !platform->getParam("wdf_main","").empty() ) return ; // No need to load labels for WDFIST mode
+
 	addWikidataLabelsForNamespace ( 0 , "item" , wikidata_language , db , ns_page ) ;
 	addWikidataLabelsForNamespace ( 120 , "property" , wikidata_language , db , ns_page ) ;
 }
@@ -388,7 +395,7 @@ void TPageList::addWikidataLabelsForNamespace ( uint32_t namespace_id , string e
 
 	vector <std::thread *> threads ;
 	for ( auto &sql:sqls ) {
-		threads.push_back ( new std::thread ( &addLabels , std::ref(sql) , std::ref(item2page) ) ) ;
+		threads.push_back ( new std::thread ( &addLabels , std::ref(sql) , std::ref(item2page) , std::ref(db) ) ) ;
 	}
 	for ( auto t:threads ) t->join() ;
 }

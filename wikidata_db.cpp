@@ -123,7 +123,7 @@ MYSQL_RES *TWikidataDB::getQueryResults ( string sql ) {
 void TWikidataDB::finishWithError ( string msg ) {
 //	if ( platform ) platform->error ( _wiki+": "+msg+"\n"+string(mysql_error(&mysql)) ) ;
 	if ( msg.empty() ) fprintf(stderr, "%s\n", mysql_error(&mysql));
-	else fprintf(stderr, "%s\n", msg.c_str());
+	else fprintf(stderr, "%s:%s\n", _wiki.c_str(),msg.c_str());
 	mysql_close(&mysql);
 }
 
