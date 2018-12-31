@@ -32,6 +32,23 @@ void TWDFIST::filterItems () {
 }
 
 void TWDFIST::filterFiles () {
+	filterFilesFromIgnoreDatabase () ;
+	filterFilesFiveOrIsUsed () ;
+	removeItemsWithNoFileCandidates () ;
+}
+
+void TWDFIST::removeItemsWithNoFileCandidates () {
+	// Remove items with no files
+	vector <string> remove_q ;
+	for ( auto qi:q2image ) {
+		if ( qi.second.empty() ) remove_q.push_back ( qi.first ) ;
+	}
+	for ( auto& q:remove_q ) {
+		q2image.erase ( q2image.find(q) ) ;
+	}
+}
+
+void TWDFIST::filterFilesFiveOrIsUsed () {
 	map <string,uint8_t> remove_files ;
 
 	// Get distinct files and their usage count
@@ -75,10 +92,10 @@ void TWDFIST::filterFiles () {
 		}
 	}
 
+
 	if ( remove_files.size() == 0 ) return ; // Nothing to remove
 
 	// Remove files
-	vector <string> remove_q ;
 	for ( auto& qi:q2image ) {
 		string q = qi.first ;
 		string2int32 new_files ;
@@ -86,13 +103,39 @@ void TWDFIST::filterFiles () {
 			if ( remove_files.find(fc.first) != remove_files.end() ) continue ;
 			new_files[fc.first] = fc.second ;
 		}
-		if ( new_files.empty() ) remove_q.push_back ( q ) ;
-		else qi.second.swap ( new_files ) ;
+		qi.second.swap ( new_files ) ;
+	}
+}
+
+void TWDFIST::filterFilesFromIgnoreDatabase () {
+	// Chunk item list
+	vector <string> item_batches ;
+	uint64_t cnt = 0 ;
+	for ( auto& qi:q2image ) {
+		if ( cnt % ITEM_BATCH_SIZE == 0 ) item_batches.push_back ( "" ) ;
+		if ( !item_batches[item_batches.size()-1].empty() ) item_batches[item_batches.size()-1] += "," ;
+		item_batches[item_batches.size()-1] += qi.first.substr(1) ;
+		cnt++ ;
 	}
 
-	// Remove items with no files
-	for ( auto& q:remove_q ) {
-		q2image.erase ( q2image.find(q) ) ;
+	// Get files to avoid, per item, from the database
+	TWikidataDB wdfist_db ;
+	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" ) ; // HARDCODED publicly readable
+	wdfist_db.doConnect ( true ) ;
+	for ( auto &s:item_batches ) {
+		string sql = "SELECT q,file FROM ignore_files WHERE q IN (" + s + ")" ;
+		MYSQL_RES *result = wdfist_db.getQueryResults ( sql ) ;
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(result))) {
+			string q = "Q" + string(row[0]) ;
+			if ( q2image.find(q) == q2image.end() ) continue ; // Paranoia
+			string file = normalizeFilename ( row[1] ) ;
+			if ( !isValidFile(file) ) continue ;
+			auto f = q2image[q].find(file) ;
+			if ( f == q2image[q].end() ) continue ;
+			q2image[q].erase ( f ) ;
+		}
+		mysql_free_result(result);
 	}
 }
 
@@ -134,7 +177,7 @@ bool TWDFIST::isValidFile ( string file ) { // Requires normalized filename
 	return true ;
 }
 
-void TWDFIST::seedIgnoreFiles () {
+void TWDFIST::seedIgnoreFilesFromWikiPage () {
 	// Load wiki list
 	string wikitext = loadTextfromURL ( "http://www.wikidata.org/w/index.php?title=User:Magnus_Manske/FIST_icons&action=raw" ) ;
 	vector <string> rows ;
@@ -146,7 +189,9 @@ void TWDFIST::seedIgnoreFiles () {
 		if ( !isValidFile(file) ) continue ;
 		files2ignore[file] = 1 ;
 	}
+}
 
+void TWDFIST::seedIgnoreFilesFromIgnoreDatabase () {
 	// Load files that were ignored at least three times
 	TWikidataDB wdfist_db ;
 	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" ) ; // HARDCODED publicly readable
@@ -160,6 +205,11 @@ void TWDFIST::seedIgnoreFiles () {
 		files2ignore[file] = 1 ;
 	}
 	mysql_free_result(result);
+}
+
+void TWDFIST::seedIgnoreFiles () {
+	seedIgnoreFilesFromWikiPage() ;
+	seedIgnoreFilesFromIgnoreDatabase() ;
 }
 
 void TWDFIST::addFileToQ ( string q , string file ) {

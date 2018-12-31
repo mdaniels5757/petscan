@@ -416,10 +416,9 @@ private:
 	struct timeval now_ish ;
 } ;
 
-typedef map <string,int32_t> string2int32 ;
-
 class TWDFIST {
 public:
+	typedef map <string,int32_t> string2int32 ;
 	TWDFIST ( TPageList *pagelist , TPlatform *platform ) : pagelist(pagelist) , platform(platform) {} ;
 	string run () ;
 
@@ -427,6 +426,11 @@ protected :
 	bool isValidFile ( string file ) ;
 	string normalizeFilename ( string filename ) ;
 	void seedIgnoreFiles () ;
+	void seedIgnoreFilesFromWikiPage () ;
+	void seedIgnoreFilesFromIgnoreDatabase () ;
+	void filterFilesFromIgnoreDatabase () ;
+	void filterFilesFiveOrIsUsed () ;
+	void removeItemsWithNoFileCandidates () ;
 	void filterItems() ;
 	void filterFiles () ;
 	void followLanguageLinks () ;
