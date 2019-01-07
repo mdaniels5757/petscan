@@ -121,7 +121,7 @@ void TWDFIST::filterFilesFromIgnoreDatabase () {
 
 	// Get files to avoid, per item, from the database
 	TWikidataDB wdfist_db ;
-	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" ) ; // HARDCODED publicly readable
+	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" , true ) ; // HARDCODED publicly readable
 	wdfist_db.doConnect ( true ) ;
 	for ( auto &s:item_batches ) {
 		string sql = "SELECT q,file FROM ignore_files WHERE q IN (" + s + ")" ;
@@ -195,7 +195,7 @@ void TWDFIST::seedIgnoreFilesFromWikiPage () {
 void TWDFIST::seedIgnoreFilesFromIgnoreDatabase () {
 	// Load files that were ignored at least three times
 	TWikidataDB wdfist_db ;
-	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" ) ; // HARDCODED publicly readable
+	wdfist_db.setHostDB ( "tools.labsdb" , "s51218__wdfist_p" , true ) ; // HARDCODED publicly readable
 	wdfist_db.doConnect ( true ) ;
 	string sql = "SELECT CONVERT(`file` USING utf8) FROM ignore_files GROUP BY file HAVING count(*)>=3" ;
 	MYSQL_RES *result = wdfist_db.getQueryResults ( sql ) ;

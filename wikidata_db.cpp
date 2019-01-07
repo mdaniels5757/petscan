@@ -65,6 +65,10 @@ void TWikidataDB::doConnect ( bool first ) {
 	string user = root_platform->config["user"] ;
 	string password = root_platform->config["password"] ;
 	mysql_init(&mysql);
+	if ( _force_utf8 ) {
+		mysql_options(&mysql, MYSQL_SET_CHARSET_NAME, "utf8"); 
+		mysql_options(&mysql, MYSQL_INIT_COMMAND, "SET NAMES utf8"); 
+	}
 	if ( mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ) {
 		did_connect = true ;
 	} else {
@@ -127,9 +131,10 @@ void TWikidataDB::finishWithError ( string msg ) {
 	mysql_close(&mysql);
 }
 
-void TWikidataDB::setHostDB ( string host , string db ) {
+void TWikidataDB::setHostDB ( string host , string db , bool force_utf8 ) {
 	_host = host ;
 	_database = db ;
+	_force_utf8 = force_utf8 ;
 }
 
 uint32_t TWikidataDB::lastInsertID () {

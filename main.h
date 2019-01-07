@@ -65,7 +65,7 @@ class TWikidataDB {
 public:
 	TWikidataDB () {} ;
 	TWikidataDB ( string wiki , TPlatform *_platform = NULL ) ;
-	void setHostDB ( string host , string db ) ;
+	void setHostDB ( string host , string db , bool force_utf8 = false ) ;
 	void doConnect ( bool first = false ) ;
 	void runQuery ( string sql ) ;
 	bool isConnected() ;
@@ -80,7 +80,8 @@ protected:
 	string _host , _config_file , _database , _wiki ;
 	TPlatform *platform = NULL ;
 	bool did_connect = false ;
-	
+	bool _force_utf8 = false ;
+
 	void finishWithError ( string msg = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
 
