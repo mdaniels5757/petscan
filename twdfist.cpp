@@ -21,6 +21,7 @@ void TWDFIST::filterItems () {
 		string sql = "SELECT page_title FROM page WHERE page_namespace=0 AND page_is_redirect=0" ;
 		sql += " AND page_title IN (" + item_batches[chunk] + ")" ;
 		if ( wdf_only_items_without_p18 ) sql += " AND NOT EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=120 AND pl_title='P18')" ;
+		sql += " AND NOT EXISTS (SELECT * FROM pagelinks WHERE pl_from=page_id AND pl_namespace=0 AND pl_title IN ('Q13406463','Q4167410'))" ; // No list/disambig
 		MYSQL_RES *result = wd_db.getQueryResults ( sql ) ;
 		MYSQL_ROW row;
 		while ((row = mysql_fetch_row(result))) {
