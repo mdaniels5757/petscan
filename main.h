@@ -325,7 +325,11 @@ public:
 	virtual bool run () ;
 
 protected:
+	typedef vector <vector<string> > vvs ;
+
 	bool getPages () ;
+	void iterateCategoryBatches ( vector <vvs> &ret , vvs &categories , uint32_t start = 0 ) ;
+	bool getPagesforPrimary ( TWikidataDB &db , string primary , string sql , string sql_before_after , vector <TPage> &pages_sublist , bool is_before_after_done ) ;
 	bool parseCategoryList ( TWikidataDB &db , vector <TSourceDatabaseCatDepth> &input , vector <vector<string> > &output ) ;
 	void getCategoriesInTree ( TWikidataDB &db , string name , int16_t depth , vector <string> &ret ) ;
 	void goDepth ( TWikidataDB &db , map <string,bool> &tmp , vector <string> &cats , int16_t left ) ;
@@ -336,6 +340,8 @@ protected:
 
 	TSourceDatabaseParams params ;
 	TPageList *primary_pagelist = NULL ;
+	vvs cat_pos , cat_neg ;
+	bool has_pos_cats , has_neg_cats , has_pos_templates , has_pos_linked_from ;
 } ;
 
 

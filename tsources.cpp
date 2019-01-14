@@ -2,6 +2,10 @@
 #include <set>
 #include <time.h>
 
+#define USE_NEW_CATEGORY_MODE 1
+#define MAX_CATEGORY_BATCH_SIZE 15000
+
+
 
 //________________________________________________________________________________________________________________________
 
@@ -329,6 +333,36 @@ bool TSourceDatabase::run () {
 	return run_result ;
 }
 
+
+
+void TSourceDatabase::iterateCategoryBatches ( vector <vvs> &ret , vvs &categories , uint32_t start ) {
+//	if ( categories.size() <= start ) return ; // This is the end, my friend, the end
+
+	vvs current ;
+	for ( uint32_t a = 0 ; a < categories[start].size() ; a++ ) {
+		if ( a % MAX_CATEGORY_BATCH_SIZE == 0 ) current.push_back ( vector <string> () ) ;
+		current[current.size()-1].push_back ( categories[start][a] ) ;
+	}
+//cout << "CURRENT (" << start << "): " << current.size() << " elements" << endl ;
+	for ( auto &c:current ) {
+		vector <vvs> tmp ;
+		if ( start+1 >= categories.size() ) { // Last one
+			vvs to_add ;
+			to_add.push_back ( c ) ;
+			ret.push_back ( to_add ) ;
+			continue ;
+		}
+		iterateCategoryBatches ( tmp , categories , start+1 ) ;
+		for ( auto &t:tmp ) {
+			vvs to_add ;
+			to_add.push_back ( c ) ;
+			for ( auto &t2:t ) to_add.push_back ( t2 ) ;
+			ret.push_back ( to_add ) ;
+		}
+	}
+}
+
+
 bool TSourceDatabase::getPages () {
 	wiki = (primary_pagelist) ? primary_pagelist->wiki : params.wiki ;
 	pages.clear() ;
@@ -336,11 +370,12 @@ bool TSourceDatabase::getPages () {
 	TWikidataDB db ( wiki , platform ) ;
 	if ( !db.isConnected() ) return false ;
 
-	vector <vector<string> > cat_pos , cat_neg ;
-	bool has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
-	bool has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
-	bool has_pos_templates = params.templates_yes.size()+params.templates_any.size() > 0 ;
-	bool has_pos_linked_from = params.linked_from_all.size()+params.linked_from_any.size()+params.links_to_all.size()+params.links_to_any.size() > 0 ;
+	cat_pos.clear() ;
+	cat_neg.clear() ;
+	has_pos_cats = parseCategoryList ( db , params.positive , cat_pos ) ;
+	has_neg_cats = parseCategoryList ( db , params.negative , cat_neg ) ;
+	has_pos_templates = params.templates_yes.size()+params.templates_any.size() > 0 ;
+	has_pos_linked_from = params.linked_from_all.size()+params.linked_from_any.size()+params.links_to_all.size()+params.links_to_any.size() > 0 ;
 
 	string primary ;
 	if ( has_pos_cats ) primary = "categories" ;
@@ -386,41 +421,73 @@ bool TSourceDatabase::getPages () {
 	string sql ;
 	
 	if ( primary == "categories" ) {
-		if ( params.combine == "subset" ) {
-			sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
-			sql += lc ;
-			sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
-			sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
-			sql += ")) cl0" ;
-			for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
-				char tmp[200] ;
-				sprintf ( tmp , " INNER JOIN categorylinks cl%d on cl0.cl_from=cl%d.cl_from and cl%d.cl_to IN (" , a , a , a ) ;
-				sql += tmp ;
-				sql += listEscapedStrings ( db , cat_pos[a] ) ;
-				sql += ")" ;
-			}
+//cout << cat_pos[0].size() << " subcategories" << endl ;
 
-		} else if ( params.combine == "union" ) {
-			
-			// Merge and unique subcat list
-			vector <string> tmp ;
-			for ( uint32_t a = 0 ; a < cat_pos.size() ; a++ ) {
-				tmp.insert ( tmp.end() , cat_pos[a].begin() , cat_pos[a].end() ) ;
+		vector <vvs> category_batches ;
+		if ( USE_NEW_CATEGORY_MODE ) {
+			iterateCategoryBatches ( category_batches , cat_pos ) ;
+/*
+			cout << category_batches.size() << " batches" << endl ;
+			for ( auto &x:category_batches ) {
+				cout << "Batch with " << x.size() << " parts:" << endl ;
+				for ( auto &y:x ) {
+					cout << "  " << y.size() << " strings" << endl ;
+				}
 			}
-			set <string> s ( tmp.begin() , tmp.end() ) ;
-			tmp.assign ( s.begin() , s.end() ) ;
-			
-			sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
-			sql += lc ;
-			sql += " FROM ( SELECT * FROM categorylinks WHERE cl_to IN (" ;
-			sql += listEscapedStrings ( db , tmp ) ;
-			sql += ")) cl0" ;
-			if(DEBUG_OUTPUT) cout << sql << endl ;
+*/
+		} else { // Old mode
+			category_batches.push_back ( cat_pos ) ;
 		}
 
-		sql += " INNER JOIN (page p" ;
-		sql += ") ON p.page_id=cl0.cl_from" ;
-	
+
+		for ( auto &category_batch:category_batches ) {
+//cout << "Running a batch..." << endl ;
+			if ( params.combine == "subset" ) {
+				sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+				sql += lc ;
+				sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
+				sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
+				sql += ")) cl0" ;
+				for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
+					char tmp[200] ;
+					sprintf ( tmp , " INNER JOIN categorylinks cl%d on cl0.cl_from=cl%d.cl_from and cl%d.cl_to IN (" , a , a , a ) ;
+					sql += tmp ;
+					sql += listEscapedStrings ( db , cat_pos[a] ) ;
+					sql += ")" ;
+				}
+
+			} else if ( params.combine == "union" ) {
+				
+				// Merge and unique subcat list
+				vector <string> tmp ;
+				for ( uint32_t a = 0 ; a < cat_pos.size() ; a++ ) {
+					tmp.insert ( tmp.end() , cat_pos[a].begin() , cat_pos[a].end() ) ;
+				}
+				set <string> s ( tmp.begin() , tmp.end() ) ;
+				tmp.assign ( s.begin() , s.end() ) ;
+				
+				sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
+				sql += lc ;
+				sql += " FROM ( SELECT * FROM categorylinks WHERE cl_to IN (" ;
+				sql += listEscapedStrings ( db , tmp ) ;
+				sql += ")) cl0" ;
+				if(DEBUG_OUTPUT) cout << sql << endl ;
+			}
+
+			sql += " INNER JOIN (page p" ;
+			sql += ") ON p.page_id=cl0.cl_from" ;
+
+			TPageList pl2 ( wiki ) ;
+			if ( !getPagesforPrimary ( db , primary , sql , sql_before_after , pl2.pages , is_before_after_done ) ) return false ;
+
+			if ( pages.size() == 0 ) pages.swap ( pl2.pages ) ;
+			else merge ( pl2 ) ;
+		}
+
+		data_loaded = true ;
+		return true ;
+
+
 	} else if ( primary == "no_wikidata" ) {
 
 		sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
@@ -466,6 +533,13 @@ bool TSourceDatabase::getPages () {
 			sql += parts[cnt] ;
 		}
 	}
+
+	if ( !getPagesforPrimary ( db , primary , sql , sql_before_after , pages , is_before_after_done ) ) return false ;
+	data_loaded = true ;
+	return true ;
+}
+
+bool TSourceDatabase::getPagesforPrimary ( TWikidataDB &db , string primary , string sql , string sql_before_after , vector <TPage> &pages_sublist , bool is_before_after_done ) {
 
 	// Namespaces
 	if ( params.page_namespace_ids.size() > 0 ) {
@@ -622,11 +696,10 @@ bool TSourceDatabase::getPages () {
 
 //cout << "Getting results is done.\n" ;
 
-	pl1.pages.swap ( pages ) ;
+	pl1.pages.swap ( pages_sublist ) ;
 
-	if(DEBUG_OUTPUT) cout << "Got " << pages.size() << " pages\n" ;	
+	if(DEBUG_OUTPUT) cout << "Got " << pages_sublist.size() << " pages\n" ;	
 
-	data_loaded = true ;
 	return true ;
 }
 
