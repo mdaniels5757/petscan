@@ -3,7 +3,7 @@
 #include <time.h>
 
 #define USE_NEW_CATEGORY_MODE 1
-#define MAX_CATEGORY_BATCH_SIZE 15000
+#define MAX_CATEGORY_BATCH_SIZE 10000
 
 
 
