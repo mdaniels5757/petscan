@@ -582,7 +582,12 @@ bool TSourceDatabase::getPages () {
 	gettimeofday(&before , NULL);
 
 	TPageList pl1 ( wiki ) ;
-	MYSQL_RES *result = db.getQueryResults ( sql ) ;
+	MYSQL_RES *result ;
+	try {
+		result = db.getQueryResults ( sql ) ;
+	} catch ( ... ) {
+		result = NULL ;
+	}
 
 //	cout << "Query is done.\n" ;
 	

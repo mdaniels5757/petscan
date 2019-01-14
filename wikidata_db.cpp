@@ -29,8 +29,8 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 
 	if ( 0 ) { // Future special cases
 	} else {
-//		_host = wiki+".web.db.svc.eqiad.wmflabs" ; // Fast ones
-		_host = wiki+".analytics.db.svc.eqiad.wmflabs" ; // New, long-query server, use this if possible
+		_host = wiki+".web.db.svc.eqiad.wmflabs" ; // Fast ones
+//		_host = wiki+".analytics.db.svc.eqiad.wmflabs" ; // New, long-query server, use this if possible
 //		_host = wiki+".labsdb" ; // Old host, try not to use
 		_database = wiki+"_p" ;
 	}
@@ -101,7 +101,13 @@ string TWikidataDB::escape ( string s ) {
 
 void TWikidataDB::runQuery ( string sql ) {
 	doConnect() ;
-	if ( mysql_query ( &mysql , sql.c_str() ) ) {
+	int result ;
+	try {
+		result = mysql_query ( &mysql , sql.c_str() ) ;
+	} catch ( ... ) {
+		result = 1 ;
+	}
+	if ( result ) {
 		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) {
 			doConnect(true) ;
 			return runQuery ( sql ) ;
@@ -111,8 +117,21 @@ void TWikidataDB::runQuery ( string sql ) {
 }
 
 MYSQL_RES *TWikidataDB::getQueryResults ( string sql ) {
-	runQuery ( sql ) ;
-	MYSQL_RES *result = mysql_store_result(&mysql);
+	try {
+		runQuery ( sql ) ;
+	} catch ( ... ) {
+		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
+		finishWithError("SQL problem:"+sql) ;
+		return NULL ;
+	}
+	MYSQL_RES *result ;
+	try {
+		result = mysql_store_result(&mysql);
+	} catch ( ... ) {
+		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
+		finishWithError("SQL problem:"+sql) ;
+		return NULL ;
+	}
 	if ( result == NULL ) {
 		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) {
 			doConnect(true) ;
