@@ -3,7 +3,7 @@
 #include <time.h>
 
 #define USE_NEW_CATEGORY_MODE 1
-#define MAX_CATEGORY_BATCH_SIZE 10000
+#define MAX_CATEGORY_BATCH_SIZE 5000
 
 
 
@@ -446,13 +446,13 @@ bool TSourceDatabase::getPages () {
 				sql = "SELECT DISTINCT p.page_id,p.page_title,p.page_namespace,p.page_touched,p.page_len" ;
 				sql += lc ;
 				sql += " FROM ( SELECT * from categorylinks where cl_to IN (" ;
-				sql += space2_ ( listEscapedStrings ( db , cat_pos[0] ) ) ;
+				sql += space2_ ( listEscapedStrings ( db , category_batch[0] ) ) ;
 				sql += ")) cl0" ;
-				for ( uint32_t a = 1 ; a < cat_pos.size() ; a++ ) {
+				for ( uint32_t a = 1 ; a < category_batch.size() ; a++ ) {
 					char tmp[200] ;
 					sprintf ( tmp , " INNER JOIN categorylinks cl%d on cl0.cl_from=cl%d.cl_from and cl%d.cl_to IN (" , a , a , a ) ;
 					sql += tmp ;
-					sql += listEscapedStrings ( db , cat_pos[a] ) ;
+					sql += listEscapedStrings ( db , category_batch[a] ) ;
 					sql += ")" ;
 				}
 
@@ -460,8 +460,8 @@ bool TSourceDatabase::getPages () {
 				
 				// Merge and unique subcat list
 				vector <string> tmp ;
-				for ( uint32_t a = 0 ; a < cat_pos.size() ; a++ ) {
-					tmp.insert ( tmp.end() , cat_pos[a].begin() , cat_pos[a].end() ) ;
+				for ( uint32_t a = 0 ; a < category_batch.size() ; a++ ) {
+					tmp.insert ( tmp.end() , category_batch[a].begin() , category_batch[a].end() ) ;
 				}
 				set <string> s ( tmp.begin() , tmp.end() ) ;
 				tmp.assign ( s.begin() , s.end() ) ;
