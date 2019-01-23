@@ -628,9 +628,10 @@ bool TSourceDatabase::getPagesforPrimary ( TWikidataDB &db , string primary , st
 	if ( params.larger > -1 ) sql += " AND p.page_len>=" + ui2s(params.larger) ;
 	if ( params.smaller > -1 ) sql += " AND p.page_len<=" + ui2s(params.smaller) ;
 	
-	// Speed up "Only pages without Wikidata items" for NS0 pages
-	if ( primary != "no_wikidata" && params.page_wikidata_item == "without" && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0 ) {
-		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
+	// Speed up "Only pages without Wikidata items"
+	if ( primary != "no_wikidata" && params.page_wikidata_item == "without" ) { // && params.page_namespace_ids.size() == 1 && params.page_namespace_ids[0] == 0
+		sql += " AND NOT EXISTS (SELECT * FROM page_props WHERE p.page_id=pp_page AND pp_propname='wikibase_item')" ;
+//		sql += " AND NOT EXISTS (SELECT * FROM wikidatawiki_p.wb_items_per_site WHERE ips_site_id='" + wiki + "' AND ips_site_page=REPLACE(p.page_title,'_',' ') AND p.page_namespace=0 LIMIT 1)" ;
 	}
 
 	if ( !is_before_after_done ) {
