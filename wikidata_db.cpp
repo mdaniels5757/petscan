@@ -1,4 +1,5 @@
 #include "main.h"
+#include <unistd.h>
 
 TPlatform *root_platform ;
 std::mutex g_root_platform_mutex;
@@ -7,11 +8,31 @@ std::mutex g_root_platform_mutex;
 
 #define DB_ESCAPE_BUFFER_SIZE 1000000
 
+#define USE_DB_CONCURRENCY_LIMIT 0
+#define MAX_CONCURRENT_DB 9
+
+uint32_t concurrent_db = 0 ;
+bool curl_initialized = false ;
+std::mutex concurrent_db_mutex;
 
 TWikidataDB::TWikidataDB ( string wiki , TPlatform *_platform ) {
+	while ( USE_DB_CONCURRENCY_LIMIT && concurrent_db >= MAX_CONCURRENT_DB ) {
+cout << "DB concurrency limit reached" << endl ;
+		usleep ( 1000 ) ;
+	}
+
+	if ( 1 ) {
+		std::lock_guard<std::mutex> guard(concurrent_db_mutex) ;
+		concurrent_db++ ;
+	}
+//cout << "Concurrent DBs: " << concurrent_db << endl ;
+
 	platform = _platform ;
 	setHostDBFromWiki ( wiki ) ;
-	curl_global_init(CURL_GLOBAL_ALL);
+	if ( !curl_initialized ) {
+		curl_global_init(CURL_GLOBAL_ALL);
+		curl_initialized = true ;
+	}
 	doConnect(true) ;
 }	
 
@@ -29,8 +50,8 @@ bool TWikidataDB::setHostDBFromWiki ( string wiki ) {
 
 	if ( 0 ) { // Future special cases
 	} else {
-		_host = wiki+".web.db.svc.eqiad.wmflabs" ; // Fast ones
-//		_host = wiki+".analytics.db.svc.eqiad.wmflabs" ; // New, long-query server, use this if possible
+//		_host = wiki+".web.db.svc.eqiad.wmflabs" ; // Fast ones
+		_host = wiki+".analytics.db.svc.eqiad.wmflabs" ; // New, long-query server, use this if possible
 //		_host = wiki+".labsdb" ; // Old host, try not to use
 		_database = wiki+"_p" ;
 	}
@@ -81,8 +102,9 @@ void TWikidataDB::doConnect ( bool first ) {
 }
 
 TWikidataDB::~TWikidataDB () {
-   mysql_close(&mysql);
-   curl_global_cleanup();
+	mysql_close(&mysql);
+//	curl_global_cleanup();
+	concurrent_db-- ;
 }
 
 string TWikidataDB::escape ( string s ) {
@@ -121,7 +143,7 @@ MYSQL_RES *TWikidataDB::getQueryResults ( string sql ) {
 		runQuery ( sql ) ;
 	} catch ( ... ) {
 		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
-		finishWithError("SQL problem:"+sql) ;
+		finishWithError("SQL problem [1]:",sql) ;
 		return NULL ;
 	}
 	MYSQL_RES *result ;
@@ -129,24 +151,32 @@ MYSQL_RES *TWikidataDB::getQueryResults ( string sql ) {
 		result = mysql_store_result(&mysql);
 	} catch ( ... ) {
 		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
-		finishWithError("SQL problem:"+sql) ;
+		finishWithError("SQL problem [2]:",sql) ;
 		return NULL ;
 	}
 	if ( result == NULL ) {
 		if ( string("MySQL server has gone away") == string(mysql_error(&mysql)) ) {
+			usleep ( 100 ) ;
+			doConnect(true) ;
+			return getQueryResults ( sql ) ;
+		}
+		if ( string("Lost connection to MySQL server during query") == string(mysql_error(&mysql)) ) {
+			usleep ( 100 ) ;
 			doConnect(true) ;
 			return getQueryResults ( sql ) ;
 		}
 		fprintf(stderr, "!! %s\n", mysql_error(&mysql));
-		finishWithError("SQL problem:"+sql) ;
+		string error_message = mysql_error(&mysql) ;
+		finishWithError("SQL problem [3]: "+error_message,sql) ;
 	}
 	return result ;
 }
 
-void TWikidataDB::finishWithError ( string msg ) {
+void TWikidataDB::finishWithError ( string msg , string sql ) {
 //	if ( platform ) platform->error ( _wiki+": "+msg+"\n"+string(mysql_error(&mysql)) ) ;
 	if ( msg.empty() ) fprintf(stderr, "%s\n", mysql_error(&mysql));
 	else fprintf(stderr, "%s:%s\n", _wiki.c_str(),msg.c_str());
+//	if ( !sql.empty() ) cout << sql << endl ;
 	mysql_close(&mysql);
 }
 

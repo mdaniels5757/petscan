@@ -659,7 +659,9 @@ bool TSourceDatabase::getPagesforPrimary ( TWikidataDB &db , string primary , st
 	TPageList pl1 ( wiki ) ;
 	MYSQL_RES *result ;
 	try {
+cout << "Init query..." << endl ;
 		result = db.getQueryResults ( sql ) ;
+cout << "Query done." << endl ;
 	} catch ( ... ) {
 		result = NULL ;
 	}

@@ -82,7 +82,7 @@ protected:
 	bool did_connect = false ;
 	bool _force_utf8 = false ;
 
-	void finishWithError ( string msg = "" ) ;
+	void finishWithError ( string msg = "" , string sql = "" ) ;
 	bool setHostDBFromWiki ( string wiki ) ;
 
 	struct MemoryStruct {
