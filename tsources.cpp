@@ -614,10 +614,10 @@ bool TSourceDatabase::getPagesforPrimary ( TWikidataDB &db , string primary , st
 	}
 
 	// Last edit
-	if ( params.last_edit_anon == "yes" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=0)" ;
-	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision WHERE rev_id=page_latest AND rev_page=page_id AND rev_user!=0)" ;
-	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
-	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups WHERE rev_id=page_latest AND rev_page=page_id AND rev_user=ug_user AND ug_group='bot')" ;
+	if ( params.last_edit_anon == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,actor WHERE rev_id=page_latest AND rev_page=page_id AND rev_actor=actor_id AND actor_user IS NULL)" ;
+	if ( params.last_edit_anon == "no" ) sql += " AND EXISTS (SELECT * FROM revision,actor WHERE rev_id=page_latest AND rev_page=page_id AND rev_actor=actor_id AND actor_user IS NOT NULL)" ;
+	if ( params.last_edit_bot == "yes" ) sql += " AND EXISTS (SELECT * FROM revision,user_groups,actor WHERE rev_id=page_latest AND rev_page=page_id AND rev_actor=actor_id AND actor_user=ug_user AND ug_group='bot')" ;
+	if ( params.last_edit_bot == "no" ) sql += " AND NOT EXISTS (SELECT * FROM revision,user_groups,actor WHERE rev_id=page_latest AND rev_page=page_id AND rev_actor=actor_id AND actor_user=ug_user AND ug_group='bot')" ;
 	if ( params.last_edit_flagged == "yes" ) sql += " AND NOT EXISTS (SELECT * FROM flaggedpage_pending WHERE p.page_id=fpp_page_id)" ;
 	if ( params.last_edit_flagged == "no" ) sql += " AND EXISTS (SELECT * FROM flaggedpage_pending WHERE p.page_id=fpp_page_id)" ;
 	
