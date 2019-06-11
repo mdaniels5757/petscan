@@ -91,19 +91,19 @@ void TWikidataDB::doConnect ( bool first ) {
 		mysql_options(&mysql, MYSQL_INIT_COMMAND, "SET NAMES utf8"); 
 	}
 
-	while ( !did_connect ) {
-		if ( mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ) {
-			did_connect = true ;
-		} else {
-			string error = mysql_error(&mysql) ;
-			if ( error.find("max_user_connections") != string::npos ) {
-				//cout << "WAITING FOR USER CONNECTION" << endl ;
-				usleep ( 100 ) ;
-				continue;
-			}
-			did_connect = false ;
-			finishWithError() ;
+	if ( mysql_real_connect(&mysql,_host.c_str(),user.c_str(),password.c_str(),_database.c_str(),0,NULL,0) ) {
+		did_connect = true ;
+	} else {
+		/*
+		string error = mysql_error(&mysql) ;
+		if ( error.find("max_user_connections") != string::npos ) {
+			//cout << "WAITING FOR USER CONNECTION" << endl ;
+			usleep ( 100 ) ;
+			continue;
 		}
+		did_connect = false ;
+		*/
+		finishWithError() ;
 	}
 //	printf("MySQL Server Version is %s\n",mysql_get_server_info(&mysql));
 }
