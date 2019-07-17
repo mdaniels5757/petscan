@@ -992,7 +992,7 @@ void TPlatform::annotateFile ( TWikidataDB &db , map <string,TPage *> &name2f , 
 	if ( file_data ) {
 		string sql = "SELECT img_name" ;
 		for ( auto i = file_data_keys.begin() ; i != file_data_keys.end() ; i++ ) sql += "," + (*i) ;
-		sql += " FROM image WHERE img_name IN (" ;
+		sql += " FROM image_compat WHERE img_name IN (" ;
 		sql += TSourceDatabase::listEscapedStrings ( db , tmp , false ) ;
 		sql += ")" ;
 
